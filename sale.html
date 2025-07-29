@@ -104,9 +104,8 @@
     var container;
 
     function toEnglishNumber(str) {
-      return (str || '').replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
-                .replace(/[\u0660-\u0669]/g, function(d){return d.charCodeAt(0)-1584;})
-                .replace(/[\u200c\u200b]/g, '');
+      return str.replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
+                .replace(/[\u0660-\u0669]/g, function(d){return d.charCodeAt(0)-1584;});
     }
 
     function toFarsiNumber(str) {
@@ -143,7 +142,7 @@
       }
 
       function searchProduct(input) {
-        var sn = toEnglishNumber(input.value).replace(/[\u200c\u200b]/g, '').trim();
+        var sn = toEnglishNumber(input.value).trim();
         if (!sn) return;
         google.script.run.withSuccessHandler(function(res) {
           if (!res) {
