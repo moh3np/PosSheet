@@ -5,7 +5,17 @@ function onOpen() {
     .addToUi();
 }
 
+var DEBUG = false;
+
+function debugLog() {
+  if (!DEBUG) return;
+  for (var i = 0; i < arguments.length; i++) {
+    Logger.log(arguments[i]);
+  }
+}
+
 function showSaleDialog() {
+  debugLog('Opening sale dialog');
   var tpl = HtmlService.createTemplateFromFile('sale');
   // Load the serial number list asynchronously on the client to avoid
   // delaying the dialog from opening.
@@ -24,6 +34,7 @@ function getInventorySNList() {
   var frozen = sheet.getFrozenRows();
   var startIndex = Math.max(0, frozen - (range.getRow() - 1));
   var values = range.getValues();
+  debugLog('Inventory SN list loaded', values.length - startIndex);
   return values.slice(startIndex).map(function(r){ return r[0]; });
 }
 
@@ -42,6 +53,7 @@ function getInventoryData() {
 
   var snValues = snRange.getValues();
   var data = [];
+  debugLog('Loading inventory data rows:', snValues.length - startIndex);
   for (var i = startIndex; i < snValues.length; i++) {
     var row = snRange.getRow() + i;
     var sn = normalizeNumber_(snValues[i][0]);
@@ -71,6 +83,7 @@ function searchInventory(sn) {
   var snRange = ss.getRangeByName('InventorySN');
   if (!snRange) return null;
   var snNorm = normalizeNumber_(sn);
+  debugLog('Server search', sn, 'normalized to', snNorm);
   var snNum = Number(snNorm);
   var values = snRange.getValues();
   for (var i = 0; i < values.length; i++) {
@@ -78,6 +91,7 @@ function searchInventory(sn) {
     var cellNum = Number(cellVal);
     if (snNorm === cellVal || (snNum && cellNum && snNum === cellNum)) {
       var row = snRange.getCell(i + 1, 1).getRow();
+      debugLog('Server found at row', row, 'sn', cellVal);
       return {
         sn: cellVal,
         name: getCellValueByName('InventoryName', row),
@@ -87,6 +101,7 @@ function searchInventory(sn) {
       };
     }
   }
+  debugLog('Server search failed for', sn);
   return null;
 }
 

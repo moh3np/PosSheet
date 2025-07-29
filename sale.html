@@ -104,6 +104,8 @@
     </div>
 
     <script>
+    var DEBUG = true;
+    function log(){ if(DEBUG) console.log.apply(console, arguments); }
     var products = [];
     var container;
     var inventoryMap = {};
@@ -173,6 +175,7 @@
 
       function searchProduct(input) {
         var sn = normalize(input.value);
+        log('search', input.value, '->', sn);
         if (!sn) return;
         var res = inventoryMap[sn];
         if (!res) {
@@ -182,14 +185,17 @@
           }
         }
         if (res) {
+          log('found locally');
           addProduct(res, input);
           return;
         }
         // Fallback to server-side search in case data is not yet loaded
         google.script.run.withSuccessHandler(function(item){
           if (item) {
+            log('found on server');
             addProduct(item, input);
           } else {
+            log('not found');
             alert('یافت نشد');
           }
         }).searchInventory(sn);
@@ -232,6 +238,7 @@
             opt.value = item.sn;
             dl.appendChild(opt);
           });
+          log('inventory loaded', list.length);
         }).getInventoryData();
       }
     </script>
