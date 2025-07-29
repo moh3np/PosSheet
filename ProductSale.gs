@@ -5,13 +5,12 @@ function onOpen() {
     .addToUi();
 }
 
-var DEBUG = false;
+var DEBUG = true;
 
 function debugLog() {
   if (!DEBUG) return;
-  for (var i = 0; i < arguments.length; i++) {
-    Logger.log(arguments[i]);
-  }
+  var msg = Array.prototype.slice.call(arguments).join(' ');
+  Logger.log(new Date().toISOString() + ' - ' + msg);
 }
 
 function showSaleDialog() {
@@ -97,7 +96,16 @@ function searchInventory(sn) {
     debugLog('Row', i + 1, 'value', cellValOriginal, 'normalized', cellVal);
     if (snNorm === cellVal || (snNum && cellNum && snNum === cellNum)) {
       var row = snRange.getCell(i + 1, 1).getRow();
-      debugLog('Server found at row', row, 'sn', cellVal);
+      debugLog(
+        'Server found at row',
+        row,
+        'sn',
+        cellVal,
+        'name',
+        getCellValueByName('InventoryName', row),
+        'brand',
+        getCellValueByName('InventoryBrand', row)
+      );
       return {
         sn: cellVal,
         name: getCellValueByName('InventoryName', row),
@@ -107,7 +115,15 @@ function searchInventory(sn) {
       };
     }
   }
-  debugLog('Server search failed for', sn, 'normalized', snNorm);
+  debugLog(
+    'Server search failed for',
+    sn,
+    'normalized',
+    snNorm,
+    'after checking',
+    values.length,
+    'rows'
+  );
   return null;
 }
 
