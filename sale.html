@@ -123,6 +123,10 @@
       return Number(val) || 0;
     }
 
+    function sanitizeNumber(val){
+      return toEnglishNumber(val).replace(/\D+/g,'');
+    }
+
       function addInput() {
         var input = document.createElement('input');
         input.type = 'text';
@@ -163,7 +167,7 @@
       }
 
       function searchProduct(input) {
-        var sn = toEnglishNumber(input.value).trim().replace(/\s+/g, '');
+        var sn = sanitizeNumber(input.value);
         if (!sn) return;
         var res = inventoryMap[sn];
         if (res) {
@@ -210,7 +214,7 @@
           var dl = document.getElementById('snList');
           inventoryMap = {};
           list.forEach(function(item){
-            var key = toEnglishNumber(item.sn).replace(/\s+/g, '');
+            var key = sanitizeNumber(item.sn);
             inventoryMap[key] = item;
             var opt = document.createElement('option');
             opt.value = item.sn;
