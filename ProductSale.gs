@@ -7,8 +7,8 @@ function onOpen() {
 
 function showSaleDialog() {
   var tpl = HtmlService.createTemplateFromFile('sale');
-  // Load SN list asynchronously on the client to speed up dialog opening
-  tpl.snList = [];
+  // Pre-populate dropdown list from InventorySN for immediate suggestions
+  tpl.snList = getInventorySNList();
   var html = tpl.evaluate()
     .setWidth(1200)
     .setHeight(800);
@@ -23,7 +23,9 @@ function getInventorySNList() {
   var frozen = sheet.getFrozenRows();
   var startIndex = Math.max(0, frozen - (range.getRow() - 1));
   var values = range.getValues();
-  return values.slice(startIndex).map(function(r){ return r[0]; });
+  return values.slice(startIndex).map(function(r){
+    return normalizeNumber_(r[0]);
+  });
 }
 
 function getInventoryData() {
