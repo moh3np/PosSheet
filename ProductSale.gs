@@ -26,13 +26,23 @@ function getInventorySNList() {
   return values.slice(startIndex).map(function(r){ return r[0]; });
 }
 
+function toEnglishNumber_(str) {
+  return String(str)
+    .replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
+    .replace(/[\u0660-\u0669]/g, function(d){return d.charCodeAt(0)-1584;});
+}
+
 function searchInventory(sn) {
   var ss = SpreadsheetApp.getActive();
   var snRange = ss.getRangeByName('InventorySN');
   if (!snRange) return null;
+  var snNorm = toEnglishNumber_(sn).replace(/\s+/g, '');
+  var snNum = Number(snNorm);
   var values = snRange.getValues();
   for (var i = 0; i < values.length; i++) {
-    if (String(values[i][0]) === String(sn)) {
+    var cellVal = toEnglishNumber_(values[i][0]).replace(/\s+/g, '');
+    var cellNum = Number(cellVal);
+    if ((snNum && cellNum && snNum === cellNum) || cellVal === snNorm) {
       var row = snRange.getCell(i + 1, 1).getRow();
       return {
         name: getCellValueByName('InventoryName', row),

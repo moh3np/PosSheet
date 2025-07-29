@@ -6,7 +6,7 @@
       body {
         font-family: Arial, sans-serif;
         direction: rtl;
-        background:#fafafa;
+        background:#f5f5f5;
         padding:20px;
         padding-bottom:80px;
       }
@@ -26,8 +26,9 @@
         width:30%;
         font-size:18px;
         text-align:center;
+        display:block;
+        margin:0 auto 10px;
         padding:8px;
-        margin-bottom:10px;
         border-radius:6px;
         border:1px solid #aaa;
       }
@@ -36,6 +37,7 @@
         padding:4px;
         border-radius:4px;
         border:1px solid #aaa;
+        text-align:center;
       }
       #totalDiv {
         margin-top:20px;
@@ -53,6 +55,7 @@
         padding:4px;
         border-radius:4px;
         border:1px solid #aaa;
+        text-align:center;
       }
       #footer {
         position: fixed;
@@ -65,8 +68,20 @@
         padding:10px;
       }
       #footer button {
-        padding:8px 16px;
+        padding:10px 20px;
         margin:0 5px;
+        border:none;
+        border-radius:4px;
+        font-size:16px;
+        cursor:pointer;
+      }
+      #footer button.submit {
+        background:#4caf50;
+        color:#fff;
+      }
+      #footer button.cancel {
+        background:#f44336;
+        color:#fff;
       }
     </style>
   </head>
@@ -77,11 +92,11 @@
       جمع کل: <span id="total">0</span> تومان
     </div>
     <div id="finalAmountDiv">
-      مبلغ نهایی: <input id="finalAmount" type="text" value="0">
+      مبلغ نهایی: <input id="finalAmount" type="text" value="0"> تومان
     </div>
     <div id="footer">
-      <button onclick="submitSale()">ثبت</button>
-      <button onclick="google.script.host.close()">لغو</button>
+      <button class="submit" onclick="submitSale()">ثبت</button>
+      <button class="cancel" onclick="google.script.host.close()">لغو</button>
     </div>
 
     <script>
