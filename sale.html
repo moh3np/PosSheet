@@ -22,6 +22,7 @@
         width:110px;
         font-weight:bold;
       }
+      #products select.sn,
       #products input.sn {
         width:30%;
         font-size:18px;
@@ -86,7 +87,6 @@
     </style>
   </head>
   <body>
-    <datalist id="snList"></datalist>
     <div id="products"></div>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
@@ -104,6 +104,7 @@
     var container;
     var inventoryMap = {};
     var inventoryNumMap = {};
+    var inventoryList = [];
 
     function toEnglishNumber(str) {
       return str.replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
@@ -129,22 +130,27 @@
     }
 
       function addInput() {
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'sn';
-        input.placeholder = 'کد محصول';
-        input.setAttribute('list', 'snList');
-        input.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            searchProduct(input);
+        var select = document.createElement('select');
+        select.className = 'sn';
+        var placeholder = document.createElement('option');
+        placeholder.textContent = 'کد محصول';
+        placeholder.value = '';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        select.appendChild(placeholder);
+        inventoryList.forEach(function(item){
+          var opt = document.createElement('option');
+          opt.value = item.sn;
+          opt.textContent = item.sn;
+          select.appendChild(opt);
+        });
+        select.addEventListener('change', function(){
+          if (this.value) {
+            searchProduct(select);
           }
         });
-        input.addEventListener('change', function(){
-          searchProduct(input);
-        });
-        container.appendChild(input);
-        input.focus();
+        container.appendChild(select);
+        select.focus();
       }
 
       function addProduct(res, input) {
@@ -163,7 +169,11 @@
         priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
         products.push({priceInput: priceInput});
         updateTotal();
-        input.value = '';
+        if (input.tagName === 'SELECT') {
+          input.selectedIndex = 0;
+        } else {
+          input.value = '';
+        }
         input.focus();
       }
 
@@ -201,15 +211,14 @@
 
       window.onload = function() {
         container = document.getElementById('products');
-        addInput();
         var finalInput = document.getElementById('finalAmount');
         finalInput.dataset.val = 0;
         finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
         finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
         google.script.run.withSuccessHandler(function(list){
-          var dl = document.getElementById('snList');
           inventoryMap = {};
           inventoryNumMap = {};
+          inventoryList = list;
           list.forEach(function(item){
             var key = normalize(item.sn);
             inventoryMap[key] = item;
@@ -217,10 +226,8 @@
             if (!isNaN(n)) {
               inventoryNumMap[n] = item;
             }
-            var opt = document.createElement('option');
-            opt.value = item.sn;
-            dl.appendChild(opt);
           });
+          addInput();
         }).getInventoryData();
       }
     </script>
