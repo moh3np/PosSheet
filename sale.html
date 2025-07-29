@@ -102,7 +102,6 @@
     <script>
     var products = [];
     var container;
-    var inventoryMap = null;
 
     function toEnglishNumber(str) {
       return str.replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
@@ -142,43 +141,32 @@
         input.focus();
       }
 
-        function searchProduct(input) {
-          var sn = toEnglishNumber(input.value).trim();
-          if (!sn) return;
-          var item = inventoryMap && inventoryMap[sn];
-          if (item) {
-            handleProduct(item, input);
-          } else if (inventoryMap) {
+      function searchProduct(input) {
+        var sn = toEnglishNumber(input.value).trim();
+        if (!sn) return;
+        google.script.run.withSuccessHandler(function(res) {
+          if (!res) {
             alert('یافت نشد');
-          } else {
-            google.script.run.withSuccessHandler(function(res) {
-              if (!res) {
-                alert('یافت نشد');
-                return;
-              }
-              handleProduct(res, input);
-            }).searchInventory(sn);
+            return;
           }
-        }
-
-      function handleProduct(res, input) {
-        var div = document.createElement('div');
-        div.className = 'product';
-        var locationText = (res.location === 'STORE') ? 'مغازه' : (res.location || '-');
-        var priceVal = parseNumber(res.price);
-        div.innerHTML = '<span class="label">نام محصول:</span><span>' + (res.name || '-') + '</span>'+
-          '<br><span class="label">برند:</span><span>' + (res.brand || '-') + '</span>'+
-          '<br><span class="label">قیمت:</span><input type="text" class="priceInput" value="' + formatNumber(priceVal) + '" data-val="' + priceVal + '"> تومان'+
-          '<br><span class="label">موقعیت:</span><span>' + locationText + '</span>';
-        container.insertBefore(div, input.nextSibling);
-        var priceInput = div.querySelector('.priceInput');
-        priceInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
-        priceInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); updateTotal(); });
-        priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
-        products.push({priceInput: priceInput});
-        updateTotal();
-        input.value = '';
-        input.focus();
+          var div = document.createElement('div');
+          div.className = 'product';
+          var locationText = (res.location === 'STORE') ? 'مغازه' : (res.location || '-');
+          var priceVal = parseNumber(res.price);
+          div.innerHTML = '<span class="label">نام محصول:</span><span>' + (res.name || '-') + '</span>'+
+            '<br><span class="label">برند:</span><span>' + (res.brand || '-') + '</span>'+
+            '<br><span class="label">قیمت:</span><input type="text" class="priceInput" value="' + formatNumber(priceVal) + '" data-val="' + priceVal + '"> تومان'+
+            '<br><span class="label">موقعیت:</span><span>' + locationText + '</span>';
+          container.insertBefore(div, input.nextSibling);
+          var priceInput = div.querySelector('.priceInput');
+          priceInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
+          priceInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); updateTotal(); });
+          priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
+          products.push({priceInput: priceInput});
+          updateTotal();
+          input.value = '';
+          input.focus();
+        }).searchInventory(sn);
       }
 
       function updateTotal() {
@@ -204,16 +192,13 @@
         finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
         finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
         google.script.run.withSuccessHandler(function(list){
-          inventoryMap = {};
           var dl = document.getElementById('snList');
-          list.forEach(function(item){
-            var key = toEnglishNumber(item.sn).replace(/\s+/g,'');
-            inventoryMap[key] = item;
+          list.forEach(function(sn){
             var opt = document.createElement('option');
-            opt.value = item.sn;
+            opt.value = sn;
             dl.appendChild(opt);
           });
-        }).getInventoryData();
+        }).getInventorySNList();
       }
     </script>
   </body>
