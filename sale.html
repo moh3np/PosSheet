@@ -100,9 +100,6 @@
     </div>
 
     <script>
-    // Inventory data injected from server
-    var inventoryData = <?!= JSON.stringify(inventory) ?>;
-
     var products = [];
     var container;
     var inventoryMap = {};
@@ -209,20 +206,22 @@
         finalInput.dataset.val = 0;
         finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
         finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
-        var dl = document.getElementById('snList');
-        inventoryMap = {};
-        inventoryNumMap = {};
-        (inventoryData || []).forEach(function(item){
-          var key = normalize(item.sn);
-          inventoryMap[key] = item;
-          var n = Number(key);
-          if (!isNaN(n)) {
-            inventoryNumMap[n] = item;
-          }
-          var opt = document.createElement('option');
-          opt.value = item.sn;
-          dl.appendChild(opt);
-        });
+        google.script.run.withSuccessHandler(function(list){
+          var dl = document.getElementById('snList');
+          inventoryMap = {};
+          inventoryNumMap = {};
+          list.forEach(function(item){
+            var key = normalize(item.sn);
+            inventoryMap[key] = item;
+            var n = Number(key);
+            if (!isNaN(n)) {
+              inventoryNumMap[n] = item;
+            }
+            var opt = document.createElement('option');
+            opt.value = item.sn;
+            dl.appendChild(opt);
+          });
+        }).getInventoryData();
       }
     </script>
   </body>
