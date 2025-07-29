@@ -22,7 +22,8 @@
         width:110px;
         font-weight:bold;
       }
-      #products input.sn {
+      #products input.sn,
+      #products select.sn {
         width:30%;
         font-size:18px;
         text-align:center;
@@ -104,6 +105,7 @@
     var container;
     var inventoryMap = {};
     var inventoryNumMap = {};
+    var snListData = [];
 
     function toEnglishNumber(str) {
       return str.replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
@@ -128,23 +130,32 @@
       return Number(val) || 0;
     }
 
+      function populateSelectOptions(sel){
+        while(sel.options.length > 1){ sel.remove(1); }
+        snListData.forEach(function(item){
+          var sn = item.sn || item;
+          var opt = document.createElement('option');
+          opt.value = sn;
+          opt.textContent = sn;
+          sel.appendChild(opt);
+        });
+      }
+
       function addInput() {
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'sn';
-        input.placeholder = 'کد محصول';
-        input.setAttribute('list', 'snList');
-        input.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            searchProduct(input);
-          }
+        var select = document.createElement('select');
+        select.className = 'sn';
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'کد محصول';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        select.appendChild(placeholder);
+        populateSelectOptions(select);
+        select.addEventListener('change', function(){
+          searchProduct(select);
         });
-        input.addEventListener('change', function(){
-          searchProduct(input);
-        });
-        container.appendChild(input);
-        input.focus();
+        container.appendChild(select);
+        select.focus();
       }
 
       function addProduct(res, input) {
@@ -163,7 +174,11 @@
         priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
         products.push({priceInput: priceInput});
         updateTotal();
-        input.value = '';
+        if (input.tagName === 'SELECT') {
+          input.selectedIndex = 0;
+        } else {
+          input.value = '';
+        }
         input.focus();
       }
 
@@ -210,6 +225,8 @@
           var dl = document.getElementById('snList');
           inventoryMap = {};
           inventoryNumMap = {};
+          snListData = list;
+          // populate maps and datalist
           list.forEach(function(item){
             var key = normalize(item.sn);
             inventoryMap[key] = item;
@@ -221,6 +238,9 @@
             opt.value = item.sn;
             dl.appendChild(opt);
           });
+          // update any existing select inputs
+          var selects = document.querySelectorAll('#products select.sn');
+          selects.forEach(populateSelectOptions);
         }).getInventoryData();
       }
     </script>
