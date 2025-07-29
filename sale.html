@@ -86,11 +86,7 @@
     </style>
   </head>
   <body>
-    <datalist id="snList">
-      <? for (var i = 0; i < snList.length; i++) { ?>
-        <option value="<?= snList[i] ?>"></option>
-      <? } ?>
-    </datalist>
+    <datalist id="snList"></datalist>
     <div id="products"></div>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
@@ -130,15 +126,6 @@
     function parseNumber(val){
       val = toEnglishNumber(val).replace(/,/g,'');
       return Number(val) || 0;
-    }
-
-    function cacheItem(item){
-      var key = normalize(item.sn);
-      inventoryMap[key] = item;
-      var n = Number(key);
-      if(!isNaN(n)){
-        inventoryNumMap[n] = item;
-      }
     }
 
       function addInput() {
@@ -190,22 +177,11 @@
             res = inventoryNumMap[n];
           }
         }
-        if (res) {
-          addProduct(res, input);
+        if (!res) {
+          alert('یافت نشد');
           return;
         }
-        google.script.run.withSuccessHandler(function(item){
-          if (item) {
-            cacheItem(item);
-            var dl = document.getElementById('snList');
-            var opt = document.createElement('option');
-            opt.value = item.sn;
-            dl.appendChild(opt);
-            addProduct(item, input);
-          } else {
-            alert('یافت نشد');
-          }
-        }).searchInventory(sn);
+        addProduct(res, input);
       }
 
       function updateTotal() {
@@ -231,9 +207,20 @@
         finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
         finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
         google.script.run.withSuccessHandler(function(list){
+          var dl = document.getElementById('snList');
           inventoryMap = {};
           inventoryNumMap = {};
-          list.forEach(cacheItem);
+          list.forEach(function(item){
+            var key = normalize(item.sn);
+            inventoryMap[key] = item;
+            var n = Number(key);
+            if (!isNaN(n)) {
+              inventoryNumMap[n] = item;
+            }
+            var opt = document.createElement('option');
+            opt.value = item.sn;
+            dl.appendChild(opt);
+          });
         }).getInventoryData();
       }
     </script>
