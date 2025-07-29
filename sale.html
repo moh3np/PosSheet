@@ -71,11 +71,7 @@
     </style>
   </head>
   <body>
-    <datalist id="snList">
-      <? snList.forEach(function(sn){ ?>
-        <option value="<?= sn ?>"></option>
-      <? }); ?>
-    </datalist>
+    <datalist id="snList"></datalist>
     <div id="products"></div>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
@@ -180,6 +176,14 @@
         finalInput.dataset.val = 0;
         finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
         finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
+        google.script.run.withSuccessHandler(function(list){
+          var dl = document.getElementById('snList');
+          list.forEach(function(sn){
+            var opt = document.createElement('option');
+            opt.value = sn;
+            dl.appendChild(opt);
+          });
+        }).getInventorySNList();
       }
     </script>
   </body>
