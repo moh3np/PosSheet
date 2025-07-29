@@ -32,27 +32,50 @@ function toEnglishNumber_(str) {
     .replace(/[\u0660-\u0669]/g, function(d){return d.charCodeAt(0)-1584;});
 }
 
-function searchInventory(sn) {
+var inventoryCache_ = null;
+var inventoryCacheTime_ = 0;
+var CACHE_TTL_MS_ = 5 * 60 * 1000; // 5 minutes
+
+function getInventoryMap_() {
+  var now = Date.now();
+  if (inventoryCache_ && now - inventoryCacheTime_ < CACHE_TTL_MS_) {
+    return inventoryCache_;
+  }
+  var map = {};
   var ss = SpreadsheetApp.getActive();
-  var snRange = ss.getRangeByName('InventorySN');
-  if (!snRange) return null;
-  var snNorm = toEnglishNumber_(sn).replace(/\s+/g, '');
-  var snNum = Number(snNorm);
-  var values = snRange.getValues();
+  var range = ss.getRangeByName('InventorySN');
+  if (!range) {
+    inventoryCache_ = map;
+    inventoryCacheTime_ = now;
+    return map;
+  }
+  var values = range.getValues();
   for (var i = 0; i < values.length; i++) {
-    var cellVal = toEnglishNumber_(values[i][0]).replace(/\s+/g, '');
-    var cellNum = Number(cellVal);
-    if ((snNum && cellNum && snNum === cellNum) || cellVal === snNorm) {
-      var row = snRange.getCell(i + 1, 1).getRow();
-      return {
-        name: getCellValueByName('InventoryName', row),
-        brand: getCellValueByName('InventoryBrand', row),
-        price: getCellValueByName('InventoryPrice', row),
-        location: getCellValueByName('InventoryLocation', row)
-      };
+    var sn = toEnglishNumber_(values[i][0]).replace(/\s+/g, '');
+    var row = range.getCell(i + 1, 1).getRow();
+    if (sn) {
+      map[sn] = row;
+      var num = Number(sn);
+      if (num) map[num] = row;
     }
   }
-  return null;
+  inventoryCache_ = map;
+  inventoryCacheTime_ = now;
+  return map;
+}
+
+function searchInventory(sn) {
+  var snNorm = toEnglishNumber_(sn).replace(/\s+/g, '');
+  var snNum = Number(snNorm);
+  var map = getInventoryMap_();
+  var row = map[snNorm] || (snNum && map[snNum]);
+  if (!row) return null;
+  return {
+    name: getCellValueByName('InventoryName', row),
+    brand: getCellValueByName('InventoryBrand', row),
+    price: getCellValueByName('InventoryPrice', row),
+    location: getCellValueByName('InventoryLocation', row)
+  };
 }
 
 function getCellValueByName(rangeName, row) {

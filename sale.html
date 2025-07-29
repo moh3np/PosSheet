@@ -129,7 +129,7 @@
         input.placeholder = 'کد محصول';
         input.setAttribute('list', 'snList');
         input.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
+          if (e.key === 'Enter' || e.key === 'NumpadEnter') {
             e.preventDefault();
             searchProduct(input);
           }
@@ -166,6 +166,8 @@
           updateTotal();
           input.value = '';
           input.focus();
+        }).withFailureHandler(function(err){
+          alert('خطا: ' + err.message);
         }).searchInventory(sn);
       }
 
