@@ -187,6 +187,17 @@
         if (res) {
           log('found locally');
           addProduct(res, input);
+          // Also check server for updated info
+          google.script.run
+            .withSuccessHandler(function(item){
+              if (item) {
+                log('verified with server');
+              }
+            })
+            .withFailureHandler(function(err){
+              log('server error', err);
+            })
+            .searchInventory(sn);
           return;
         }
         // Fallback to server-side search in case data is not yet loaded
