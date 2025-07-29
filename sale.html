@@ -87,11 +87,6 @@
   </head>
   <body>
     <datalist id="snList"></datalist>
-    <? if (snList && snList.length) { ?>
-    <script>
-      var serverData = <?!= JSON.stringify(snList) ?>;
-    </script>
-    <? } ?>
     <div id="products"></div>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
@@ -189,18 +184,6 @@
         google.script.host.close();
       }
 
-      function populateInventory(list){
-        var dl = document.getElementById('snList');
-        inventoryMap = {};
-        list.forEach(function(item){
-          var key = toEnglishNumber(item.sn).replace(/\s+/g, '');
-          inventoryMap[key] = item;
-          var opt = document.createElement('option');
-          opt.value = item.sn;
-          dl.appendChild(opt);
-        });
-      }
-
       window.onload = function() {
         container = document.getElementById('products');
         addInput();
@@ -208,11 +191,17 @@
         finalInput.dataset.val = 0;
         finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
         finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
-        if (typeof serverData !== 'undefined') {
-          populateInventory(serverData);
-        } else {
-          google.script.run.withSuccessHandler(populateInventory).getInventoryData();
-        }
+        google.script.run.withSuccessHandler(function(list){
+          var dl = document.getElementById('snList');
+          inventoryMap = {};
+          list.forEach(function(item){
+            var key = toEnglishNumber(item.sn).replace(/\s+/g, '');
+            inventoryMap[key] = item;
+            var opt = document.createElement('option');
+            opt.value = item.sn;
+            dl.appendChild(opt);
+          });
+        }).getInventoryData();
       }
     </script>
   </body>
