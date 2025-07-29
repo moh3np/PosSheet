@@ -142,14 +142,26 @@
         input.focus();
       }
 
+
       function searchProduct(input) {
         var sn = toEnglishNumber(input.value).trim().replace(/\s+/g, '');
         if (!sn) return;
         var res = inventoryMap[sn];
-        if (!res) {
-          alert('یافت نشد');
+        if (res) {
+          insertProduct(res, input);
           return;
         }
+        google.script.run.withSuccessHandler(function(item){
+          if (!item) {
+            alert('یافت نشد');
+            return;
+          }
+          inventoryMap[sn] = item;
+          insertProduct(item, input);
+        }).searchInventory(sn);
+      }
+
+      function insertProduct(res, input) {
         var div = document.createElement('div');
         div.className = 'product';
         var locationText = (res.location === 'STORE') ? 'مغازه' : (res.location || '-');
@@ -161,14 +173,13 @@
         container.insertBefore(div, input.nextSibling);
         var priceInput = div.querySelector('.priceInput');
         priceInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
-        priceInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); updateTotal(); });
+        priceInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); updateTotal();});
         priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
         products.push({priceInput: priceInput});
         updateTotal();
         input.value = '';
         input.focus();
       }
-
       function updateTotal() {
         var total = products.reduce(function(sum, p){ return sum + parseNumber(p.priceInput.dataset.val || p.priceInput.value || 0); }, 0);
         document.getElementById('total').textContent = formatNumber(total);
