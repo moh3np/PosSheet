@@ -46,17 +46,25 @@ function getInventoryData() {
   var startIndex = Math.max(0, frozen - (snRange.getRow() - 1));
 
   // Load all related ranges once to avoid per-row calls which are slow on
-  // large datasets.
+  // large datasets. We'll later trim the arrays to only the rows that
+  // actually contain a serial number to speed up processing.
   var snValues = snRange.getValues();
   var nameValues = ss.getRangeByName('InventoryName')?.getValues() || [];
   var brandValues = ss.getRangeByName('InventoryBrand')?.getValues() || [];
   var priceValues = ss.getRangeByName('InventoryPrice')?.getValues() || [];
   var locationValues = ss.getRangeByName('InventoryLocation')?.getValues() || [];
 
+  // Determine the last row that actually contains a serial number.
+  var endIndex = snValues.length;
+  while (endIndex > startIndex && !normalizeNumber_(snValues[endIndex - 1][0])) {
+    endIndex--;
+  }
+
   var data = [];
-  debugLog('Loading inventory data rows:', snValues.length - startIndex);
-  for (var i = startIndex; i < snValues.length; i++) {
+  debugLog('Loading inventory data rows:', endIndex - startIndex);
+  for (var i = startIndex; i < endIndex; i++) {
     var sn = normalizeNumber_(snValues[i][0]);
+    if (!sn) continue; // Skip blank rows inside the defined range
     data.push({
       sn: sn,
       name: nameValues[i] ? nameValues[i][0] : '-',
