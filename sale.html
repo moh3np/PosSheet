@@ -142,14 +142,7 @@
         input.focus();
       }
 
-      function searchProduct(input) {
-        var sn = toEnglishNumber(input.value).trim().replace(/\s+/g, '');
-        if (!sn) return;
-        var res = inventoryMap[sn];
-        if (!res) {
-          alert('یافت نشد');
-          return;
-        }
+      function addProduct(res, input) {
         var div = document.createElement('div');
         div.className = 'product';
         var locationText = (res.location === 'STORE') ? 'مغازه' : (res.location || '-');
@@ -167,6 +160,28 @@
         updateTotal();
         input.value = '';
         input.focus();
+      }
+
+      function searchProduct(input) {
+        var sn = toEnglishNumber(input.value).trim().replace(/\s+/g, '');
+        if (!sn) return;
+        var res = inventoryMap[sn];
+        if (res) {
+          addProduct(res, input);
+          return;
+        }
+        google.script.run.withSuccessHandler(function(data) {
+          if (data) {
+            inventoryMap[sn] = data;
+            var dl = document.getElementById('snList');
+            var opt = document.createElement('option');
+            opt.value = data.sn || sn;
+            dl.appendChild(opt);
+            addProduct(data, input);
+          } else {
+            alert('یافت نشد');
+          }
+        }).searchInventory(sn);
       }
 
       function updateTotal() {
