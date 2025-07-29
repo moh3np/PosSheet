@@ -103,6 +103,7 @@
     var products = [];
     var container;
     var inventoryMap = {};
+    var inventoryLoaded = false;
 
     function toEnglishNumber(str) {
       return str.replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
@@ -127,8 +128,9 @@
         var input = document.createElement('input');
         input.type = 'text';
         input.className = 'sn';
-        input.placeholder = 'کد محصول';
+        input.placeholder = inventoryLoaded ? 'کد محصول' : 'در حال بارگذاری...';
         input.setAttribute('list', 'snList');
+        input.disabled = !inventoryLoaded;
         input.addEventListener('keydown', function(e) {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -139,10 +141,14 @@
           searchProduct(input);
         });
         container.appendChild(input);
-        input.focus();
+        if (inventoryLoaded) input.focus();
       }
 
       function searchProduct(input) {
+        if (!inventoryLoaded) {
+          alert('اطلاعات انبار در حال بارگذاری است. لطفاً کمی صبر کنید.');
+          return;
+        }
         var sn = toEnglishNumber(input.value).trim().replace(/\s+/g, '');
         if (!sn) return;
         var res = inventoryMap[sn];
@@ -201,6 +207,13 @@
             opt.value = item.sn;
             dl.appendChild(opt);
           });
+          inventoryLoaded = true;
+          document.querySelectorAll('input.sn').forEach(function(inp){
+            inp.disabled = false;
+            inp.placeholder = 'کد محصول';
+          });
+          var first = document.querySelector('input.sn');
+          if (first) first.focus();
         }).getInventoryData();
       }
     </script>
