@@ -43,7 +43,7 @@ function getInventoryData() {
   var data = [];
   for (var i = startIndex; i < snValues.length; i++) {
     var row = snRange.getRow() + i;
-    var sn = toEnglishNumber_(snValues[i][0]).replace(/\s+/g, '');
+    var sn = normalizeNumber_(snValues[i][0]);
     data.push({
       sn: sn,
       name: getCellValueByName('InventoryName', row),
@@ -61,19 +61,24 @@ function toEnglishNumber_(str) {
     .replace(/[\u0660-\u0669]/g, function(d){return d.charCodeAt(0)-1584;});
 }
 
+function normalizeNumber_(str) {
+  return toEnglishNumber_(str).replace(/[^0-9]/g, '');
+}
+
 function searchInventory(sn) {
   var ss = SpreadsheetApp.getActive();
   var snRange = ss.getRangeByName('InventorySN');
   if (!snRange) return null;
-  var snNorm = toEnglishNumber_(sn).replace(/\s+/g, '');
+  var snNorm = normalizeNumber_(sn);
   var snNum = Number(snNorm);
   var values = snRange.getValues();
   for (var i = 0; i < values.length; i++) {
-    var cellVal = toEnglishNumber_(values[i][0]).replace(/\s+/g, '');
+    var cellVal = normalizeNumber_(values[i][0]);
     var cellNum = Number(cellVal);
-    if ((snNum && cellNum && snNum === cellNum) || cellVal === snNorm) {
+    if (snNorm === cellVal || (snNum && cellNum && snNum === cellNum)) {
       var row = snRange.getCell(i + 1, 1).getRow();
       return {
+        sn: cellVal,
         name: getCellValueByName('InventoryName', row),
         brand: getCellValueByName('InventoryBrand', row),
         price: getCellValueByName('InventoryPrice', row),
