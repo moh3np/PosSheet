@@ -190,15 +190,22 @@
           return;
         }
         // Fallback to server-side search in case data is not yet loaded
-        google.script.run.withSuccessHandler(function(item){
-          if (item) {
-            log('found on server');
-            addProduct(item, input);
-          } else {
-            log('not found');
-            alert('یافت نشد');
-          }
-        }).searchInventory(sn);
+        log('calling server search');
+        google.script.run
+          .withSuccessHandler(function(item){
+            if (item) {
+              log('found on server');
+              addProduct(item, input);
+            } else {
+              log('not found');
+              alert('یافت نشد');
+            }
+          })
+          .withFailureHandler(function(err){
+            log('server error', err);
+            alert('خطا در ارتباط با سرور');
+          })
+          .searchInventory(sn);
       }
 
       function updateTotal() {
