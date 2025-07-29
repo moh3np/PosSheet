@@ -7,10 +7,9 @@ function onOpen() {
 
 function showSaleDialog() {
   var tpl = HtmlService.createTemplateFromFile('sale');
-  // Pre-populate the datalist so the dropdown works even if the
-  // asynchronous call fails. The full inventory data will still be
-  // fetched on the client after the dialog loads.
-  tpl.snList = getInventorySNList();
+  // Load the serial number list asynchronously on the client to avoid
+  // delaying the dialog from opening.
+  tpl.snList = [];
   var html = tpl.evaluate()
     .setWidth(1200)
     .setHeight(800);
