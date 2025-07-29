@@ -8,6 +8,7 @@
         direction: rtl;
         background:#fafafa;
         padding:20px;
+        padding-bottom:80px;
       }
       .product {
         margin-bottom: 15px;
@@ -22,7 +23,7 @@
         font-weight:bold;
       }
       #products input.sn {
-        width:100%;
+        width:30%;
         font-size:18px;
         text-align:center;
         padding:8px;
@@ -40,10 +41,12 @@
         margin-top:20px;
         font-size:20px;
         font-weight:bold;
+        text-align:center;
       }
       #finalAmountDiv {
         margin-top:10px;
         font-size:18px;
+        text-align:center;
       }
       #finalAmount {
         width:200px;
@@ -51,15 +54,38 @@
         border-radius:4px;
         border:1px solid #aaa;
       }
+      #footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background:#fff;
+        border-top:1px solid #ccc;
+        text-align:center;
+        padding:10px;
+      }
+      #footer button {
+        padding:8px 16px;
+        margin:0 5px;
+      }
     </style>
   </head>
   <body>
+    <datalist id="snList">
+      <? snList.forEach(function(sn){ ?>
+        <option value="<?= sn ?>"></option>
+      <? }); ?>
+    </datalist>
     <div id="products"></div>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
     </div>
     <div id="finalAmountDiv">
       مبلغ نهایی: <input id="finalAmount" type="text" value="0">
+    </div>
+    <div id="footer">
+      <button onclick="submitSale()">ثبت</button>
+      <button onclick="google.script.host.close()">لغو</button>
     </div>
 
     <script>
@@ -90,15 +116,22 @@
         input.type = 'text';
         input.className = 'sn';
         input.placeholder = 'کد محصول';
-        input.addEventListener('keyup', function(e) {
-          if (e.key === 'Enter') { searchProduct(input); }
+        input.setAttribute('list', 'snList');
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            searchProduct(input);
+          }
+        });
+        input.addEventListener('change', function(){
+          searchProduct(input);
         });
         container.appendChild(input);
         input.focus();
       }
 
       function searchProduct(input) {
-        var sn = toEnglishNumber(input.value);
+        var sn = toEnglishNumber(input.value).trim();
         if (!sn) return;
         google.script.run.withSuccessHandler(function(res) {
           if (!res) {
@@ -121,6 +154,7 @@
           products.push({priceInput: priceInput});
           updateTotal();
           input.value = '';
+          input.focus();
         }).searchInventory(sn);
       }
 
@@ -132,6 +166,11 @@
           finalInput.dataset.val = total;
           finalInput.value = formatNumber(total);
         }
+      }
+
+      function submitSale() {
+        // Placeholder for saving data
+        google.script.host.close();
       }
 
       window.onload = function() {
