@@ -11,7 +11,3 @@ to a server‑side lookup when local data is missing.
 
 To share or back up the script, open the Apps Script editor and use **File ›
 Download** to obtain a zip archive of the project.
-
-## Performance
-
-`getInventoryData` now caches inventory rows for a few minutes. This avoids repeatedly reading large ranges from the spreadsheet and speeds up loading the sales dialog.
