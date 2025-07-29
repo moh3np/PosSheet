@@ -6,10 +6,23 @@ function onOpen() {
 }
 
 function showSaleDialog() {
-  var html = HtmlService.createHtmlOutputFromFile('sale')
+  var tpl = HtmlService.createTemplateFromFile('sale');
+  tpl.snList = getInventorySNList();
+  var html = tpl.evaluate()
     .setWidth(1200)
     .setHeight(800);
   SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
+}
+
+function getInventorySNList() {
+  var ss = SpreadsheetApp.getActive();
+  var range = ss.getRangeByName('InventorySN');
+  if (!range) return [];
+  var sheet = range.getSheet();
+  var frozen = sheet.getFrozenRows();
+  var startIndex = Math.max(0, frozen - (range.getRow() - 1));
+  var values = range.getValues();
+  return values.slice(startIndex).map(function(r){ return r[0]; });
 }
 
 function searchInventory(sn) {
