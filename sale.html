@@ -1,96 +1,98 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
-    <base target="_top" />
+    <base target="_top">
     <style>
       body {
         font-family: Arial, sans-serif;
         direction: rtl;
-        background: #f5f5f5;
-        padding: 20px;
-        padding-bottom: 80px;
+        background:#f5f5f5;
+        padding:20px;
+        padding-bottom:80px;
       }
       .product {
         margin-bottom: 15px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        background: #fff;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:8px;
+        background:#fff;
       }
       .label {
-        display: inline-block;
-        width: 110px;
-        font-weight: bold;
+        display:inline-block;
+        width:110px;
+        font-weight:bold;
       }
       #products input.sn {
-        width: 30%;
-        font-size: 18px;
-        text-align: center;
-        display: block;
-        margin: 0 auto 10px;
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid #aaa;
+        width:30%;
+        font-size:18px;
+        text-align:center;
+        display:block;
+        margin:0 auto 10px;
+        padding:8px;
+        border-radius:6px;
+        border:1px solid #aaa;
       }
       .priceInput {
-        width: 150px;
-        padding: 4px;
-        border-radius: 4px;
-        border: 1px solid #aaa;
-        text-align: center;
+        width:150px;
+        padding:4px;
+        border-radius:4px;
+        border:1px solid #aaa;
+        text-align:center;
       }
       #totalDiv {
-        margin-top: 20px;
-        font-size: 20px;
-        font-weight: bold;
-        text-align: center;
+        margin-top:20px;
+        font-size:20px;
+        font-weight:bold;
+        text-align:center;
       }
       #finalAmountDiv {
-        margin-top: 10px;
-        font-size: 18px;
-        text-align: center;
+        margin-top:10px;
+        font-size:18px;
+        text-align:center;
       }
       #finalAmount {
-        width: 200px;
-        padding: 4px;
-        border-radius: 4px;
-        border: 1px solid #aaa;
-        text-align: center;
+        width:200px;
+        padding:4px;
+        border-radius:4px;
+        border:1px solid #aaa;
+        text-align:center;
       }
       #footer {
         position: fixed;
         bottom: 0;
         left: 0;
         right: 0;
-        background: #fff;
-        border-top: 1px solid #ccc;
-        text-align: center;
-        padding: 10px;
+        background:#fff;
+        border-top:1px solid #ccc;
+        text-align:center;
+        padding:10px;
       }
       #footer button {
-        padding: 10px 20px;
-        margin: 0 5px;
-        border: none;
-        border-radius: 4px;
-        font-size: 16px;
-        cursor: pointer;
+        padding:10px 20px;
+        margin:0 5px;
+        border:none;
+        border-radius:4px;
+        font-size:16px;
+        cursor:pointer;
       }
       #footer button.submit {
-        background: #4caf50;
-        color: #fff;
+        background:#4caf50;
+        color:#fff;
       }
       #footer button.cancel {
-        background: #f44336;
-        color: #fff;
+        background:#f44336;
+        color:#fff;
       }
     </style>
   </head>
   <body>
     <datalist id="snList"></datalist>
     <div id="products"></div>
-    <div id="totalDiv">جمع کل: <span id="total">0</span> تومان</div>
+    <div id="totalDiv">
+      جمع کل: <span id="total">0</span> تومان
+    </div>
     <div id="finalAmountDiv">
-      مبلغ نهایی: <input id="finalAmount" type="text" value="0" /> تومان
+      مبلغ نهایی: <input id="finalAmount" type="text" value="0"> تومان
     </div>
     <div id="footer">
       <button class="submit" onclick="submitSale()">ثبت</button>
@@ -98,49 +100,42 @@
     </div>
 
     <script>
-      var products = [];
-      var container;
-      var inventoryMap = {};
+    var products = [];
+    var container;
+    var inventoryMap = {};
 
-      function toEnglishNumber(str) {
-        return str
-          .replace(/[\u06F0-\u06F9]/g, function (d) {
-            return d.charCodeAt(0) - 1728;
-          })
-          .replace(/[\u0660-\u0669]/g, function (d) {
-            return d.charCodeAt(0) - 1584;
-          });
-      }
+    function toEnglishNumber(str) {
+      return str.replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
+                .replace(/[\u0660-\u0669]/g, function(d){return d.charCodeAt(0)-1584;});
+    }
 
-      function toFarsiNumber(str) {
-        return str.replace(/\d/g, function (d) {
-          return "۰۱۲۳۴۵۶۷۸۹"[d];
-        });
-      }
+    function toFarsiNumber(str) {
+      return str.replace(/\d/g, function(d){return '۰۱۲۳۴۵۶۷۸۹'[d];});
+    }
 
-      function formatNumber(num) {
-        var str = Number(num || 0).toLocaleString("en-US");
-        return toFarsiNumber(str);
-      }
+    function formatNumber(num) {
+      var str = Number(num || 0).toLocaleString('en-US');
+      return toFarsiNumber(str);
+    }
 
-      function parseNumber(val) {
-        val = toEnglishNumber(val).replace(/,/g, "");
-        return Number(val) || 0;
-      }
+    function parseNumber(val){
+      val = toEnglishNumber(val).replace(/,/g,'');
+      return Number(val) || 0;
+    }
 
       function addInput() {
-        var input = document.createElement("input");
-        input.type = "text";
-        input.className = "sn";
-        input.placeholder = "کد محصول";
-        input.setAttribute("list", "snList");
-        input.addEventListener("keydown", function (e) {
-          if (e.key === "Enter") {
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'sn';
+        input.placeholder = 'کد محصول';
+        input.setAttribute('list', 'snList');
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
             e.preventDefault();
             searchProduct(input);
           }
         });
-        input.addEventListener("change", function () {
+        input.addEventListener('change', function(){
           searchProduct(input);
         });
         container.appendChild(input);
@@ -148,61 +143,36 @@
       }
 
       function searchProduct(input) {
-        var sn = toEnglishNumber(input.value).trim().replace(/\s+/g, "");
+        var sn = toEnglishNumber(input.value).trim().replace(/\s+/g, '');
         if (!sn) return;
         var res = inventoryMap[sn];
         if (!res) {
-          alert("یافت نشد");
+          alert('یافت نشد');
           return;
         }
-        var div = document.createElement("div");
-        div.className = "product";
-        var locationText =
-          res.location === "STORE" ? "مغازه" : res.location || "-";
+        var div = document.createElement('div');
+        div.className = 'product';
+        var locationText = (res.location === 'STORE') ? 'مغازه' : (res.location || '-');
         var priceVal = parseNumber(res.price);
-        div.innerHTML =
-          '<span class="label">نام محصول:</span><span>' +
-          (res.name || "-") +
-          "</span>" +
-          '<br><span class="label">برند:</span><span>' +
-          (res.brand || "-") +
-          "</span>" +
-          '<br><span class="label">قیمت:</span><input type="text" class="priceInput" value="' +
-          formatNumber(priceVal) +
-          '" data-val="' +
-          priceVal +
-          '"> تومان' +
-          '<br><span class="label">موقعیت:</span><span>' +
-          locationText +
-          "</span>";
+        div.innerHTML = '<span class="label">نام محصول:</span><span>' + (res.name || '-') + '</span>'+
+          '<br><span class="label">برند:</span><span>' + (res.brand || '-') + '</span>'+
+          '<br><span class="label">قیمت:</span><input type="text" class="priceInput" value="' + formatNumber(priceVal) + '" data-val="' + priceVal + '"> تومان'+
+          '<br><span class="label">موقعیت:</span><span>' + locationText + '</span>';
         container.insertBefore(div, input.nextSibling);
-        var priceInput = div.querySelector(".priceInput");
-        priceInput.addEventListener("focus", function () {
-          this.value = this.dataset.val;
-        });
-        priceInput.addEventListener("blur", function () {
-          this.dataset.val = parseNumber(this.value);
-          this.value = formatNumber(this.dataset.val);
-          updateTotal();
-        });
-        priceInput.addEventListener("input", function () {
-          this.dataset.val = parseNumber(this.value);
-        });
-        products.push({ priceInput: priceInput });
+        var priceInput = div.querySelector('.priceInput');
+        priceInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
+        priceInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); updateTotal(); });
+        priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
+        products.push({priceInput: priceInput});
         updateTotal();
-        input.value = "";
+        input.value = '';
         input.focus();
       }
 
       function updateTotal() {
-        var total = products.reduce(function (sum, p) {
-          return (
-            sum +
-            parseNumber(p.priceInput.dataset.val || p.priceInput.value || 0)
-          );
-        }, 0);
-        document.getElementById("total").textContent = formatNumber(total);
-        var finalInput = document.getElementById("finalAmount");
+        var total = products.reduce(function(sum, p){ return sum + parseNumber(p.priceInput.dataset.val || p.priceInput.value || 0); }, 0);
+        document.getElementById('total').textContent = formatNumber(total);
+        var finalInput = document.getElementById('finalAmount');
         if (document.activeElement !== finalInput) {
           finalInput.dataset.val = total;
           finalInput.value = formatNumber(total);
@@ -214,33 +184,25 @@
         google.script.host.close();
       }
 
-      window.onload = function () {
-        container = document.getElementById("products");
-        var finalInput = document.getElementById("finalAmount");
+      window.onload = function() {
+        container = document.getElementById('products');
+        addInput();
+        var finalInput = document.getElementById('finalAmount');
         finalInput.dataset.val = 0;
-        finalInput.addEventListener("focus", function () {
-          this.value = this.dataset.val;
-        });
-        finalInput.addEventListener("blur", function () {
-          this.dataset.val = parseNumber(this.value);
-          this.value = formatNumber(this.dataset.val);
-        });
-        google.script.run
-          .withSuccessHandler(function (list) {
-            var dl = document.getElementById("snList");
-            inventoryMap = {};
-            dl.innerHTML = "";
-            list.forEach(function (item) {
-              var key = toEnglishNumber(item.sn).replace(/\s+/g, "");
-              inventoryMap[key] = item;
-              var opt = document.createElement("option");
-              opt.value = item.sn;
-              dl.appendChild(opt);
-            });
-            addInput(); // add the input after data is ready
-          })
-          .getInventoryData();
-      };
+        finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
+        finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
+        google.script.run.withSuccessHandler(function(list){
+          var dl = document.getElementById('snList');
+          inventoryMap = {};
+          list.forEach(function(item){
+            var key = toEnglishNumber(item.sn).replace(/\s+/g, '');
+            inventoryMap[key] = item;
+            var opt = document.createElement('option');
+            opt.value = item.sn;
+            dl.appendChild(opt);
+          });
+        }).getInventoryData();
+      }
     </script>
   </body>
 </html>
