@@ -28,12 +28,8 @@ function getInventorySNList() {
 
 function toEnglishNumber_(str) {
   return String(str)
-    .replace(/[\u06F0-\u06F9]/g, function(d){
-      return String.fromCharCode(d.charCodeAt(0) - 1728);
-    })
-    .replace(/[\u0660-\u0669]/g, function(d){
-      return String.fromCharCode(d.charCodeAt(0) - 1584);
-    });
+    .replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
+    .replace(/[\u0660-\u0669]/g, function(d){return d.charCodeAt(0)-1584;});
 }
 
 function searchInventory(sn) {
