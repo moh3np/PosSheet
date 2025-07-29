@@ -45,23 +45,24 @@ function getInventoryData() {
   var frozen = sheet.getFrozenRows();
   var startIndex = Math.max(0, frozen - (snRange.getRow() - 1));
 
-  var nameRange = ss.getRangeByName('InventoryName');
-  var brandRange = ss.getRangeByName('InventoryBrand');
-  var priceRange = ss.getRangeByName('InventoryPrice');
-  var locationRange = ss.getRangeByName('InventoryLocation');
-
+  // Load all related ranges once to avoid per-row calls which are slow on
+  // large datasets.
   var snValues = snRange.getValues();
+  var nameValues = ss.getRangeByName('InventoryName')?.getValues() || [];
+  var brandValues = ss.getRangeByName('InventoryBrand')?.getValues() || [];
+  var priceValues = ss.getRangeByName('InventoryPrice')?.getValues() || [];
+  var locationValues = ss.getRangeByName('InventoryLocation')?.getValues() || [];
+
   var data = [];
   debugLog('Loading inventory data rows:', snValues.length - startIndex);
   for (var i = startIndex; i < snValues.length; i++) {
-    var row = snRange.getRow() + i;
     var sn = normalizeNumber_(snValues[i][0]);
     data.push({
       sn: sn,
-      name: getCellValueByName('InventoryName', row),
-      brand: getCellValueByName('InventoryBrand', row),
-      price: getCellValueByName('InventoryPrice', row),
-      location: getCellValueByName('InventoryLocation', row)
+      name: nameValues[i] ? nameValues[i][0] : '-',
+      brand: brandValues[i] ? brandValues[i][0] : '-',
+      price: priceValues[i] ? priceValues[i][0] : '-',
+      location: locationValues[i] ? locationValues[i][0] : '-'
     });
   }
   return data;
