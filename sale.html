@@ -147,6 +147,12 @@
         if (!sn) return;
         var res = inventoryMap[sn];
         if (!res) {
+          var numKey = String(Number(sn));
+          if (!isNaN(Number(sn)) && inventoryMap[numKey]) {
+            res = inventoryMap[numKey];
+          }
+        }
+        if (!res) {
           alert('یافت نشد');
           return;
         }
@@ -197,6 +203,10 @@
           list.forEach(function(item){
             var key = toEnglishNumber(item.sn).replace(/\s+/g, '');
             inventoryMap[key] = item;
+            var numKey = String(Number(key));
+            if (!isNaN(Number(key)) && !(numKey in inventoryMap)) {
+              inventoryMap[numKey] = item;
+            }
             var opt = document.createElement('option');
             opt.value = item.sn;
             dl.appendChild(opt);
