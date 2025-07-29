@@ -38,13 +38,6 @@ function getInventorySNList() {
 }
 
 function getInventoryData() {
-  var cache = CacheService.getDocumentCache();
-  var cached = cache.get('inventoryData');
-  if (cached) {
-    debugLog('Returning cached inventory data');
-    return JSON.parse(cached);
-  }
-
   var ss = SpreadsheetApp.getActive();
   var snRange = ss.getRangeByName('InventorySN');
   if (!snRange) return [];
@@ -80,7 +73,6 @@ function getInventoryData() {
       location: locationValues[i] ? locationValues[i][0] : '-'
     });
   }
-  cache.put('inventoryData', JSON.stringify(data), 300);
   return data;
 }
 
