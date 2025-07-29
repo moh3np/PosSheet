@@ -86,7 +86,11 @@
     </style>
   </head>
   <body>
-    <datalist id="snList"></datalist>
+    <datalist id="snList">
+      <? snList.forEach(function(sn){ ?>
+        <option value="<?= sn ?>"></option>
+      <? }); ?>
+    </datalist>
     <div id="products"></div>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
