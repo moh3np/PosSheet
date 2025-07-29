@@ -181,11 +181,18 @@
             res = inventoryNumMap[n];
           }
         }
-        if (!res) {
-          alert('یافت نشد');
+        if (res) {
+          addProduct(res, input);
           return;
         }
-        addProduct(res, input);
+        // Fallback to server-side search in case data is not yet loaded
+        google.script.run.withSuccessHandler(function(item){
+          if (item) {
+            addProduct(item, input);
+          } else {
+            alert('یافت نشد');
+          }
+        }).searchInventory(sn);
       }
 
       function updateTotal() {
