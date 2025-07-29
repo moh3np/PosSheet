@@ -211,7 +211,6 @@
         finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
         finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
         google.script.run.withSuccessHandler(function(list){
-          var dl = document.getElementById('snList');
           inventoryMap = {};
           inventoryNumMap = {};
           list.forEach(function(item){
@@ -221,9 +220,6 @@
             if (!isNaN(n)) {
               inventoryNumMap[n] = item;
             }
-            var opt = document.createElement('option');
-            opt.value = item.sn;
-            dl.appendChild(opt);
           });
         }).getInventoryData();
       }
