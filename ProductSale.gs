@@ -81,14 +81,20 @@ function normalizeNumber_(str) {
 function searchInventory(sn) {
   var ss = SpreadsheetApp.getActive();
   var snRange = ss.getRangeByName('InventorySN');
-  if (!snRange) return null;
+  if (!snRange) {
+    debugLog('InventorySN range not found');
+    return null;
+  }
   var snNorm = normalizeNumber_(sn);
   debugLog('Server search', sn, 'normalized to', snNorm);
   var snNum = Number(snNorm);
   var values = snRange.getValues();
+  debugLog('Checking', values.length, 'inventory rows');
   for (var i = 0; i < values.length; i++) {
-    var cellVal = normalizeNumber_(values[i][0]);
+    var cellValOriginal = values[i][0];
+    var cellVal = normalizeNumber_(cellValOriginal);
     var cellNum = Number(cellVal);
+    debugLog('Row', i + 1, 'value', cellValOriginal, 'normalized', cellVal);
     if (snNorm === cellVal || (snNum && cellNum && snNum === cellNum)) {
       var row = snRange.getCell(i + 1, 1).getRow();
       debugLog('Server found at row', row, 'sn', cellVal);
@@ -101,7 +107,7 @@ function searchInventory(sn) {
       };
     }
   }
-  debugLog('Server search failed for', sn);
+  debugLog('Server search failed for', sn, 'normalized', snNorm);
   return null;
 }
 
