@@ -7,8 +7,8 @@ function onOpen() {
 
 function showSaleDialog() {
   var tpl = HtmlService.createTemplateFromFile('sale');
-  // Load SN list asynchronously on the client to speed up dialog opening
-  tpl.snList = [];
+  // Pass inventory data directly so lookup works immediately
+  tpl.inventory = getInventoryData();
   var html = tpl.evaluate()
     .setWidth(1200)
     .setHeight(800);
