@@ -128,8 +128,9 @@
         input.className = 'sn';
         input.placeholder = 'کد محصول';
         input.setAttribute('list', 'snList');
-        input.addEventListener('keyup', function(e) {
+        input.addEventListener('keydown', function(e) {
           if (e.key === 'Enter') {
+            e.preventDefault();
             searchProduct(input);
           }
         });
