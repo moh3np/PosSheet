@@ -7,8 +7,8 @@ function onOpen() {
 
 function showSaleDialog() {
   var html = HtmlService.createHtmlOutputFromFile('sale')
-    .setWidth(800)
-    .setHeight(600);
+    .setWidth(1200)
+    .setHeight(800);
   SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
 }
 
