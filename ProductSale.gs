@@ -7,8 +7,10 @@ function onOpen() {
 
 function showSaleDialog() {
   var tpl = HtmlService.createTemplateFromFile('sale');
-  // Load SN list asynchronously on the client to speed up dialog opening
-  tpl.snList = [];
+  // Pre-populate the datalist so the dropdown works even if the
+  // asynchronous call fails. The full inventory data will still be
+  // fetched on the client after the dialog loads.
+  tpl.snList = getInventorySNList();
   var html = tpl.evaluate()
     .setWidth(1200)
     .setHeight(800);
