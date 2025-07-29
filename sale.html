@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {font-family: Arial, sans-serif; direction: rtl;}
+      .product {margin-bottom: 10px;}
+      .label {display:inline-block; width:90px;}
+    </style>
+  </head>
+  <body>
+    <div id="products"></div>
+    <div id="totalDiv" style="margin-top:10px;font-weight:bold;">
+      جمع کل: <span id="total">0</span>
+    </div>
+
+    <script>
+    var products = [];
+    var container;
+
+    function addInput() {
+      var input = document.createElement('input');
+      input.type = 'number';
+      input.placeholder = 'کد محصول';
+      input.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') { searchProduct(input); }
+      });
+      container.appendChild(input);
+      input.focus();
+    }
+
+    function searchProduct(input) {
+      var sn = input.value;
+      if (!sn) return;
+      google.script.run.withSuccessHandler(function(res) {
+        if (!res) {
+          alert('یافت نشد');
+          return;
+        }
+        var div = document.createElement('div');
+        div.className = 'product';
+        div.innerHTML = '<span class="label">نام محصول:</span><span>' + (res.name || '-') + '</span>'+
+          '<br><span class="label">برند:</span><span>' + (res.brand || '-') + '</span>'+
+          '<br><span class="label">قیمت:</span><input type="number" class="price" value="' + (res.price || '') + '">' +
+          '<br><span class="label">موقعیت:</span><span>' + (res.location || '-') + '</span>';
+        container.insertBefore(div, input.nextSibling);
+        var priceInput = div.querySelector('.price');
+        priceInput.addEventListener('input', updateTotal);
+        products.push({priceInput: priceInput});
+        updateTotal();
+        input.value = '';
+      }).searchInventory(sn);
+    }
+
+    function updateTotal() {
+      var total = products.reduce(function(sum, p){ return sum + Number(p.priceInput.value || 0); }, 0);
+      document.getElementById('total').textContent = total;
+    }
+
+    window.onload = function() {
+      container = document.getElementById('products');
+      addInput();
+    }
+    </script>
+  </body>
+</html>
