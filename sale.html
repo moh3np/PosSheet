@@ -141,7 +141,8 @@
         input.placeholder = 'کد محصول';
         input.setAttribute('list', 'snList');
         input.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
+          var key = e.key || e.keyCode;
+          if (key === 'Enter' || key === 13) {
             e.preventDefault();
             searchProduct(input);
           }
