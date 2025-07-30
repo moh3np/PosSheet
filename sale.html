@@ -140,7 +140,9 @@
         input.className = 'sn';
         input.placeholder = 'کد محصول';
         input.setAttribute('list', 'snList');
-        input.addEventListener('keyup', function(e) {
+        // Using keydown ensures the handler runs even when a datalist option is
+        // selected with Enter, since keyup may be swallowed by the browser.
+        input.addEventListener('keydown', function(e) {
           var key = e.key || e.keyCode;
           if (key === 'Enter' || key === 13) {
             searchProduct(input);
