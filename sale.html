@@ -356,11 +356,12 @@
                 }
               });
               discountInput.addEventListener('input', function(){
-                discountInput.dataset.auto = 'false';
                 const raw = discountInput.value;
                 if(raw.trim() === ''){
+                  discountInput.dataset.auto = 'true';
                   discountInput.value = '';
                 } else {
+                  discountInput.dataset.auto = 'false';
                   const val = parseNumber(raw);
                   discountInput.value = formatNumber(val);
                 }
