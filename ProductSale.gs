@@ -16,9 +16,6 @@ function debugLog() {
 function showSaleDialog() {
   debugLog('Opening sale dialog');
   var tpl = HtmlService.createTemplateFromFile('sale');
-  // Load the serial number list asynchronously on the client to avoid
-  // delaying the dialog from opening.
-  tpl.snList = [];
   var html = tpl.evaluate()
     .setWidth(1200)
     .setHeight(800);
