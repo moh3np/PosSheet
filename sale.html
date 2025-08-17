@@ -126,6 +126,7 @@
             <th>سریال</th>
             <th>موقعیت</th>
             <th>قیمت</th>
+            <th>قیمت با تخفیف</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -177,6 +178,13 @@
       totalEl.textContent = formatNumber(total);
       finalAmountInput.value = formatNumber(total);
 
+      function updateTotals(){
+        total = Array.from(document.querySelectorAll('.discount'))
+          .reduce((sum, input) => sum + parseNumber(input.value), 0);
+        totalEl.textContent = formatNumber(total);
+        finalAmountInput.value = formatNumber(total);
+      }
+
       snInput.addEventListener('keydown', function(e){
         if(e.key === 'Enter'){
           const query = snInput.value.trim();
@@ -194,12 +202,16 @@
             const price = Number(inventoryData.prices[idx]) || 0;
             const location = inventoryData.locations[idx] === 'STORE' ? 'مغازه' : inventoryData.locations[idx];
             const row = document.createElement('tr');
-            row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${serial}</td><td>${location}</td><td class="price">${formatNumber(price)}</td>`;
+            row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${serial}</td><td>${location}</td><td class="price">${formatNumber(price)}</td><td><input class="priceInput discount" type="text" value="${formatNumber(price)}"></td>`;
             tbody.appendChild(row);
             addedSerials.add(serial);
-            total += price;
-            totalEl.textContent = formatNumber(total);
-            finalAmountInput.value = formatNumber(total);
+            const discountInput = row.querySelector('.discount');
+            discountInput.addEventListener('input', function(){
+              const val = parseNumber(discountInput.value);
+              discountInput.value = formatNumber(val);
+              updateTotals();
+            });
+            updateTotals();
             snInput.value = '';
           }
         }
