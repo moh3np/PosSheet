@@ -66,6 +66,10 @@
       #productTable td.price {
         font-weight:bold;
       }
+      #productTable th.inventory, #productTable td.inventory {
+        background:#fff8dc;
+        font-weight:bold;
+      }
       .remove-btn {
         background:none;
         border:none;
@@ -161,6 +165,7 @@
             <th>قیمت</th>
             <th>قیمت با تخفیف</th>
             <th>حذف</th>
+            <th class="inventory">موجودی</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -189,6 +194,7 @@
         (o[key] = o[key] || []).push(i);
         return o;
       }, {});
+      const inventoryCounts = inventoryData.names.reduce((o, name) => (o[name] = (o[name] || 0) + 1, o), {});
       const productList = document.getElementById('productList');
       inventoryData.sns.forEach(sn => {
         const opt = document.createElement('option');
@@ -369,16 +375,19 @@
             }
             const price = Number(inventoryData.prices[idx]) || 0;
             const location = inventoryData.locations[idx] === 'STORE' ? 'مغازه' : inventoryData.locations[idx];
-              const row = document.createElement('tr');
-              row.dataset.serial = serial;
-              row.innerHTML =
+            const productName = inventoryData.names[idx];
+            const inventoryCount = inventoryCounts[productName];
+            const row = document.createElement('tr');
+            row.dataset.serial = serial;
+            row.innerHTML =
                 `<td class="row-number"></td>` +
-                `<td>${inventoryData.names[idx]}</td>` +
+                `<td>${productName}</td>` +
                 `<td>${serial}</td>` +
                 `<td>${location}</td>` +
                 `<td class="price">${formatNumber(price)}</td>` +
                 `<td><input class="priceInput discount" type="text" placeholder="${formatNumber(price)}"><div class="discount-info"></div></td>` +
-                `<td><button class="remove-btn" title="حذف"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5-3h4a2 2 0 0 1 2 2v1H8V5a2 2 0 0 1 2-2z"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button></td>`;
+                `<td><button class="remove-btn" title="حذف"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5-3h4a2 2 0 0 1 2 2v1H8V5a2 2 0 0 1 2-2z"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button></td>` +
+                `<td class="inventory">${inventoryCount}</td>`;
               tbody.appendChild(row);
               addedSerials.add(serial);
               const discountInput = row.querySelector('.discount');
