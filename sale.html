@@ -100,5 +100,57 @@
       <button class="submit">ثبت</button>
       <button class="cancel" onclick="google.script.host.close()">لغو</button>
     </div>
+    <script>
+      var inventoryData = <?= JSON.stringify(inventoryData) ?>;
+      document.addEventListener('DOMContentLoaded', function () {
+        var snList = document.getElementById('snList');
+        inventoryData.sn.forEach(function (sn) {
+          var option = document.createElement('option');
+          option.value = sn;
+          snList.appendChild(option);
+        });
+        var snInput = document.querySelector('#products .sn');
+        snInput.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') {
+            var code = snInput.value.trim();
+            var index = inventoryData.sn.indexOf(code);
+            if (index !== -1) {
+              addRow(index);
+            }
+            snInput.value = '';
+            e.preventDefault();
+          }
+        });
+
+        function addRow(idx) {
+          var table = document.getElementById('productTable');
+          if (!table) {
+            table = document.createElement('table');
+            table.id = 'productTable';
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            var header = document.createElement('tr');
+            ['محصول', 'سریال', 'موقعیت', 'قیمت'].forEach(function (title) {
+              var th = document.createElement('th');
+              th.textContent = title;
+              th.style.border = '1px solid #ccc';
+              th.style.padding = '4px';
+              header.appendChild(th);
+            });
+            table.appendChild(header);
+            document.getElementById('products').appendChild(table);
+          }
+          var tr = document.createElement('tr');
+          [inventoryData.name[idx], inventoryData.sn[idx], inventoryData.location[idx], inventoryData.price[idx]].forEach(function (value) {
+            var td = document.createElement('td');
+            td.textContent = value;
+            td.style.border = '1px solid #ccc';
+            td.style.padding = '4px';
+            tr.appendChild(td);
+          });
+          table.appendChild(tr);
+        }
+      });
+    </script>
   </body>
 </html>
