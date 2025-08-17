@@ -10,19 +10,18 @@
         padding:20px;
         padding-bottom:80px;
       }
-      .product {
-        margin-bottom: 15px;
-        padding:10px;
-        border:1px solid #ccc;
-        border-radius:8px;
+      #products {
+        width:100%;
+        margin-top:15px;
+        border-collapse:collapse;
         background:#fff;
       }
-      .label {
-        display:inline-block;
-        width:110px;
-        font-weight:bold;
+      #products th, #products td {
+        border:1px solid #ccc;
+        padding:8px;
+        text-align:center;
       }
-      #products .sn {
+      #productInput .sn {
         width:30%;
         font-size:18px;
         text-align:center;
@@ -86,7 +85,18 @@
     </style>
   </head>
   <body>
-    <div id="products"></div>
+    <div id="productInput"></div>
+    <table id="products">
+      <thead>
+        <tr>
+          <th>نام محصول</th>
+          <th>SKU</th>
+          <th>سریال</th>
+          <th>قیمت</th>
+        </tr>
+      </thead>
+      <tbody id="productRows"></tbody>
+    </table>
     <datalist id="snList"></datalist>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
@@ -104,6 +114,7 @@
     function log(){ if(DEBUG) console.log.apply(console, arguments); }
     var products = [];
     var container;
+    var tableBody;
     var inventoryMap = {};
     var inventoryNumMap = {};
     var snOptionsHtml = '';
@@ -150,16 +161,14 @@
       }
 
       function addProduct(res, input) {
-        var div = document.createElement('div');
-        div.className = 'product';
-        var locationText = (res.location === 'STORE') ? 'مغازه' : (res.location || '-');
+        var tr = document.createElement('tr');
         var priceVal = parseNumber(res.price);
-        div.innerHTML = '<span class="label">نام محصول:</span><span>' + (res.name || '-') + '</span>'+
-          '<br><span class="label">برند:</span><span>' + (res.brand || '-') + '</span>'+
-          '<br><span class="label">قیمت:</span><input type="text" class="priceInput" value="' + formatNumber(priceVal) + '" data-val="' + priceVal + '"> تومان'+
-          '<br><span class="label">موقعیت:</span><span>' + locationText + '</span>';
-        container.insertBefore(div, input.nextSibling);
-        var priceInput = div.querySelector('.priceInput');
+        tr.innerHTML = '<td>' + (res.name || '-') + '</td>' +
+          '<td>' + (res.sku || '-') + '</td>' +
+          '<td>' + (res.sn || '-') + '</td>' +
+          '<td><input type="text" class="priceInput" value="' + formatNumber(priceVal) + '" data-val="' + priceVal + '"></td>';
+        tableBody.appendChild(tr);
+        var priceInput = tr.querySelector('.priceInput');
         priceInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
         priceInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); updateTotal();});
         priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
@@ -220,7 +229,8 @@
       }
 
       window.onload = function() {
-        container = document.getElementById('products');
+        container = document.getElementById('productInput');
+        tableBody = document.getElementById('productRows');
         addInput();
         var finalInput = document.getElementById('finalAmount');
         finalInput.dataset.val = 0;

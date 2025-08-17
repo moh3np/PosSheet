@@ -52,9 +52,8 @@ function getInventoryData() {
   // actually contain a serial number to speed up processing.
   var snValues = snRange.getValues();
   var nameValues = ss.getRangeByName('InventoryName')?.getValues() || [];
-  var brandValues = ss.getRangeByName('InventoryBrand')?.getValues() || [];
+  var skuValues = ss.getRangeByName('InventorySKU')?.getValues() || [];
   var priceValues = ss.getRangeByName('InventoryPrice')?.getValues() || [];
-  var locationValues = ss.getRangeByName('InventoryLocation')?.getValues() || [];
 
   // Determine the last row that actually contains a serial number.
   var endIndex = snValues.length;
@@ -70,9 +69,8 @@ function getInventoryData() {
     data.push({
       sn: sn,
       name: nameValues[i] ? nameValues[i][0] : '-',
-      brand: brandValues[i] ? brandValues[i][0] : '-',
-      price: priceValues[i] ? priceValues[i][0] : '-',
-      location: locationValues[i] ? locationValues[i][0] : '-'
+      sku: skuValues[i] ? skuValues[i][0] : '-',
+      price: priceValues[i] ? priceValues[i][0] : '-'
     });
   }
   return data;
@@ -114,15 +112,14 @@ function searchInventory(sn) {
         cellVal,
         'name',
         getCellValueByName('InventoryName', row),
-        'brand',
-        getCellValueByName('InventoryBrand', row)
+        'sku',
+        getCellValueByName('InventorySKU', row)
       );
       return {
         sn: cellVal,
         name: getCellValueByName('InventoryName', row),
-        brand: getCellValueByName('InventoryBrand', row),
-        price: getCellValueByName('InventoryPrice', row),
-        location: getCellValueByName('InventoryLocation', row)
+        sku: getCellValueByName('InventorySKU', row),
+        price: getCellValueByName('InventoryPrice', row)
       };
     }
   }
