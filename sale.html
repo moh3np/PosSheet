@@ -86,7 +86,9 @@
     </style>
   </head>
   <body>
-    <div id="products"></div>
+    <div id="products">
+      <input class="sn" list="snList" placeholder="کد محصول">
+    </div>
     <datalist id="snList"></datalist>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
@@ -95,155 +97,8 @@
       مبلغ نهایی: <input id="finalAmount" type="text" value="0"> تومان
     </div>
     <div id="footer">
-      <button class="submit" onclick="submitSale()">ثبت</button>
+      <button class="submit">ثبت</button>
       <button class="cancel" onclick="google.script.host.close()">لغو</button>
     </div>
-
-    <script>
-    var DEBUG = true;
-    function log(){ if(DEBUG) console.log.apply(console, arguments); }
-    var products = [];
-    var container;
-    var inventoryMap = {};
-    var inventoryNumMap = {};
-    var snOptionsHtml = '';
-
-    function toEnglishNumber(str) {
-      return str.replace(/[\u06F0-\u06F9]/g, function(d){return d.charCodeAt(0)-1728;})
-                .replace(/[\u0660-\u0669]/g, function(d){return d.charCodeAt(0)-1584;});
-    }
-
-    function normalize(str){
-      return toEnglishNumber(str).replace(/[^0-9]/g, '');
-    }
-
-    function toFarsiNumber(str) {
-      return str.replace(/\d/g, function(d){return '۰۱۲۳۴۵۶۷۸۹'[d];});
-    }
-
-    function formatNumber(num) {
-      var str = Number(num || 0).toLocaleString('en-US');
-      return toFarsiNumber(str);
-    }
-
-    function parseNumber(val){
-      val = toEnglishNumber(val).replace(/,/g,'');
-      return Number(val) || 0;
-    }
-
-      function addInput() {
-        var input = document.createElement('input');
-        input.className = 'sn';
-        input.setAttribute('list', 'snList');
-        input.setAttribute('placeholder', 'کد محصول');
-        input.addEventListener('change', function(){
-          searchProduct(input);
-        });
-        input.addEventListener('keydown', function(e){
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            searchProduct(input);
-          }
-        });
-        container.appendChild(input);
-        input.focus();
-      }
-
-      function addProduct(res, input) {
-        var div = document.createElement('div');
-        div.className = 'product';
-        var priceVal = parseNumber(res.price);
-        div.innerHTML = '<span class="label">نام محصول:</span><span>' + (res.name || '-') + '</span>'+
-          '<br><span class="label">SKU:</span><span>' + (res.sku || '-') + '</span>'+
-          '<br><span class="label">سریال محصول:</span><span>' + (res.sn || '-') + '</span>'+
-          '<br><span class="label">قیمت:</span><input type="text" class="priceInput" value="' + formatNumber(priceVal) + '" data-val="' + priceVal + '"> تومان';
-        container.insertBefore(div, input.nextSibling);
-        var priceInput = div.querySelector('.priceInput');
-        priceInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
-        priceInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); updateTotal();});
-        priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
-        products.push({priceInput: priceInput});
-        updateTotal();
-        input.value = '';
-        input.focus();
-      }
-
-      function searchProduct(input) {
-        var sn = normalize(input.value);
-        log('search', input.value, '->', sn);
-        if (!sn) return;
-        var res = inventoryMap[sn];
-        if (!res) {
-          var n = Number(sn);
-          if (!isNaN(n)) {
-            res = inventoryNumMap[n];
-          }
-        }
-        if (res) {
-          log('found locally');
-          addProduct(res, input);
-          return;
-        }
-        // Fallback to server-side search in case data is not yet loaded
-        log('calling server search');
-        google.script.run
-          .withSuccessHandler(function(item){
-            if (item) {
-              log('found on server');
-              addProduct(item, input);
-            } else {
-              log('not found');
-              alert('یافت نشد');
-            }
-          })
-          .withFailureHandler(function(err){
-            log('server error', err);
-            alert('خطا در ارتباط با سرور');
-          })
-          .searchInventory(sn);
-      }
-
-      function updateTotal() {
-        var total = products.reduce(function(sum, p){ return sum + parseNumber(p.priceInput.dataset.val || p.priceInput.value || 0); }, 0);
-        document.getElementById('total').textContent = formatNumber(total);
-        var finalInput = document.getElementById('finalAmount');
-        if (document.activeElement !== finalInput) {
-          finalInput.dataset.val = total;
-          finalInput.value = formatNumber(total);
-        }
-      }
-
-      function submitSale() {
-        // Placeholder for saving data
-        google.script.host.close();
-      }
-
-      window.onload = function() {
-        container = document.getElementById('products');
-        addInput();
-        var finalInput = document.getElementById('finalAmount');
-        finalInput.dataset.val = 0;
-        finalInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
-        finalInput.addEventListener('blur', function(){ this.dataset.val = parseNumber(this.value); this.value = formatNumber(this.dataset.val); });
-        google.script.run.withSuccessHandler(function(list){
-          inventoryMap = {};
-          inventoryNumMap = {};
-          snOptionsHtml = '';
-          list.forEach(function(item){
-            if (!item || !item.sn) return;
-            var key = normalize(item.sn);
-            inventoryMap[key] = item;
-            var n = Number(key);
-            if (!isNaN(n)) {
-              inventoryNumMap[n] = item;
-            }
-            snOptionsHtml += '<option value="' + item.sn + '"></option>';
-          });
-          var dl = document.getElementById('snList');
-          dl.innerHTML = snOptionsHtml;
-          log('inventory loaded', list.length);
-        }).getInventoryData();
-      }
-    </script>
   </body>
 </html>
