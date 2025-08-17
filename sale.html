@@ -190,18 +190,43 @@
         return o;
       }, {});
       const productList = document.getElementById('productList');
-      inventoryData.sns.forEach(sn => {
-        const opt = document.createElement('option');
-        opt.value = sn;
-        productList.appendChild(opt);
-      });
       const uniqueNames = Array.from(new Set(inventoryData.names));
-      uniqueNames.forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        productList.appendChild(opt);
-      });
       const snInput = document.querySelector('.sn');
+
+      function updateProductList(query){
+        productList.innerHTML = '';
+        const lower = query.toLowerCase();
+        const snMatches = inventoryData.sns
+          .filter(sn => sn.includes(query))
+          .sort((a,b) => {
+            const aStarts = a.startsWith(query);
+            const bStarts = b.startsWith(query);
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+            return a.indexOf(query) - b.indexOf(query);
+          });
+        const nameMatches = uniqueNames
+          .filter(name => name.toLowerCase().includes(lower))
+          .sort((a,b) => {
+            const aLower = a.toLowerCase();
+            const bLower = b.toLowerCase();
+            const aStarts = aLower.startsWith(lower);
+            const bStarts = bLower.startsWith(lower);
+            if (aStarts && !bStarts) return -1;
+            if (!aStarts && bStarts) return 1;
+            return aLower.indexOf(lower) - bLower.indexOf(lower);
+          });
+        [...snMatches, ...nameMatches].forEach(val => {
+          const opt = document.createElement('option');
+          opt.value = val;
+          productList.appendChild(opt);
+        });
+      }
+
+      snInput.addEventListener('input', function(){
+        updateProductList(snInput.value.trim());
+      });
+      updateProductList('');
       const tbody = document.querySelector('#productTable tbody');
       const totalEl = document.getElementById('total');
       const finalAmountInput = document.getElementById('finalAmount');
