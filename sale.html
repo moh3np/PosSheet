@@ -184,14 +184,19 @@
     <script>
       const inventoryData = <?!= JSON.stringify(inventoryData) ?>;
       const snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
-      const nameIndex = inventoryData.names.reduce((o, name, i) => (o[name.toLowerCase()] = i, o), {});
+      const nameIndex = inventoryData.names.reduce((o, name, i) => {
+        const key = name.toLowerCase();
+        (o[key] = o[key] || []).push(i);
+        return o;
+      }, {});
       const productList = document.getElementById('productList');
       inventoryData.sns.forEach(sn => {
         const opt = document.createElement('option');
         opt.value = sn;
         productList.appendChild(opt);
       });
-      inventoryData.names.forEach(name => {
+      const uniqueNames = Array.from(new Set(inventoryData.names));
+      uniqueNames.forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
         productList.appendChild(opt);
@@ -351,7 +356,10 @@
           if(!query) return;
           let idx = snIndex[query];
           if(idx === undefined){
-            idx = nameIndex[query.toLowerCase()];
+            const indices = nameIndex[query.toLowerCase()];
+            if(indices){
+              idx = indices.find(i => !addedSerials.has(inventoryData.sns[i]));
+            }
           }
           if(idx !== undefined){
             const serial = inventoryData.sns[idx];
