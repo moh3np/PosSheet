@@ -102,6 +102,13 @@
         font-weight:bold;
         color:#d32f2f;
       }
+      #finalAmountReminder {
+        display:none;
+        margin-top:8px;
+        font-size:16px;
+        font-weight:bold;
+        color:#d32f2f;
+      }
       #footer {
         position: fixed;
         bottom: 0;
@@ -153,6 +160,7 @@
       </div>
       <div id="finalAmountDiv">
         مبلغ نهایی: <input id="finalAmount" type="text" value="" placeholder="0"> تومان
+        <div id="finalAmountReminder">برای اعمال مبلغ نهایی، اینتر را بزنید</div>
         <div id="finalDiscountInfo"></div>
       </div>
     </div>
@@ -180,6 +188,7 @@
       const totalEl = document.getElementById('total');
       const finalAmountInput = document.getElementById('finalAmount');
       const finalDiscountInfo = document.getElementById('finalDiscountInfo');
+      const finalAmountReminder = document.getElementById('finalAmountReminder');
       const addedSerials = new Set();
       let manualFinalAmount = false;
 
@@ -200,12 +209,27 @@
         if(raw.trim() === ''){
           manualFinalAmount = false;
           finalAmountInput.value = '';
+          finalAmountReminder.style.display = 'none';
           updateTotals();
         } else {
           manualFinalAmount = true;
           const val = parseNumber(raw);
           finalAmountInput.value = formatNumber(val);
+          finalAmountReminder.style.display = 'block';
+          updateFinalDiscount(total, val);
+        }
+      });
+      finalAmountInput.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+          const val = parseNumber(finalAmountInput.value);
+          finalAmountInput.value = formatNumber(val);
+          finalAmountReminder.style.display = 'none';
           applyExtraDiscount(val);
+        }
+      });
+      finalAmountInput.addEventListener('focus', function(){
+        if(this.value.trim() !== ''){
+          setTimeout(() => this.select(), 0);
         }
       });
 
@@ -326,6 +350,11 @@
               addedSerials.add(serial);
               const discountInput = row.querySelector('.discount');
               discountInput.dataset.auto = 'true';
+              discountInput.addEventListener('focus', function(){
+                if(this.value.trim() !== ''){
+                  setTimeout(() => this.select(), 0);
+                }
+              });
               discountInput.addEventListener('input', function(){
                 discountInput.dataset.auto = 'false';
                 const raw = discountInput.value;
