@@ -146,8 +146,8 @@
     </div>
     <script>
       const inventoryData = <?!= JSON.stringify(inventoryData) ?>;
-      const snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
-      const nameIndex = inventoryData.names.reduce((o, name, i) => (o[name.toLowerCase()] = i, o), {});
+      let snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
+      let nameIndex = inventoryData.names.reduce((o, name, i) => (o[name.toLowerCase()] = i, o), {});
       const productList = document.getElementById('productList');
       inventoryData.sns.forEach(sn => {
         const opt = document.createElement('option');
@@ -187,6 +187,7 @@
           }
           if(idx !== undefined){
             const serial = inventoryData.sns[idx];
+            const name = inventoryData.names[idx];
             if (addedSerials.has(serial)) {
               snInput.value = '';
               return;
@@ -201,6 +202,18 @@
             totalEl.textContent = formatNumber(total);
             finalAmountInput.value = formatNumber(total);
             snInput.value = '';
+
+            Array.from(productList.options).forEach(opt => {
+              if (opt.value === serial || opt.value === name) {
+                productList.removeChild(opt);
+              }
+            });
+            inventoryData.names.splice(idx, 1);
+            inventoryData.sns.splice(idx, 1);
+            inventoryData.locations.splice(idx, 1);
+            inventoryData.prices.splice(idx, 1);
+            snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
+            nameIndex = inventoryData.names.reduce((o, n, i) => (o[n.toLowerCase()] = i, o), {});
           }
         }
       });
