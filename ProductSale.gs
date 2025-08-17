@@ -30,8 +30,13 @@ function getInventorySNList() {
   var frozen = sheet.getFrozenRows();
   var startIndex = Math.max(0, frozen - (range.getRow() - 1));
   var values = range.getValues();
-  debugLog('Inventory SN list loaded', values.length - startIndex);
-  return values.slice(startIndex).map(function(r){ return r[0]; });
+  var list = [];
+  for (var i = startIndex; i < values.length; i++) {
+    var sn = normalizeNumber_(values[i][0]);
+    if (sn) list.push(sn);
+  }
+  debugLog('Inventory SN list loaded', list.length);
+  return list;
 }
 
 function getInventoryData() {

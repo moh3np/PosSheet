@@ -87,6 +87,7 @@
   </head>
   <body>
     <div id="products"></div>
+    <datalist id="snList"></datalist>
     <div id="totalDiv">
       جمع کل: <span id="total">0</span> تومان
     </div>
@@ -131,14 +132,21 @@
     }
 
       function addInput() {
-        var select = document.createElement('select');
-        select.className = 'sn';
-        select.innerHTML = '<option value="">کد محصول</option>' + snOptionsHtml;
-        select.addEventListener('change', function(){
-          searchProduct(select);
+        var input = document.createElement('input');
+        input.className = 'sn';
+        input.setAttribute('list', 'snList');
+        input.setAttribute('placeholder', 'کد محصول');
+        input.addEventListener('change', function(){
+          searchProduct(input);
         });
-        container.appendChild(select);
-        select.focus();
+        input.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            searchProduct(input);
+          }
+        });
+        container.appendChild(input);
+        input.focus();
       }
 
       function addProduct(res, input) {
@@ -157,7 +165,7 @@
         priceInput.addEventListener('input', function(){ this.dataset.val = parseNumber(this.value); });
         products.push({priceInput: priceInput});
         updateTotal();
-        input.selectedIndex = 0;
+        input.value = '';
         input.focus();
       }
 
@@ -223,18 +231,17 @@
           inventoryNumMap = {};
           snOptionsHtml = '';
           list.forEach(function(item){
+            if (!item || !item.sn) return;
             var key = normalize(item.sn);
             inventoryMap[key] = item;
             var n = Number(key);
             if (!isNaN(n)) {
               inventoryNumMap[n] = item;
             }
-            snOptionsHtml += '<option value="' + item.sn + '">' + item.sn + '</option>';
+            snOptionsHtml += '<option value="' + item.sn + '"></option>';
           });
-          var select = container.querySelector('select.sn');
-          if (select) {
-            select.innerHTML = '<option value="">کد محصول</option>' + snOptionsHtml;
-          }
+          var dl = document.getElementById('snList');
+          dl.innerHTML = snOptionsHtml;
           log('inventory loaded', list.length);
         }).getInventoryData();
       }
