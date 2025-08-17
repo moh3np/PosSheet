@@ -157,6 +157,7 @@
       const tbody = document.querySelector('#productTable tbody');
       const totalEl = document.getElementById('total');
       const finalAmountInput = document.getElementById('finalAmount');
+      const addedSerials = new Set();
 
       const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
       function formatNumber(num){
@@ -176,11 +177,17 @@
           if(!code) return;
           const idx = snIndex[code];
           if(idx !== undefined){
+            if (addedSerials.has(code)) {
+              alert('سریال تکراری است');
+              snInput.value = '';
+              return;
+            }
             const price = Number(inventoryData.prices[idx]) || 0;
             const location = inventoryData.locations[idx] === 'STORE' ? 'مغازه' : inventoryData.locations[idx];
             const row = document.createElement('tr');
             row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${inventoryData.sns[idx]}</td><td>${location}</td><td class="price">${formatNumber(price)}</td>`;
             tbody.appendChild(row);
+            addedSerials.add(code);
             total += price;
             totalEl.textContent = formatNumber(total);
             finalAmountInput.value = formatNumber(total);
