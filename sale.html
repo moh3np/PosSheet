@@ -8,7 +8,7 @@
         direction: rtl;
         background:#f5f5f5;
         padding:20px;
-        padding-bottom:80px;
+        padding-bottom:200px;
       }
       .product {
         margin-bottom: 15px;
@@ -52,16 +52,23 @@
       #productTable th {
         background:#eee;
       }
+      #totalDiv, #finalAmountDiv {
+        position: fixed;
+        left: 0;
+        right: 0;
+        background:#fff;
+        border-top:1px solid #ccc;
+        text-align:center;
+        padding:10px;
+      }
       #totalDiv {
-        margin-top:20px;
+        bottom:120px;
         font-size:20px;
         font-weight:bold;
-        text-align:center;
       }
       #finalAmountDiv {
-        margin-top:10px;
+        bottom:60px;
         font-size:18px;
-        text-align:center;
       }
       #finalAmount {
         width:200px;
@@ -136,21 +143,41 @@
       const snInput = document.querySelector('.sn');
       const tbody = document.querySelector('#productTable tbody');
       const totalEl = document.getElementById('total');
+      const finalAmountInput = document.getElementById('finalAmount');
+
+      const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+      function formatNumber(num){
+        return Number(num || 0).toLocaleString('fa-IR').replace(/٬/g, ',');
+      }
+      function parseNumber(str){
+        return Number(String(str).replace(/,/g, '').replace(/[۰-۹]/g, d => persianDigits.indexOf(d))) || 0;
+      }
+
       let total = 0;
+      totalEl.textContent = formatNumber(total);
+      finalAmountInput.value = formatNumber(total);
+
       snInput.addEventListener('keydown', function(e){
         if(e.key === 'Enter'){
           const code = snInput.value.trim();
           if(!code) return;
           const idx = snIndex[code];
           if(idx !== undefined){
+            const price = Number(inventoryData.prices[idx]) || 0;
             const row = document.createElement('tr');
-            row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${inventoryData.sns[idx]}</td><td>${inventoryData.locations[idx]}</td><td>${inventoryData.prices[idx]}</td>`;
+            row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${inventoryData.sns[idx]}</td><td>${inventoryData.locations[idx]}</td><td>${formatNumber(price)}</td>`;
             tbody.appendChild(row);
-            total += Number(inventoryData.prices[idx]) || 0;
-            totalEl.textContent = total;
+            total += price;
+            totalEl.textContent = formatNumber(total);
+            finalAmountInput.value = formatNumber(total);
             snInput.value = '';
           }
         }
+      });
+
+      finalAmountInput.addEventListener('input', function(){
+        const val = parseNumber(finalAmountInput.value);
+        finalAmountInput.value = formatNumber(val);
       });
     </script>
   </body>
