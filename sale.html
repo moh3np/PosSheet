@@ -205,7 +205,7 @@
           manualFinalAmount = true;
           const val = parseNumber(raw);
           finalAmountInput.value = formatNumber(val);
-          updateFinalDiscount(total, val);
+          applyExtraDiscount(val);
         }
       });
 
@@ -243,6 +243,46 @@
         }
       }
 
+      function applyExtraDiscount(finalVal){
+        const rows = Array.from(document.querySelectorAll('#productTable tbody tr'));
+        const manualRows = rows.filter(row => row.querySelector('.discount').dataset.auto === 'false');
+        const autoRows = rows.filter(row => row.querySelector('.discount').dataset.auto !== 'false');
+        const manualTotal = manualRows.reduce((sum, row) => {
+          const input = row.querySelector('.discount');
+          const price = parseNumber(row.querySelector('.price').textContent);
+          const val = input.value.trim() === '' ? price : parseNumber(input.value);
+          return sum + val;
+        }, 0);
+        const autoTotalOriginal = autoRows.reduce((sum, row) => {
+          return sum + parseNumber(row.querySelector('.price').textContent);
+        }, 0);
+        if(finalVal < manualTotal){
+          finalVal = manualTotal;
+          finalAmountInput.value = formatNumber(finalVal);
+        }
+        const diff = manualTotal + autoTotalOriginal - finalVal;
+        if(diff > 0 && autoRows.length){
+          const percent = diff / autoTotalOriginal;
+          let running = 0;
+          for(let i = 0; i < autoRows.length; i++){
+            const row = autoRows[i];
+            const price = parseNumber(row.querySelector('.price').textContent);
+            let newPrice;
+            if(i < autoRows.length - 1){
+              newPrice = Math.round(price * (1 - percent));
+              running += newPrice;
+            } else {
+              newPrice = finalVal - manualTotal - running;
+            }
+            const input = row.querySelector('.discount');
+            input.value = formatNumber(newPrice);
+            input.dataset.auto = 'true';
+            updateRowDiscount(row);
+          }
+        }
+        updateTotals();
+      }
+
       function updateRowDiscount(row){
         const price = parseNumber(row.querySelector('.price').textContent);
         const discountInput = row.querySelector('.discount');
@@ -275,28 +315,35 @@
             }
             const price = Number(inventoryData.prices[idx]) || 0;
             const location = inventoryData.locations[idx] === 'STORE' ? 'مغازه' : inventoryData.locations[idx];
-            const row = document.createElement('tr');
-            row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${serial}</td><td>${location}</td><td class="price">${formatNumber(price)}</td><td><input class="priceInput discount" type="text" placeholder="${formatNumber(price)}"><div class="discount-info"></div></td>`;
-            tbody.appendChild(row);
-            addedSerials.add(serial);
-            const discountInput = row.querySelector('.discount');
-            discountInput.addEventListener('input', function(){
-              const raw = discountInput.value;
-              if(raw.trim() === ''){
-                discountInput.value = '';
-              } else {
-                const val = parseNumber(raw);
-                discountInput.value = formatNumber(val);
-              }
+              const row = document.createElement('tr');
+              row.innerHTML =
+                `<td>${inventoryData.names[idx]}</td>` +
+                `<td>${serial}</td>` +
+                `<td>${location}</td>` +
+                `<td class="price">${formatNumber(price)}</td>` +
+                `<td><input class="priceInput discount" type="text" placeholder="${formatNumber(price)}"><div class="discount-info"></div></td>`;
+              tbody.appendChild(row);
+              addedSerials.add(serial);
+              const discountInput = row.querySelector('.discount');
+              discountInput.dataset.auto = 'true';
+              discountInput.addEventListener('input', function(){
+                discountInput.dataset.auto = 'false';
+                const raw = discountInput.value;
+                if(raw.trim() === ''){
+                  discountInput.value = '';
+                } else {
+                  const val = parseNumber(raw);
+                  discountInput.value = formatNumber(val);
+                }
+                updateRowDiscount(row);
+                updateTotals();
+              });
               updateRowDiscount(row);
               updateTotals();
-            });
-            updateRowDiscount(row);
-            updateTotals();
-            snInput.value = '';
+              snInput.value = '';
+            }
           }
-        }
-      });
+        });
     </script>
   </body>
 </html>
