@@ -359,6 +359,12 @@
         });
       });
 
+      function resetModalSearch(){
+        modalSearch.value = '';
+        modalSearch.focus();
+        modalSearch.dispatchEvent(new Event('input'));
+      }
+
       let total = 0;
       totalEl.textContent = formatNumber(total);
       finalAmountInput.placeholder = formatNumber(total);
@@ -565,9 +571,10 @@
         modalSearch.value = '';
         const firstIdx = indices[0];
         const name = inventoryData.names[firstIdx];
-        const sku = inventoryData.skus ? inventoryData.skus[firstIdx] : '';
+        const sku = inventoryData.skus ? toEnglishDigits(inventoryData.skus[firstIdx]) : '';
         const count = inventoryCounts[name];
-        modalProductInfo.innerHTML = `${name} | SKU: ${sku} | موجودی: ${formatNumber(count)}`;
+        const countDisplay = Number(count || 0).toLocaleString('en-US');
+        modalProductInfo.innerHTML = `<div>${name}</div><div>SKU: ${sku} | Inventory: ${countDisplay}</div>`;
         indices.forEach(i => {
           const serial = inventoryData.sns[i];
           const location = inventoryData.locations[i] === 'STORE' ? 'مغازه' : inventoryData.locations[i];
@@ -577,10 +584,12 @@
           cb.addEventListener('click', e => {
             e.stopPropagation();
             tr.classList.toggle('selected', cb.checked);
+            resetModalSearch();
           });
           tr.addEventListener('click', () => {
             cb.checked = !cb.checked;
             tr.classList.toggle('selected', cb.checked);
+            resetModalSearch();
           });
           selectionList.appendChild(tr);
         });
