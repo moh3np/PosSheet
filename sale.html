@@ -215,7 +215,7 @@
             <th>قیمت</th>
             <th>قیمت با تخفیف</th>
             <th>حذف</th>
-            <th class="inventory">موجودی انبار</th>
+            <th class="inventory">انبار</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -258,6 +258,7 @@
     <script>
       const inventoryData = <?!= JSON.stringify(inventoryData) ?>;
       const snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
+      const persianSnIndex = inventoryData.persianSNS.reduce((o, sn, i) => (o[sn] = i, o), {});
       const nameIndex = inventoryData.names.reduce((o, name, i) => {
         const key = name.toLowerCase();
         (o[key] = o[key] || []).push(i);
@@ -266,6 +267,11 @@
       const inventoryCounts = inventoryData.names.reduce((o, name) => (o[name] = (o[name] || 0) + 1, o), {});
       const productList = document.getElementById('productList');
       inventoryData.sns.forEach(sn => {
+        const opt = document.createElement('option');
+        opt.value = sn;
+        productList.appendChild(opt);
+      });
+      inventoryData.persianSNS.forEach(sn => {
         const opt = document.createElement('option');
         opt.value = sn;
         productList.appendChild(opt);
@@ -495,6 +501,7 @@
         updateTotals();
         updateRowNumbers();
         updateInventoryDisplay();
+        snInput.focus();
       }
 
       function openSelectionModal(indices){
@@ -532,6 +539,13 @@
           const idx = snIndex[query];
           if(idx !== undefined){
             addProduct(idx);
+            snInput.value = '';
+            snInput.focus();
+            return;
+          }
+          const persianIdx = persianSnIndex[query];
+          if(persianIdx !== undefined){
+            addProduct(persianIdx);
             snInput.value = '';
             snInput.focus();
             return;
