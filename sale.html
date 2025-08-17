@@ -83,11 +83,31 @@
         background:#f44336;
         color:#fff;
       }
+      .productTable {
+        width:80%;
+        margin:10px auto 0;
+        border-collapse:collapse;
+      }
+      .productTable th, .productTable td {
+        border:1px solid #ccc;
+        padding:6px 8px;
+        text-align:center;
+      }
     </style>
   </head>
   <body>
     <div id="products">
       <input class="sn" list="snList" placeholder="کد محصول">
+      <table id="productTable" class="productTable">
+        <thead>
+          <tr>
+            <th>محصول</th>
+            <th>موقعیت</th>
+            <th>قیمت</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
     <datalist id="snList"></datalist>
     <div id="totalDiv">
@@ -100,5 +120,43 @@
       <button class="submit">ثبت</button>
       <button class="cancel" onclick="google.script.host.close()">لغو</button>
     </div>
+    <script>
+      var data = <?!= JSON.stringify(data) ?>;
+      document.addEventListener('DOMContentLoaded', function() {
+        var input = document.querySelector('#products .sn');
+        var snList = document.getElementById('snList');
+        data.sns.forEach(function(sn) {
+          var option = document.createElement('option');
+          option.value = sn;
+          snList.appendChild(option);
+        });
+        var tbody = document.querySelector('#productTable tbody');
+        var totalEl = document.getElementById('total');
+        var finalAmount = document.getElementById('finalAmount');
+        var total = 0;
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            var code = input.value.trim();
+            if (!code) return;
+            var idx = data.sns.indexOf(code);
+            if (idx > -1) {
+              var row = document.createElement('tr');
+              ['names', 'locations', 'prices'].forEach(function(key) {
+                var cell = document.createElement('td');
+                cell.textContent = data[key][idx] || '';
+                row.appendChild(cell);
+              });
+              tbody.appendChild(row);
+              var price = parseFloat(data.prices[idx]) || 0;
+              total += price;
+              totalEl.textContent = total;
+              finalAmount.value = total;
+            }
+            input.value = '';
+          }
+        });
+      });
+    </script>
   </body>
 </html>
