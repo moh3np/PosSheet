@@ -44,6 +44,12 @@
         text-align:center;
         font-weight:bold;
       }
+      .discount-info {
+        display:none;
+        margin-top:4px;
+        font-size:12px;
+        color:#d32f2f;
+      }
       #productTable {
         width:100%;
         border-collapse:collapse;
@@ -87,6 +93,14 @@
         border:1px solid #aaa;
         text-align:center;
         font-weight:bold;
+        background:#f9f9f9;
+      }
+      #finalDiscountInfo {
+        display:none;
+        margin-top:8px;
+        font-size:16px;
+        font-weight:bold;
+        color:#d32f2f;
       }
       #footer {
         position: fixed;
@@ -138,7 +152,8 @@
         جمع کل: <span id="total">0</span> تومان
       </div>
       <div id="finalAmountDiv">
-        مبلغ نهایی: <input id="finalAmount" type="text" value="0"> تومان
+        مبلغ نهایی: <input id="finalAmount" type="text" value="0" readonly> تومان
+        <div id="finalDiscountInfo"></div>
       </div>
     </div>
     <div id="footer">
@@ -164,6 +179,7 @@
       const tbody = document.querySelector('#productTable tbody');
       const totalEl = document.getElementById('total');
       const finalAmountInput = document.getElementById('finalAmount');
+      const finalDiscountInfo = document.getElementById('finalDiscountInfo');
       const addedSerials = new Set();
 
       const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
@@ -179,10 +195,41 @@
       finalAmountInput.value = formatNumber(total);
 
       function updateTotals(){
-        total = Array.from(document.querySelectorAll('.discount'))
+        total = Array.from(document.querySelectorAll('#productTable tbody tr .price'))
+          .reduce((sum, td) => sum + parseNumber(td.textContent), 0);
+        const finalTotal = Array.from(document.querySelectorAll('.discount'))
           .reduce((sum, input) => sum + parseNumber(input.value), 0);
         totalEl.textContent = formatNumber(total);
-        finalAmountInput.value = formatNumber(total);
+        finalAmountInput.value = formatNumber(finalTotal);
+        updateFinalDiscount(total, finalTotal);
+      }
+
+      function updateFinalDiscount(total, finalTotal){
+        const diff = total - finalTotal;
+        if(diff !== 0){
+          const percent = total ? ((diff / total) * 100).toFixed(2) : 0;
+          finalDiscountInfo.textContent = `${formatNumber(diff)} تومان (${percent}%) تخفیف`;
+          finalDiscountInfo.style.display = 'block';
+        } else {
+          finalDiscountInfo.textContent = '';
+          finalDiscountInfo.style.display = 'none';
+        }
+      }
+
+      function updateRowDiscount(row){
+        const price = parseNumber(row.querySelector('.price').textContent);
+        const discountInput = row.querySelector('.discount');
+        const discount = parseNumber(discountInput.value);
+        const infoEl = row.querySelector('.discount-info');
+        const diff = price - discount;
+        if(diff !== 0){
+          const percent = price ? ((diff / price) * 100).toFixed(2) : 0;
+          infoEl.textContent = `${formatNumber(diff)} تومان (${percent}%)`;
+          infoEl.style.display = 'block';
+        } else {
+          infoEl.textContent = '';
+          infoEl.style.display = 'none';
+        }
       }
 
       snInput.addEventListener('keydown', function(e){
@@ -202,24 +249,21 @@
             const price = Number(inventoryData.prices[idx]) || 0;
             const location = inventoryData.locations[idx] === 'STORE' ? 'مغازه' : inventoryData.locations[idx];
             const row = document.createElement('tr');
-            row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${serial}</td><td>${location}</td><td class="price">${formatNumber(price)}</td><td><input class="priceInput discount" type="text" value="${formatNumber(price)}"></td>`;
+            row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${serial}</td><td>${location}</td><td class="price">${formatNumber(price)}</td><td><input class="priceInput discount" type="text" value="${formatNumber(price)}"><div class="discount-info"></div></td>`;
             tbody.appendChild(row);
             addedSerials.add(serial);
             const discountInput = row.querySelector('.discount');
             discountInput.addEventListener('input', function(){
               const val = parseNumber(discountInput.value);
               discountInput.value = formatNumber(val);
+              updateRowDiscount(row);
               updateTotals();
             });
+            updateRowDiscount(row);
             updateTotals();
             snInput.value = '';
           }
         }
-      });
-
-      finalAmountInput.addEventListener('input', function(){
-        const val = parseNumber(finalAmountInput.value);
-        finalAmountInput.value = formatNumber(val);
       });
     </script>
   </body>
