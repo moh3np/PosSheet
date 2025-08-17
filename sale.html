@@ -187,10 +187,19 @@
       <button class="cancel" onclick="google.script.host.close()">لغو</button>
     </div>
     <script>
+      const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+      function toEnglishDigits(str){
+        return String(str).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+      }
       const inventoryData = <?!= JSON.stringify(inventoryData) ?>;
-      const snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
+      const snIndex = inventoryData.sns.reduce((o, sn, i) => {
+        const normalized = toEnglishDigits(sn);
+        o[normalized] = i;
+        o[sn] = i;
+        return o;
+      }, {});
       const nameIndex = inventoryData.names.reduce((o, name, i) => {
-        const key = name.toLowerCase();
+        const key = toEnglishDigits(name).toLowerCase();
         (o[key] = o[key] || []).push(i);
         return o;
       }, {});
@@ -200,6 +209,12 @@
         const opt = document.createElement('option');
         opt.value = sn;
         productList.appendChild(opt);
+        const snEn = toEnglishDigits(sn);
+        if(snEn !== sn){
+          const optEn = document.createElement('option');
+          optEn.value = snEn;
+          productList.appendChild(optEn);
+        }
       });
       const uniqueNames = Array.from(new Set(inventoryData.names));
       uniqueNames.forEach(name => {
@@ -215,8 +230,6 @@
       const finalAmountReminder = document.getElementById('finalAmountReminder');
       const addedSerials = new Set();
       let manualFinalAmount = false;
-
-      const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
       function formatNumber(num){
         return Number(num || 0).toLocaleString('fa-IR').replace(/٬/g, ',');
       }
@@ -358,7 +371,7 @@
 
       snInput.addEventListener('keydown', function(e){
         if(e.key === 'Enter'){
-          const query = snInput.value.trim();
+          const query = toEnglishDigits(snInput.value.trim());
           if(!query) return;
           let idx = snIndex[query];
           if(idx === undefined){
