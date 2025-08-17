@@ -165,7 +165,7 @@
             <th>قیمت</th>
             <th>قیمت با تخفیف</th>
             <th>حذف</th>
-            <th class="inventory">موجودی</th>
+            <th class="inventory">موجودی انبار</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -356,6 +356,19 @@
         });
       }
 
+      function updateInventoryDisplay(){
+        const counts = {};
+        document.querySelectorAll('#productTable tbody tr').forEach(row => {
+          const name = row.dataset.productName;
+          counts[name] = (counts[name] || 0) + 1;
+        });
+        document.querySelectorAll('#productTable tbody tr').forEach(row => {
+          const name = row.dataset.productName;
+          const remaining = (inventoryCounts[name] || 0) - counts[name];
+          row.querySelector('.inventory').textContent = remaining;
+        });
+      }
+
       snInput.addEventListener('keydown', function(e){
         if(e.key === 'Enter'){
           const query = snInput.value.trim();
@@ -379,6 +392,7 @@
             const inventoryCount = inventoryCounts[productName];
             const row = document.createElement('tr');
             row.dataset.serial = serial;
+            row.dataset.productName = productName;
             row.innerHTML =
                 `<td class="row-number"></td>` +
                 `<td>${productName}</td>` +
@@ -416,10 +430,12 @@
                 row.remove();
                 updateTotals();
                 updateRowNumbers();
+                updateInventoryDisplay();
               });
               updateRowDiscount(row);
               updateTotals();
               updateRowNumbers();
+              updateInventoryDisplay();
               snInput.value = '';
             }
           }
