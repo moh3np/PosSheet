@@ -39,6 +39,19 @@
         border:1px solid #aaa;
         text-align:center;
       }
+      #productTable {
+        width:100%;
+        border-collapse:collapse;
+        margin-top:15px;
+      }
+      #productTable th, #productTable td {
+        border:1px solid #ccc;
+        padding:8px;
+        text-align:center;
+      }
+      #productTable th {
+        background:#eee;
+      }
       #totalDiv {
         margin-top:20px;
         font-size:20px;
@@ -88,6 +101,17 @@
   <body>
     <div id="products">
       <input class="sn" list="snList" placeholder="کد محصول">
+      <table id="productTable">
+        <thead>
+          <tr>
+            <th>محصول</th>
+            <th>سریال</th>
+            <th>موقعیت</th>
+            <th>قیمت</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
     <datalist id="snList"></datalist>
     <div id="totalDiv">
@@ -100,5 +124,34 @@
       <button class="submit">ثبت</button>
       <button class="cancel" onclick="google.script.host.close()">لغو</button>
     </div>
+    <script>
+      const inventoryData = <?!= JSON.stringify(inventoryData) ?>;
+      const snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
+      const snList = document.getElementById('snList');
+      inventoryData.sns.forEach(sn => {
+        const opt = document.createElement('option');
+        opt.value = sn;
+        snList.appendChild(opt);
+      });
+      const snInput = document.querySelector('.sn');
+      const tbody = document.querySelector('#productTable tbody');
+      const totalEl = document.getElementById('total');
+      let total = 0;
+      snInput.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+          const code = snInput.value.trim();
+          if(!code) return;
+          const idx = snIndex[code];
+          if(idx !== undefined){
+            const row = document.createElement('tr');
+            row.innerHTML = `<td>${inventoryData.names[idx]}</td><td>${inventoryData.sns[idx]}</td><td>${inventoryData.locations[idx]}</td><td>${inventoryData.prices[idx]}</td>`;
+            tbody.appendChild(row);
+            total += Number(inventoryData.prices[idx]) || 0;
+            totalEl.textContent = total;
+            snInput.value = '';
+          }
+        }
+      });
+    </script>
   </body>
 </html>
