@@ -152,12 +152,11 @@
       function addProduct(res, input) {
         var div = document.createElement('div');
         div.className = 'product';
-        var locationText = (res.location === 'STORE') ? 'مغازه' : (res.location || '-');
         var priceVal = parseNumber(res.price);
         div.innerHTML = '<span class="label">نام محصول:</span><span>' + (res.name || '-') + '</span>'+
-          '<br><span class="label">برند:</span><span>' + (res.brand || '-') + '</span>'+
-          '<br><span class="label">قیمت:</span><input type="text" class="priceInput" value="' + formatNumber(priceVal) + '" data-val="' + priceVal + '"> تومان'+
-          '<br><span class="label">موقعیت:</span><span>' + locationText + '</span>';
+          '<br><span class="label">SKU:</span><span>' + (res.sku || '-') + '</span>'+
+          '<br><span class="label">سریال محصول:</span><span>' + (res.sn || '-') + '</span>'+
+          '<br><span class="label">قیمت:</span><input type="text" class="priceInput" value="' + formatNumber(priceVal) + '" data-val="' + priceVal + '"> تومان';
         container.insertBefore(div, input.nextSibling);
         var priceInput = div.querySelector('.priceInput');
         priceInput.addEventListener('focus', function(){ this.value = this.dataset.val; });
