@@ -98,23 +98,61 @@
         padding:20px;
         border-radius:8px;
         max-height:80%;
-        overflow:auto;
         min-width:300px;
         box-shadow:0 2px 10px rgba(0,0,0,0.3);
         text-align:center;
+        display:flex;
+        flex-direction:column;
+      }
+      #selectionModal .modal-header {
+        flex:0 0 auto;
+        position:sticky;
+        top:0;
+        background:#fff;
+        z-index:1;
+      }
+      #modalProductInfo {
+        margin-bottom:10px;
+        font-weight:bold;
+      }
+      #modalProductInfo span {
+        margin:0 5px;
+      }
+      #modalSearch {
+        width:80%;
+        padding:8px;
+        border:1px solid #aaa;
+        border-radius:6px;
+        margin:0 auto;
+        display:block;
+      }
+      #selectionModal .modal-body {
+        flex:1 1 auto;
+        overflow-y:auto;
+        margin-top:10px;
       }
       #selectionModal table {
         width:100%;
         border-collapse:collapse;
-        margin-top:10px;
       }
       #selectionModal th, #selectionModal td {
         border:1px solid #ccc;
         padding:8px;
         text-align:center;
       }
+      #selectionModal tr.selected {
+        background:#e0f7fa;
+      }
+      #selectionModal tr {
+        cursor:pointer;
+      }
       #selectionModal .modal-actions {
+        flex:0 0 auto;
         margin-top:10px;
+        position:sticky;
+        bottom:0;
+        background:#fff;
+        padding-top:10px;
       }
       #selectionModal .modal-actions button {
         margin:0 5px;
@@ -224,17 +262,22 @@
     <datalist id="productList"></datalist>
     <div id="selectionModal">
       <div class="modal-content">
-        <h3>محصولات یافت شده</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>انتخاب</th>
-              <th>سریال</th>
-              <th>موقعیت</th>
-            </tr>
-          </thead>
-          <tbody id="selectionList"></tbody>
-        </table>
+        <div class="modal-header">
+          <div id="modalProductInfo"></div>
+          <input type="text" id="modalSearch" placeholder="جستجوی سریال">
+        </div>
+        <div class="modal-body">
+          <table>
+            <thead>
+              <tr>
+                <th>انتخاب</th>
+                <th>سریال</th>
+                <th>موقعیت</th>
+              </tr>
+            </thead>
+            <tbody id="selectionList"></tbody>
+          </table>
+        </div>
         <div class="modal-actions">
           <button id="addSelected" class="add">افزودن</button>
           <button id="cancelSelection" class="cancel">انصراف</button>
@@ -294,6 +337,8 @@
       const selectionList = document.getElementById('selectionList');
       const addSelectedBtn = document.getElementById('addSelected');
       const cancelSelectionBtn = document.getElementById('cancelSelection');
+      const modalSearch = document.getElementById('modalSearch');
+      const modalProductInfo = document.getElementById('modalProductInfo');
 
       const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
       function formatNumber(num){
@@ -302,6 +347,17 @@
       function parseNumber(str){
         return Number(String(str).replace(/,/g, '').replace(/[۰-۹]/g, d => persianDigits.indexOf(d))) || 0;
       }
+      function toEnglishDigits(str){
+        return String(str).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+      }
+
+      modalSearch.addEventListener('input', function(){
+        const q = toEnglishDigits(this.value.trim());
+        Array.from(selectionList.querySelectorAll('tr')).forEach(tr => {
+          const serial = toEnglishDigits(tr.cells[1].textContent.trim());
+          tr.style.display = serial.includes(q) ? '' : 'none';
+        });
+      });
 
       let total = 0;
       totalEl.textContent = formatNumber(total);
@@ -506,14 +562,30 @@
 
       function openSelectionModal(indices){
         selectionList.innerHTML = '';
+        modalSearch.value = '';
+        const firstIdx = indices[0];
+        const name = inventoryData.names[firstIdx];
+        const sku = inventoryData.skus ? inventoryData.skus[firstIdx] : '';
+        const count = inventoryCounts[name];
+        modalProductInfo.innerHTML = `${name} | SKU: ${sku} | موجودی: ${formatNumber(count)}`;
         indices.forEach(i => {
           const serial = inventoryData.sns[i];
           const location = inventoryData.locations[i] === 'STORE' ? 'مغازه' : inventoryData.locations[i];
           const tr = document.createElement('tr');
           tr.innerHTML = `<td><input type="checkbox" value="${i}"></td><td>${serial}</td><td>${location}</td>`;
+          const cb = tr.querySelector('input[type="checkbox"]');
+          cb.addEventListener('click', e => {
+            e.stopPropagation();
+            tr.classList.toggle('selected', cb.checked);
+          });
+          tr.addEventListener('click', () => {
+            cb.checked = !cb.checked;
+            tr.classList.toggle('selected', cb.checked);
+          });
           selectionList.appendChild(tr);
         });
         selectionModal.style.display = 'flex';
+        modalSearch.focus();
         addSelectedBtn.onclick = () => {
           const selected = Array.from(selectionList.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
           selected.forEach(addProduct);
@@ -525,6 +597,8 @@
       function closeSelectionModal(){
         selectionModal.style.display = 'none';
         selectionList.innerHTML = '';
+        modalProductInfo.innerHTML = '';
+        modalSearch.value = '';
         snInput.focus();
       }
 
