@@ -83,20 +83,11 @@
         background:#f44336;
         color:#fff;
       }
-      table { width:80%; margin:10px auto; border-collapse:collapse; background:#fff; }
-      th, td { border:1px solid #ccc; padding:6px 10px; text-align:center; }
-      th { background:#eee; }
     </style>
   </head>
   <body>
     <div id="products">
       <input class="sn" list="snList" placeholder="کد محصول">
-      <table id="resultTable">
-        <thead>
-          <tr><th>محصول</th><th>موقعیت</th><th>قیمت</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
     </div>
     <datalist id="snList"></datalist>
     <div id="totalDiv">
@@ -109,36 +100,5 @@
       <button class="submit">ثبت</button>
       <button class="cancel" onclick="google.script.host.close()">لغو</button>
     </div>
-    <script>
-      const inventory = <?!= JSON.stringify(inventory) ?>;
-      const snMap = new Map(inventory.sns.map((sn,i)=>[sn,i]));
-      const snInput = document.querySelector('#products .sn');
-      const snList = document.getElementById('snList');
-      const tbody = document.querySelector('#resultTable tbody');
-      inventory.sns.forEach(sn => {
-        const opt = document.createElement('option');
-        opt.value = sn;
-        snList.appendChild(opt);
-      });
-      let total = 0;
-      snInput.addEventListener('keydown', e => {
-        if (e.key === 'Enter') {
-          const code = snInput.value.trim();
-          const idx = snMap.get(code);
-          if (idx !== undefined) {
-            const tr = document.createElement('tr');
-            const name = inventory.names[idx] || '';
-            const loc = inventory.locations[idx] || '';
-            const price = inventory.prices[idx] || 0;
-            tr.innerHTML = `<td>${name}</td><td>${loc}</td><td>${price}</td>`;
-            tbody.appendChild(tr);
-            total += Number(price) || 0;
-            document.getElementById('total').textContent = total;
-            document.getElementById('finalAmount').value = total;
-          }
-          snInput.value = '';
-        }
-      });
-    </script>
   </body>
 </html>
