@@ -134,9 +134,10 @@
           });
           chkTd.appendChild(chk);
           tr.appendChild(chkTd);
+          const date = orderData.persianDates[i] || orderData.dates[i] || '';
           const fields = [
             orderData.ids[i],
-            orderData.persianDates[i],
+            date,
             orderData.names[i],
             orderData.sns[i],
             orderData.prices[i],
@@ -201,11 +202,13 @@
         const q = document.getElementById('orderSearch').value.trim().toLowerCase();
         const en = toEnglishDigits(q);
         const filtered = allIndices.filter(i => {
+          const name = (orderData.names[i] || '').toLowerCase();
+          const date = (orderData.persianDates[i] || orderData.dates[i] || '').split(' ')[0];
           const data = [
             orderData.ids[i], orderData.persianIds[i],
             orderData.sns[i], orderData.persianSNS[i],
-            orderData.names[i].toLowerCase(),
-            orderData.persianDates[i].split(' ')[0]
+            name,
+            date
           ].join(' ');
           const dataEn = toEnglishDigits(data);
           return data.indexOf(q) > -1 || dataEn.indexOf(en) > -1;
