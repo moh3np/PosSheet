@@ -77,6 +77,10 @@
         color:#fff;
         cursor:pointer;
       }
+      td.date-cell {
+        direction: ltr;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
@@ -167,6 +171,9 @@
               }
             } else {
               td.textContent = f;
+            }
+            if (idx === 1) {
+              td.classList.add('date-cell');
             }
             tr.appendChild(td);
           });
