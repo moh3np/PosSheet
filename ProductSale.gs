@@ -38,10 +38,15 @@ function submitOrder(items) {
 
   var idValues = idRange.getValues().map(function(r){ return r[0]; });
   var lastIndex = idValues.length - 1;
-  while (lastIndex >= 0 && !idValues[lastIndex]) {
+  var lastId = 109;
+  while (lastIndex >= 0) {
+    var num = Number(idValues[lastIndex]);
+    if (!isNaN(num)) {
+      lastId = num;
+      break;
+    }
     lastIndex--;
   }
-  var lastId = lastIndex >= 0 ? Number(idValues[lastIndex]) : 109;
   var orderId = lastId + 1;
   var nextRow = idRange.getRow() + lastIndex + 1;
 
