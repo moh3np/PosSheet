@@ -1,7 +1,7 @@
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
-  ui.createMenu('توسعه')
-    .addSubMenu(ui.createMenu('فروش').addItem('فروش محصول', 'showSaleDialog'))
+  ui.createMenu('فروش')
+    .addItem('خرده فروشی', 'showSaleDialog')
     .addToUi();
 }
 
@@ -37,18 +37,19 @@ function submitOrder(items) {
   var paidCol = ss.getRangeByName('OrderPaidPrice').getColumn();
 
   var idValues = idRange.getValues().map(function(r){ return r[0]; });
-  var lastIndex = idValues.length - 1;
   var lastId = 109;
-  while (lastIndex >= 0) {
-    var num = Number(idValues[lastIndex]);
-    if (!isNaN(num)) {
+  idValues.forEach(function(v){
+    var num = Number(v);
+    if (!isNaN(num) && num > lastId) {
       lastId = num;
-      break;
     }
-    lastIndex--;
-  }
+  });
   var orderId = lastId + 1;
-  var nextRow = idRange.getRow() + lastIndex + 1;
+  var nextIndex = 0;
+  while (nextIndex < idValues.length && idValues[nextIndex]) {
+    nextIndex++;
+  }
+  var nextRow = idRange.getRow() + nextIndex;
 
   var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [];
   var dateStr = getPersianDateTime();
