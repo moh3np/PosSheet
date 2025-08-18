@@ -13,8 +13,11 @@ function showSaleDialog() {
   var skus = ss.getRangeByName('InventorySKU').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
   var locations = ss.getRangeByName('InventoryLocation').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
   var prices = ss.getRangeByName('InventoryPrice').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
+  var uniqueCodes = ss.getRangeByName('InventoryUniqueCode').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
+  var brands = ss.getRangeByName('InventoryBrand').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
+  var sellers = ss.getRangeByName('InventorySeller').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
   var template = HtmlService.createTemplateFromFile('sale');
-  template.inventoryData = {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices};
+  template.inventoryData = {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
   var html = template.evaluate()
     .setWidth(1200)
     .setHeight(800);
@@ -35,6 +38,10 @@ function submitOrder(items) {
   var dateCol = ss.getRangeByName('OrderDate').getColumn();
   var priceCol = ss.getRangeByName('OrderPrice').getColumn();
   var paidCol = ss.getRangeByName('OrderPaidPrice').getColumn();
+  var uniqueCodeCol = ss.getRangeByName('OrderUniqueCode').getColumn();
+  var locationCol = ss.getRangeByName('OrderLocation').getColumn();
+  var sellerCol = ss.getRangeByName('OrderSeller').getColumn();
+  var brandCol = ss.getRangeByName('OrderBrand').getColumn();
 
   var idValues = idRange.getValues().map(function(r){ return r[0]; });
   var lastId = 109;
@@ -51,7 +58,7 @@ function submitOrder(items) {
   }
   var nextRow = idRange.getRow() + nextIndex;
 
-  var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [];
+  var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [], uniqueCodes = [], locations = [], sellers = [], brands = [];
   var dateStr = getPersianDateTime();
   items.forEach(function(it) {
     ids.push([orderId]);
@@ -61,6 +68,10 @@ function submitOrder(items) {
     dates.push([dateStr]);
     prices.push([it.price]);
     paid.push([it.paid]);
+    uniqueCodes.push([it.uniqueCode]);
+    locations.push([it.location]);
+    sellers.push([it.seller]);
+    brands.push([it.brand]);
   });
   sheet.getRange(nextRow, idCol, items.length, 1).setValues(ids);
   sheet.getRange(nextRow, nameCol, items.length, 1).setValues(names);
@@ -69,6 +80,10 @@ function submitOrder(items) {
   sheet.getRange(nextRow, dateCol, items.length, 1).setValues(dates);
   sheet.getRange(nextRow, priceCol, items.length, 1).setValues(prices);
   sheet.getRange(nextRow, paidCol, items.length, 1).setValues(paid);
+  sheet.getRange(nextRow, uniqueCodeCol, items.length, 1).setValues(uniqueCodes);
+  sheet.getRange(nextRow, locationCol, items.length, 1).setValues(locations);
+  sheet.getRange(nextRow, sellerCol, items.length, 1).setValues(sellers);
+  sheet.getRange(nextRow, brandCol, items.length, 1).setValues(brands);
 
   handleExternalOrders(orderId, dateStr, items);
 }
@@ -85,7 +100,11 @@ function handleExternalOrders(orderId, dateStr, items) {
         sn: 'OrderSN',
         date: 'OrderDate',
         price: 'OrderPrice',
-        paid: 'OrderPaidPrice'
+        paid: 'OrderPaidPrice',
+        uniqueCode: 'OrderUniqueCode',
+        location: 'OrderLocation',
+        seller: 'OrderSeller',
+        brand: 'OrderBrand'
       },
       inventoryRange: 'InventorySN'
     }, tlItems, orderId, dateStr);
@@ -101,7 +120,11 @@ function handleExternalOrders(orderId, dateStr, items) {
         sn: 'StoreOrderSN',
         date: 'StoreOrderDate',
         price: 'StoreOrderPrice',
-        paid: 'StoreOrderPaidPrice'
+        paid: 'StoreOrderPaidPrice',
+        uniqueCode: 'StoreOrderUniqueCode',
+        location: 'StoreOrderLocation',
+        seller: 'StoreOrderSeller',
+        brand: 'StoreOrderBrand'
       },
       inventoryRange: 'InventorySN'
     }, brItems, orderId, dateStr);
@@ -120,6 +143,14 @@ function processExternalOrder(cfg, items, orderId, dateStr) {
   var dateCol = ss.getRangeByName(cfg.rangeNames.date).getColumn();
   var priceCol = ss.getRangeByName(cfg.rangeNames.price).getColumn();
   var paidCol = ss.getRangeByName(cfg.rangeNames.paid).getColumn();
+  var uniqueCodeRange = ss.getRangeByName(cfg.rangeNames.uniqueCode);
+  var locationRange = ss.getRangeByName(cfg.rangeNames.location);
+  var sellerRange = ss.getRangeByName(cfg.rangeNames.seller);
+  var brandRange = ss.getRangeByName(cfg.rangeNames.brand);
+  var uniqueCodeCol = uniqueCodeRange ? uniqueCodeRange.getColumn() : null;
+  var locationCol = locationRange ? locationRange.getColumn() : null;
+  var sellerCol = sellerRange ? sellerRange.getColumn() : null;
+  var brandCol = brandRange ? brandRange.getColumn() : null;
 
   var idValues = idRange.getValues().map(function(r){ return r[0]; });
   var nextIndex = 0;
@@ -128,7 +159,7 @@ function processExternalOrder(cfg, items, orderId, dateStr) {
   }
   var nextRow = idRange.getRow() + nextIndex;
 
-  var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [];
+  var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [], uniqueCodes = [], locations = [], sellers = [], brands = [];
   items.forEach(function(it) {
     ids.push([orderId]);
     names.push([it.name]);
@@ -137,6 +168,10 @@ function processExternalOrder(cfg, items, orderId, dateStr) {
     dates.push([dateStr]);
     prices.push([it.price]);
     paid.push([it.paid]);
+    uniqueCodes.push([it.uniqueCode]);
+    locations.push([it.location]);
+    sellers.push([it.seller]);
+    brands.push([it.brand]);
   });
   sheet.getRange(nextRow, idCol, items.length, 1).setValues(ids);
   sheet.getRange(nextRow, nameCol, items.length, 1).setValues(names);
@@ -145,6 +180,10 @@ function processExternalOrder(cfg, items, orderId, dateStr) {
   sheet.getRange(nextRow, dateCol, items.length, 1).setValues(dates);
   sheet.getRange(nextRow, priceCol, items.length, 1).setValues(prices);
   sheet.getRange(nextRow, paidCol, items.length, 1).setValues(paid);
+  if (uniqueCodeCol) sheet.getRange(nextRow, uniqueCodeCol, items.length, 1).setValues(uniqueCodes);
+  if (locationCol) sheet.getRange(nextRow, locationCol, items.length, 1).setValues(locations);
+  if (sellerCol) sheet.getRange(nextRow, sellerCol, items.length, 1).setValues(sellers);
+  if (brandCol) sheet.getRange(nextRow, brandCol, items.length, 1).setValues(brands);
 
   items.forEach(function(it) {
     var invRange = ss.getRangeByName(cfg.inventoryRange);

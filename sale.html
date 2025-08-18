@@ -295,7 +295,7 @@
       </div>
     </div>
     <div id="footer">
-      <button class="submit">ثبت</button>
+      <button class="submit">فروش</button>
       <button class="cancel" onclick="google.script.host.close()">لغو</button>
     </div>
     <script>
@@ -517,11 +517,18 @@
         const location = inventoryData.locations[idx] === 'STORE' ? 'مغازه' : inventoryData.locations[idx];
         const productName = inventoryData.names[idx];
         const sku = inventoryData.skus ? inventoryData.skus[idx] : '';
+        const uniqueCode = inventoryData.uniqueCodes ? inventoryData.uniqueCodes[idx] : '';
+        const brand = inventoryData.brands ? inventoryData.brands[idx] : '';
+        const seller = inventoryData.sellers ? inventoryData.sellers[idx] : '';
         const inventoryCount = inventoryCounts[productName];
         const row = document.createElement('tr');
         row.dataset.serial = serial;
         row.dataset.productName = productName;
         row.dataset.sku = sku;
+        row.dataset.uniqueCode = uniqueCode;
+        row.dataset.brand = brand;
+        row.dataset.seller = seller;
+        row.dataset.location = location;
         row.innerHTML =
             `<td class="row-number"></td>` +
             `<td>${productName}</td>` +
@@ -658,7 +665,11 @@
             sku: row.dataset.sku || '',
             serial: row.dataset.serial,
             price: price,
-            paid: paid
+            paid: paid,
+            uniqueCode: row.dataset.uniqueCode || '',
+            location: row.dataset.location || '',
+            seller: row.dataset.seller || '',
+            brand: row.dataset.brand || ''
           };
         });
         google.script.run.withSuccessHandler(resetForm).submitOrder(items);
