@@ -234,10 +234,6 @@
         background:#4caf50;
         color:#fff;
       }
-      #footer button.cancel {
-        background:#f44336;
-        color:#fff;
-      }
     </style>
   </head>
   <body>
@@ -295,8 +291,7 @@
       </div>
     </div>
     <div id="footer">
-      <button class="submit">فروش</button>
-      <button class="cancel" onclick="google.script.host.close()">لغو</button>
+      <button class="submit">ثبت سفارش</button>
     </div>
     <script>
       const inventoryData = <?!= JSON.stringify(inventoryData) ?>;
