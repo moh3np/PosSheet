@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        direction: rtl;
+        background:#f5f5f5;
+        padding:20px;
+        padding-bottom:200px;
+      }
+      .product {
+        margin-bottom: 15px;
+        padding:10px;
+        border:1px solid #ccc;
+        border-radius:8px;
+        background:#fff;
+      }
+      .label {
+        display:inline-block;
+        width:110px;
+        font-weight:bold;
+      }
+      #products .sn {
+        width:30%;
+        font-size:18px;
+        text-align:center;
+        display:block;
+        margin:0 auto 10px;
+        padding:8px;
+        border-radius:6px;
+        border:1px solid #aaa;
+        position: sticky;
+        top: 0;
+        background:#fff;
+        z-index: 1;
+      }
+      .priceInput {
+        width:150px;
+        padding:4px;
+        border-radius:4px;
+        border:1px solid #aaa;
+        text-align:center;
+        font-weight:bold;
+      }
+      .discount-info {
+        display:none;
+        margin-top:4px;
+        font-size:12px;
+        color:#d32f2f;
+      }
+      #productTable {
+        width:100%;
+        border-collapse:collapse;
+        margin-top:15px;
+      }
+      #productTable th, #productTable td {
+        border:1px solid #ccc;
+        padding:8px;
+        text-align:center;
+      }
+      #productTable th {
+        background:#eee;
+      }
+      #productTable td.price {
+        font-weight:bold;
+      }
+      #productTable th.inventory, #productTable td.inventory {
+        background:#fff8dc;
+        font-weight:bold;
+      }
+      .remove-btn {
+        background:none;
+        border:none;
+        cursor:pointer;
+        color:#d32f2f;
+      }
+      .remove-btn svg {
+        width:20px;
+        height:20px;
+        pointer-events:none;
+      }
+      #selectionModal {
+        display:none;
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        background:rgba(0,0,0,0.5);
+        justify-content:center;
+        align-items:center;
+        z-index:2;
+      }
+      #selectionModal .modal-content {
+        background:#fff;
+        padding:20px;
+        border-radius:8px;
+        max-height:80%;
+        min-width:300px;
+        box-shadow:0 2px 10px rgba(0,0,0,0.3);
+        text-align:center;
+        display:flex;
+        flex-direction:column;
+      }
+      #selectionModal .modal-header {
+        flex:0 0 auto;
+        position:sticky;
+        top:0;
+        background:#fff;
+        z-index:1;
+      }
+      #modalProductInfo {
+        margin-bottom:10px;
+        font-weight:bold;
+      }
+      #modalProductInfo span {
+        margin:0 5px;
+      }
+      #modalSearch {
+        width:80%;
+        padding:8px;
+        border:1px solid #aaa;
+        border-radius:6px;
+        margin:0 auto;
+        display:block;
+      }
+      #selectionModal .modal-body {
+        flex:1 1 auto;
+        overflow-y:auto;
+        margin-top:10px;
+      }
+      #selectionModal table {
+        width:100%;
+        border-collapse:collapse;
+      }
+      #selectionModal th, #selectionModal td {
+        border:1px solid #ccc;
+        padding:8px;
+        text-align:center;
+      }
+      #selectionModal tr.selected {
+        background:#e0f7fa;
+      }
+      #selectionModal tr {
+        cursor:pointer;
+      }
+      #selectionModal .modal-actions {
+        flex:0 0 auto;
+        margin-top:10px;
+        position:sticky;
+        bottom:0;
+        background:#fff;
+        padding-top:10px;
+      }
+      #selectionModal .modal-actions button {
+        margin:0 5px;
+        padding:8px 16px;
+        border:none;
+        border-radius:4px;
+        cursor:pointer;
+      }
+      #selectionModal .modal-actions button.add {
+        background:#4caf50;
+        color:#fff;
+      }
+      #selectionModal .modal-actions button.cancel {
+        background:#f44336;
+        color:#fff;
+      }
+      #totals {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom:60px;
+        background:#fff;
+        border-top:1px solid #ccc;
+      }
+      #totalDiv, #finalAmountDiv {
+        padding:10px;
+        text-align:center;
+        border-top:1px solid #ccc;
+      }
+      #totalDiv {
+        font-size:20px;
+        font-weight:bold;
+      }
+      #finalAmountDiv {
+        font-size:18px;
+      }
+      #finalAmount {
+        width:200px;
+        padding:4px;
+        border-radius:4px;
+        border:1px solid #aaa;
+        text-align:center;
+        font-weight:bold;
+        background:#f9f9f9;
+      }
+      #finalDiscountInfo {
+        display:none;
+        margin-top:8px;
+        font-size:16px;
+        font-weight:bold;
+        color:#d32f2f;
+      }
+      #finalAmountReminder {
+        display:none;
+        margin-top:8px;
+        font-size:16px;
+        font-weight:bold;
+        color:#d32f2f;
+      }
+      #footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background:#fff;
+        border-top:1px solid #ccc;
+        text-align:center;
+        padding:10px;
+      }
+      #footer button {
+        padding:10px 20px;
+        margin:0 5px;
+        border:none;
+        border-radius:4px;
+        font-size:16px;
+        cursor:pointer;
+      }
+      #footer button.submit {
+        background:#4caf50;
+        color:#fff;
+      }
+      #footer button.cancel {
+        background:#f44336;
+        color:#fff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="products">
+      <input class="sn" list="productList" placeholder="جستجوی محصول">
+      <table id="productTable">
+        <thead>
+          <tr>
+            <th>ردیف</th>
+            <th>محصول</th>
+            <th>سریال</th>
+            <th>موقعیت</th>
+            <th>قیمت</th>
+            <th>قیمت با تخفیف</th>
+            <th>حذف</th>
+            <th class="inventory">انبار</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <datalist id="productList"></datalist>
+    <div id="selectionModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div id="modalProductInfo"></div>
+          <input type="text" id="modalSearch" placeholder="جستجوی سریال">
+        </div>
+        <div class="modal-body">
+          <table>
+            <thead>
+              <tr>
+                <th>انتخاب</th>
+                <th>سریال</th>
+                <th>موقعیت</th>
+              </tr>
+            </thead>
+            <tbody id="selectionList"></tbody>
+          </table>
+        </div>
+        <div class="modal-actions">
+          <button id="addSelected" class="add">افزودن</button>
+          <button id="cancelSelection" class="cancel">انصراف</button>
+        </div>
+      </div>
+    </div>
+    <div id="totals">
+      <div id="totalDiv">
+        جمع کل: <span id="total">0</span> تومان
+      </div>
+      <div id="finalAmountDiv">
+        مبلغ نهایی: <input id="finalAmount" type="text" value="" placeholder="0"> تومان
+        <div id="finalAmountReminder">برای اعمال مبلغ نهایی، اینتر را بزنید</div>
+        <div id="finalDiscountInfo"></div>
+      </div>
+    </div>
+    <div id="footer">
+      <button class="submit">ثبت</button>
+      <button class="cancel" onclick="google.script.host.close()">لغو</button>
+    </div>
+    <script>
+      const inventoryData = <?!= JSON.stringify(inventoryData) ?>;
+      const snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
+      const persianSnIndex = inventoryData.persianSNS.reduce((o, sn, i) => (o[sn] = i, o), {});
+      const nameIndex = inventoryData.names.reduce((o, name, i) => {
+        const key = name.toLowerCase();
+        (o[key] = o[key] || []).push(i);
+        return o;
+      }, {});
+      const inventoryCounts = inventoryData.names.reduce((o, name) => (o[name] = (o[name] || 0) + 1, o), {});
+      const productList = document.getElementById('productList');
+      inventoryData.sns.forEach(sn => {
+        const opt = document.createElement('option');
+        opt.value = sn;
+        productList.appendChild(opt);
+      });
+      inventoryData.persianSNS.forEach(sn => {
+        const opt = document.createElement('option');
+        opt.value = sn;
+        productList.appendChild(opt);
+      });
+      const uniqueNames = Array.from(new Set(inventoryData.names));
+      uniqueNames.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        productList.appendChild(opt);
+      });
+      const snInput = document.querySelector('.sn');
+      const tbody = document.querySelector('#productTable tbody');
+      const totalEl = document.getElementById('total');
+      const finalAmountInput = document.getElementById('finalAmount');
+      const finalDiscountInfo = document.getElementById('finalDiscountInfo');
+      const finalAmountReminder = document.getElementById('finalAmountReminder');
+      const addedSerials = new Set();
+      let manualFinalAmount = false;
+      const selectionModal = document.getElementById('selectionModal');
+      const selectionList = document.getElementById('selectionList');
+      const addSelectedBtn = document.getElementById('addSelected');
+      const cancelSelectionBtn = document.getElementById('cancelSelection');
+      const modalSearch = document.getElementById('modalSearch');
+      const modalProductInfo = document.getElementById('modalProductInfo');
+
+      const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+      function formatNumber(num){
+        return Number(num || 0).toLocaleString('fa-IR').replace(/٬/g, ',');
+      }
+      function parseNumber(str){
+        return Number(String(str).replace(/,/g, '').replace(/[۰-۹]/g, d => persianDigits.indexOf(d))) || 0;
+      }
+      function toEnglishDigits(str){
+        return String(str).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+      }
+
+      modalSearch.addEventListener('input', function(){
+        const q = toEnglishDigits(this.value.trim());
+        Array.from(selectionList.querySelectorAll('tr')).forEach(tr => {
+          const serial = toEnglishDigits(tr.cells[1].textContent.trim());
+          tr.style.display = serial.includes(q) ? '' : 'none';
+        });
+      });
+
+      function resetModalSearch(){
+        modalSearch.value = '';
+        modalSearch.focus();
+        modalSearch.dispatchEvent(new Event('input'));
+      }
+
+      let total = 0;
+      totalEl.textContent = formatNumber(total);
+      finalAmountInput.placeholder = formatNumber(total);
+      finalAmountInput.value = '';
+      finalAmountInput.addEventListener('input', function(){
+        const raw = finalAmountInput.value;
+        if(raw.trim() === ''){
+          manualFinalAmount = false;
+          finalAmountInput.value = '';
+          finalAmountReminder.style.display = 'none';
+          updateTotals();
+        } else {
+          manualFinalAmount = true;
+          const val = parseNumber(raw);
+          finalAmountInput.value = formatNumber(val);
+          finalAmountReminder.style.display = 'block';
+          updateFinalDiscount(total, val);
+        }
+      });
+      finalAmountInput.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+          const val = parseNumber(finalAmountInput.value);
+          finalAmountInput.value = formatNumber(val);
+          finalAmountReminder.style.display = 'none';
+          applyExtraDiscount(val);
+        }
+      });
+      finalAmountInput.addEventListener('focus', function(){
+        if(this.value.trim() !== ''){
+          setTimeout(() => this.select(), 0);
+        }
+      });
+
+      function updateTotals(){
+        total = Array.from(document.querySelectorAll('#productTable tbody tr .price'))
+          .reduce((sum, td) => sum + parseNumber(td.textContent), 0);
+        const finalTotal = Array.from(document.querySelectorAll('.discount'))
+          .reduce((sum, input) => {
+            const rowPrice = parseNumber(input.closest('tr').querySelector('.price').textContent);
+            const val = input.value.trim() === '' ? rowPrice : parseNumber(input.value);
+            return sum + val;
+          }, 0);
+        totalEl.textContent = formatNumber(total);
+        finalAmountInput.placeholder = formatNumber(total);
+        if(!manualFinalAmount){
+          if(finalTotal === total){
+            finalAmountInput.value = '';
+          } else {
+            finalAmountInput.value = formatNumber(finalTotal);
+          }
+        }
+        const displayedFinal = manualFinalAmount ? parseNumber(finalAmountInput.value) || 0 : finalTotal;
+        updateFinalDiscount(total, displayedFinal);
+      }
+
+      function updateFinalDiscount(total, finalTotal){
+        const diff = total - finalTotal;
+        if(diff !== 0){
+          const percent = total ? Math.round((diff / total) * 100) : 0;
+          finalDiscountInfo.innerHTML = `<b>${formatNumber(diff)}</b> تومان (<b>${formatNumber(percent)}</b>٪) تخفیف`;
+          finalDiscountInfo.style.display = 'block';
+        } else {
+          finalDiscountInfo.innerHTML = '';
+          finalDiscountInfo.style.display = 'none';
+        }
+      }
+
+      function applyExtraDiscount(finalVal){
+        const rows = Array.from(document.querySelectorAll('#productTable tbody tr'));
+        const manualRows = rows.filter(row => row.querySelector('.discount').dataset.auto === 'false');
+        const autoRows = rows.filter(row => row.querySelector('.discount').dataset.auto !== 'false');
+        const manualTotal = manualRows.reduce((sum, row) => {
+          const input = row.querySelector('.discount');
+          const price = parseNumber(row.querySelector('.price').textContent);
+          const val = input.value.trim() === '' ? price : parseNumber(input.value);
+          return sum + val;
+        }, 0);
+        const autoTotalOriginal = autoRows.reduce((sum, row) => {
+          return sum + parseNumber(row.querySelector('.price').textContent);
+        }, 0);
+        if(finalVal < manualTotal){
+          finalVal = manualTotal;
+          finalAmountInput.value = formatNumber(finalVal);
+        }
+        const diff = manualTotal + autoTotalOriginal - finalVal;
+        if(diff > 0 && autoRows.length){
+          const percent = diff / autoTotalOriginal;
+          let running = 0;
+          for(let i = 0; i < autoRows.length; i++){
+            const row = autoRows[i];
+            const price = parseNumber(row.querySelector('.price').textContent);
+            let newPrice;
+            if(i < autoRows.length - 1){
+              newPrice = Math.round(price * (1 - percent));
+              running += newPrice;
+            } else {
+              newPrice = finalVal - manualTotal - running;
+            }
+            const input = row.querySelector('.discount');
+            input.value = formatNumber(newPrice);
+            input.dataset.auto = 'true';
+            updateRowDiscount(row);
+          }
+        }
+        updateTotals();
+      }
+
+      function updateRowDiscount(row){
+        const price = parseNumber(row.querySelector('.price').textContent);
+        const discountInput = row.querySelector('.discount');
+        const discount = discountInput.value.trim() === '' ? price : parseNumber(discountInput.value);
+        const infoEl = row.querySelector('.discount-info');
+        const diff = price - discount;
+        if(diff !== 0){
+          const percent = price ? Math.round((diff / price) * 100) : 0;
+          infoEl.innerHTML = `<b>${formatNumber(diff)}</b> تومان (<b>${formatNumber(percent)}</b>٪) تخفیف`;
+          infoEl.style.display = 'block';
+        } else {
+          infoEl.innerHTML = '';
+          infoEl.style.display = 'none';
+        }
+      }
+
+      function updateRowNumbers(){
+        document.querySelectorAll('#productTable tbody tr').forEach((row, idx) => {
+          const cell = row.querySelector('.row-number');
+          if(cell){
+            cell.textContent = idx + 1;
+          }
+        });
+      }
+
+      function updateInventoryDisplay(){
+        const counts = {};
+        document.querySelectorAll('#productTable tbody tr').forEach(row => {
+          const name = row.dataset.productName;
+          counts[name] = (counts[name] || 0) + 1;
+        });
+        document.querySelectorAll('#productTable tbody tr').forEach(row => {
+          const name = row.dataset.productName;
+          const remaining = (inventoryCounts[name] || 0) - counts[name];
+          row.querySelector('.inventory').textContent = remaining;
+        });
+      }
+
+      function addProduct(idx){
+        const serial = inventoryData.sns[idx];
+        if (addedSerials.has(serial)) return;
+        const price = Number(inventoryData.prices[idx]) || 0;
+        const location = inventoryData.locations[idx] === 'STORE' ? 'مغازه' : inventoryData.locations[idx];
+        const productName = inventoryData.names[idx];
+        const sku = inventoryData.skus ? inventoryData.skus[idx] : '';
+        const inventoryCount = inventoryCounts[productName];
+        const row = document.createElement('tr');
+        row.dataset.serial = serial;
+        row.dataset.productName = productName;
+        row.dataset.sku = sku;
+        row.innerHTML =
+            `<td class="row-number"></td>` +
+            `<td>${productName}</td>` +
+            `<td>${serial}</td>` +
+            `<td>${location}</td>` +
+            `<td class="price">${formatNumber(price)}</td>` +
+            `<td><input class="priceInput discount" type="text" placeholder="${formatNumber(price)}"><div class="discount-info"></div></td>` +
+            `<td><button class="remove-btn" title="حذف"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m5-3h4a2 2 0 0 1 2 2v1H8V5a2 2 0 0 1 2-2z"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg></button></td>` +
+            `<td class="inventory">${inventoryCount}</td>`;
+        tbody.appendChild(row);
+        addedSerials.add(serial);
+        const discountInput = row.querySelector('.discount');
+        discountInput.dataset.auto = 'true';
+        discountInput.addEventListener('focus', function(){
+          if(this.value.trim() !== ''){
+            setTimeout(() => this.select(), 0);
+          }
+        });
+        discountInput.addEventListener('input', function(){
+          const raw = discountInput.value;
+          if(raw.trim() === ''){
+            discountInput.dataset.auto = 'true';
+            discountInput.value = '';
+          } else {
+            discountInput.dataset.auto = 'false';
+            const val = parseNumber(raw);
+            discountInput.value = formatNumber(val);
+          }
+          updateRowDiscount(row);
+          updateTotals();
+        });
+        const removeBtn = row.querySelector('.remove-btn');
+        removeBtn.addEventListener('click', function(){
+          addedSerials.delete(serial);
+          row.remove();
+          updateTotals();
+          updateRowNumbers();
+          updateInventoryDisplay();
+        });
+        updateRowDiscount(row);
+        updateTotals();
+        updateRowNumbers();
+        updateInventoryDisplay();
+        snInput.focus();
+      }
+
+      function openSelectionModal(indices){
+        selectionList.innerHTML = '';
+        modalSearch.value = '';
+        const firstIdx = indices[0];
+        const name = inventoryData.names[firstIdx];
+        const sku = inventoryData.skus ? toEnglishDigits(inventoryData.skus[firstIdx]) : '';
+        const count = inventoryCounts[name];
+        const countDisplay = Number(count || 0).toLocaleString('en-US');
+        modalProductInfo.innerHTML = `<div>${name}</div><div>SKU: ${sku} | Inventory: ${countDisplay}</div>`;
+        indices.forEach(i => {
+          const serial = inventoryData.sns[i];
+          const location = inventoryData.locations[i] === 'STORE' ? 'مغازه' : inventoryData.locations[i];
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td><input type="checkbox" value="${i}"></td><td>${serial}</td><td>${location}</td>`;
+          const cb = tr.querySelector('input[type="checkbox"]');
+          cb.addEventListener('click', e => {
+            e.stopPropagation();
+            tr.classList.toggle('selected', cb.checked);
+            resetModalSearch();
+          });
+          tr.addEventListener('click', () => {
+            cb.checked = !cb.checked;
+            tr.classList.toggle('selected', cb.checked);
+            resetModalSearch();
+          });
+          selectionList.appendChild(tr);
+        });
+        selectionModal.style.display = 'flex';
+        modalSearch.focus();
+        addSelectedBtn.onclick = () => {
+          const selected = Array.from(selectionList.querySelectorAll('input[type="checkbox"]:checked')).map(cb => parseInt(cb.value));
+          selected.forEach(addProduct);
+          closeSelectionModal();
+        };
+        cancelSelectionBtn.onclick = closeSelectionModal;
+      }
+
+      function closeSelectionModal(){
+        selectionModal.style.display = 'none';
+        selectionList.innerHTML = '';
+        modalProductInfo.innerHTML = '';
+        modalSearch.value = '';
+        snInput.focus();
+      }
+
+      selectionModal.addEventListener('click', function(e){
+        if(e.target === selectionModal) closeSelectionModal();
+      });
+
+      snInput.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+          const query = snInput.value.trim();
+          if(!query) return;
+          const idx = snIndex[query];
+          if(idx !== undefined){
+            addProduct(idx);
+            snInput.value = '';
+            snInput.focus();
+            return;
+          }
+          const persianIdx = persianSnIndex[query];
+          if(persianIdx !== undefined){
+            addProduct(persianIdx);
+            snInput.value = '';
+            snInput.focus();
+            return;
+          }
+          const indices = nameIndex[query.toLowerCase()];
+          if(indices){
+            const available = indices.filter(i => !addedSerials.has(inventoryData.sns[i]));
+            if(available.length){
+              openSelectionModal(available);
+            }
+            snInput.value = '';
+          }
+        }
+      });
+      const submitBtn = document.querySelector('#footer .submit');
+      submitBtn.addEventListener('click', function(){
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        if(!rows.length) return;
+        const items = rows.map(row => {
+          const price = parseNumber(row.querySelector('.price').textContent);
+          const discountInput = row.querySelector('.discount');
+          const paid = discountInput.value.trim() === '' ? price : parseNumber(discountInput.value);
+          return {
+            name: row.dataset.productName,
+            sku: row.dataset.sku || '',
+            serial: row.dataset.serial,
+            price: price,
+            paid: paid
+          };
+        });
+        google.script.run.withSuccessHandler(resetForm).submitOrder(items);
+      });
+
+      function resetForm(){
+        tbody.innerHTML = '';
+        addedSerials.clear();
+        manualFinalAmount = false;
+        finalAmountInput.value = '';
+        finalAmountReminder.style.display = 'none';
+        updateTotals();
+        updateRowNumbers();
+        updateInventoryDisplay();
+        snInput.value = '';
+        snInput.focus();
+      }
+
+      setTimeout(() => snInput.focus(), 0);
+    </script>
+  </body>
+</html>
