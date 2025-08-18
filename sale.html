@@ -617,41 +617,32 @@
         if(e.target === selectionModal) closeSelectionModal();
       });
 
-      function processQuery(query){
-        if(!query) return;
-        const idx = snIndex[query];
-        if(idx !== undefined){
-          addProduct(idx);
-          snInput.value = '';
-          snInput.focus();
-          return;
-        }
-        const persianIdx = persianSnIndex[query];
-        if(persianIdx !== undefined){
-          addProduct(persianIdx);
-          snInput.value = '';
-          snInput.focus();
-          return;
-        }
-        const indices = nameIndex[query.toLowerCase()];
-        if(indices){
-          const available = indices.filter(i => !addedSerials.has(inventoryData.sns[i]));
-          if(available.length){
-            openSelectionModal(available);
-          }
-          snInput.value = '';
-        }
-      }
-
-      snInput.addEventListener('input', function(e){
-        if(e.inputType === 'insertReplacementText'){
-          processQuery(snInput.value.trim());
-        }
-      });
-
       snInput.addEventListener('keydown', function(e){
         if(e.key === 'Enter'){
-          processQuery(snInput.value.trim());
+          const query = snInput.value.trim();
+          if(!query) return;
+          const idx = snIndex[query];
+          if(idx !== undefined){
+            addProduct(idx);
+            snInput.value = '';
+            snInput.focus();
+            return;
+          }
+          const persianIdx = persianSnIndex[query];
+          if(persianIdx !== undefined){
+            addProduct(persianIdx);
+            snInput.value = '';
+            snInput.focus();
+            return;
+          }
+          const indices = nameIndex[query.toLowerCase()];
+          if(indices){
+            const available = indices.filter(i => !addedSerials.has(inventoryData.sns[i]));
+            if(available.length){
+              openSelectionModal(available);
+            }
+            snInput.value = '';
+          }
         }
       });
       const submitBtn = document.querySelector('#footer .submit');
