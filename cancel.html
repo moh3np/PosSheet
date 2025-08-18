@@ -116,6 +116,14 @@
       function toEnglishDigits(str){
         return String(str).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
       }
+      function formatDateStr(str){
+        if(!str) return '';
+        const d = new Date(str);
+        if(isNaN(d)) return str;
+        const pad = n => n.toString().padStart(2,'0');
+        return d.getFullYear() + '/' + pad(d.getMonth()+1) + '/' + pad(d.getDate()) + ' ' +
+               pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+      }
 
       const allIndices = orderData.ids.map((_,i)=>i);
 
@@ -134,7 +142,7 @@
           });
           chkTd.appendChild(chk);
           tr.appendChild(chkTd);
-          const date = orderData.persianDates[i] || orderData.dates[i] || '';
+          const date = formatDateStr(orderData.persianDates[i] || orderData.dates[i] || '');
           const fields = [
             orderData.ids[i],
             date,
@@ -203,7 +211,7 @@
         const en = toEnglishDigits(q);
         const filtered = allIndices.filter(i => {
           const name = (orderData.names[i] || '').toLowerCase();
-          const date = (orderData.persianDates[i] || orderData.dates[i] || '').split(' ')[0];
+          const date = formatDateStr(orderData.persianDates[i] || orderData.dates[i] || '').split(' ')[0];
           const data = [
             orderData.ids[i], orderData.persianIds[i],
             orderData.sns[i], orderData.persianSNS[i],
