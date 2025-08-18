@@ -2,6 +2,7 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('فروش')
     .addItem('خرده فروشی', 'showSaleDialog')
+    .addItem('لغو سفارش', 'showCancelDialog')
     .addToUi();
 }
 
