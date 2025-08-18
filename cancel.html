@@ -7,21 +7,14 @@
         font-family: Arial, sans-serif;
         direction: rtl;
         padding:20px;
-        padding-bottom:200px;
       }
       #orderSearch {
-        width:30%;
-        font-size:18px;
-        text-align:center;
-        display:block;
-        margin:0 auto 10px;
+        width:50%;
         padding:8px;
-        border-radius:6px;
         border:1px solid #aaa;
-        position: sticky;
-        top: 0;
-        background:#fff;
-        z-index:1;
+        border-radius:6px;
+        display:block;
+        margin:0 auto;
       }
       table {
         width:100%;
@@ -43,29 +36,12 @@
         font-size:12px;
         color:#d32f2f;
       }
-      #totals {
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom:60px;
-        background:#fff;
-        border-top:1px solid #ccc;
-        padding:10px;
-        text-align:center;
-        font-weight:bold;
-      }
       #footer {
-        position: fixed;
-        bottom:0;
-        left:0;
-        right:0;
-        background:#fff;
-        border-top:1px solid #ccc;
+        margin-top:15px;
         text-align:center;
-        padding:10px;
       }
       #footer button {
-        padding:10px 20px;
+        padding:8px 16px;
         border:none;
         border-radius:4px;
         background:#f44336;
@@ -79,7 +55,7 @@
     <table id="orderTable">
       <thead>
         <tr>
-          <th>انتخاب</th>
+          <th></th>
           <th>شماره سفارش</th>
           <th>تاریخ</th>
           <th>نام محصول</th>
@@ -90,43 +66,13 @@
       </thead>
       <tbody></tbody>
     </table>
-    <div id="totals">
-      جمع کل مبلغ پرداختی: <span id="total">۰</span> تومان
-    </div>
     <div id="footer">
       <button id="cancelBtn">لغو سفارش</button>
     </div>
     <script>
       const orderData = <?!= JSON.stringify(orderData) ?>;
       const tbody = document.querySelector('#orderTable tbody');
-      const MAX_ROWS = 200;
-
-      function toEnglishDigits(str){
-        const persian = '۰۱۲۳۴۵۶۷۸۹';
-        return String(str).replace(/[۰-۹]/g, d => persian.indexOf(d));
-      }
-      function toPersianDigits(str){
-        const persian = '۰۱۲۳۴۵۶۷۸۹';
-        return String(str).replace(/[0-9]/g, d => persian[d]);
-      }
-      function formatPrice(num){
-        const n = Number(num) || 0;
-        return toPersianDigits(n.toLocaleString('en-US'));
-      }
-      function updateTotal(){
-        const total = Array.from(tbody.querySelectorAll('tr')).reduce((sum, row) => {
-          const chk = row.querySelector('input[type="checkbox"]');
-          if(chk.checked){
-            const val = Number(row.querySelector('.paid-price').dataset.value);
-            return sum + val;
-          }
-          return sum;
-        }, 0);
-        document.getElementById('total').textContent = formatPrice(total);
-      }
-
       orderData.ids.forEach((id, i) => {
-        if(i >= MAX_ROWS) return;
         const tr = document.createElement('tr');
         tr.dataset.id = orderData.ids[i];
         const chkTd = document.createElement('td');
@@ -137,19 +83,15 @@
         const fields = [orderData.ids[i], orderData.dates[i], orderData.names[i], orderData.sns[i], orderData.prices[i], orderData.paidPrices[i]];
         fields.forEach((f, idx) => {
           const td = document.createElement('td');
-          if (idx === 4 || idx === 5) {
-            td.textContent = formatPrice(f);
-            td.dataset.value = Number(f) || 0;
-            if (idx === 5) {
-              td.className = 'paid-price';
-              const diff = Number(orderData.prices[i]) - Number(orderData.paidPrices[i]);
-              if (diff > 0 && Number(orderData.prices[i])) {
-                const pct = Math.round(diff / Number(orderData.prices[i]) * 100);
-                const info = document.createElement('div');
-                info.className = 'discount-info';
-                info.textContent = '-' + formatPrice(diff) + ' (' + toPersianDigits(pct) + '%)';
-                td.appendChild(info);
-              }
+          if (idx === 5) {
+            td.textContent = f;
+            const diff = Number(orderData.prices[i]) - Number(orderData.paidPrices[i]);
+            if (diff > 0 && Number(orderData.prices[i])) {
+              const pct = Math.round(diff / Number(orderData.prices[i]) * 100);
+              const info = document.createElement('div');
+              info.className = 'discount-info';
+              info.textContent = '-' + diff + ' (' + pct + '%)';
+              td.appendChild(info);
             }
           } else {
             td.textContent = f;
@@ -159,7 +101,6 @@
         tr.addEventListener('click', (e) => {
           if (e.target.tagName !== 'INPUT') chk.checked = !chk.checked;
           tr.classList.toggle('selected', chk.checked);
-          updateTotal();
           const search = document.getElementById('orderSearch');
           if (search.value) {
             search.value = '';
@@ -169,7 +110,10 @@
         });
         tbody.appendChild(tr);
       });
-
+      function toEnglishDigits(str){
+        const persian = '۰۱۲۳۴۵۶۷۸۹';
+        return String(str).replace(/[۰-۹]/g, d => persian.indexOf(d));
+      }
       function filterOrders(){
         const q = document.getElementById('orderSearch').value.trim().toLowerCase();
         const en = toEnglishDigits(q);
@@ -178,8 +122,7 @@
             orderData.ids[i], orderData.persianIds[i],
             orderData.sns[i], orderData.persianSNS[i],
             orderData.names[i].toLowerCase(),
-            orderData.dates[i].split(' ')[0],
-            orderData.persianDates[i] ? orderData.persianDates[i].split(' ')[0] : ''
+            String(orderData.dates[i]).split(' ')[0]
           ].join(' ');
           const dataEn = toEnglishDigits(data);
           const show = data.indexOf(q) > -1 || dataEn.indexOf(en) > -1;
