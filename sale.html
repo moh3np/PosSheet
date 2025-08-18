@@ -516,10 +516,12 @@
         const price = Number(inventoryData.prices[idx]) || 0;
         const location = inventoryData.locations[idx] === 'STORE' ? 'مغازه' : inventoryData.locations[idx];
         const productName = inventoryData.names[idx];
+        const sku = inventoryData.skus ? inventoryData.skus[idx] : '';
         const inventoryCount = inventoryCounts[productName];
         const row = document.createElement('tr');
         row.dataset.serial = serial;
         row.dataset.productName = productName;
+        row.dataset.sku = sku;
         row.innerHTML =
             `<td class="row-number"></td>` +
             `<td>${productName}</td>` +
@@ -643,6 +645,37 @@
           }
         }
       });
+      const submitBtn = document.querySelector('#footer .submit');
+      submitBtn.addEventListener('click', function(){
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        if(!rows.length) return;
+        const items = rows.map(row => {
+          const price = parseNumber(row.querySelector('.price').textContent);
+          const discountInput = row.querySelector('.discount');
+          const paid = discountInput.value.trim() === '' ? price : parseNumber(discountInput.value);
+          return {
+            name: row.dataset.productName,
+            sku: row.dataset.sku || '',
+            serial: row.dataset.serial,
+            price: price,
+            paid: paid
+          };
+        });
+        google.script.run.withSuccessHandler(resetForm).submitOrder(items);
+      });
+
+      function resetForm(){
+        tbody.innerHTML = '';
+        addedSerials.clear();
+        manualFinalAmount = false;
+        finalAmountInput.value = '';
+        finalAmountReminder.style.display = 'none';
+        updateTotals();
+        updateRowNumbers();
+        updateInventoryDisplay();
+        snInput.value = '';
+        snInput.focus();
+      }
 
       setTimeout(() => snInput.focus(), 0);
     </script>
