@@ -35,9 +35,16 @@ function submitOrder(items) {
   var dateCol = ss.getRangeByName('OrderDate').getColumn();
   var priceCol = ss.getRangeByName('OrderPrice').getColumn();
   var paidCol = ss.getRangeByName('OrderPaidPrice').getColumn();
-  var nextRow = sheet.getLastRow() + 1;
-  var lastId = sheet.getRange(nextRow - 1, idCol).getValue();
-  var orderId = lastId ? Number(lastId) + 1 : 1;
+
+  var idValues = idRange.getValues().map(function(r){ return r[0]; });
+  var lastIndex = idValues.length - 1;
+  while (lastIndex >= 0 && !idValues[lastIndex]) {
+    lastIndex--;
+  }
+  var lastId = lastIndex >= 0 ? Number(idValues[lastIndex]) : 109;
+  var orderId = lastId + 1;
+  var nextRow = idRange.getRow() + lastIndex + 1;
+
   var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [];
   var dateStr = getPersianDateTime();
   items.forEach(function(it) {
