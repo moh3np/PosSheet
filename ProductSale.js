@@ -69,6 +69,92 @@ function submitOrder(items) {
   sheet.getRange(nextRow, dateCol, items.length, 1).setValues(dates);
   sheet.getRange(nextRow, priceCol, items.length, 1).setValues(prices);
   sheet.getRange(nextRow, paidCol, items.length, 1).setValues(paid);
+
+  handleExternalOrders(orderId, dateStr, items);
+}
+
+function handleExternalOrders(orderId, dateStr, items) {
+  var tlItems = items.filter(function(it){ return it.sku && it.sku.indexOf('TL') === 0; });
+  if (tlItems.length) {
+    processExternalOrder({
+      spreadsheetId: '1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s',
+      rangeNames: {
+        id: 'OrderID',
+        name: 'OrderName',
+        sku: 'OrderSKU',
+        sn: 'OrderSN',
+        date: 'OrderDate',
+        price: 'OrderPrice',
+        paid: 'OrderPaidPrice'
+      },
+      inventoryRange: 'InventorySN'
+    }, tlItems, orderId, dateStr);
+  }
+  var brItems = items.filter(function(it){ return it.sku && it.sku.indexOf('BR') === 0; });
+  if (brItems.length) {
+    processExternalOrder({
+      spreadsheetId: 'Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8',
+      rangeNames: {
+        id: 'StoreOrderID',
+        name: 'StoreOrderName',
+        sku: 'StoreOrderSKU',
+        sn: 'StoreOrderSN',
+        date: 'StoreOrderDate',
+        price: 'StoreOrderPrice',
+        paid: 'StoreOrderPaidPrice'
+      },
+      inventoryRange: 'InventorySN'
+    }, brItems, orderId, dateStr);
+  }
+}
+
+function processExternalOrder(cfg, items, orderId, dateStr) {
+  var ss = SpreadsheetApp.openById(cfg.spreadsheetId);
+  var idRange = ss.getRangeByName(cfg.rangeNames.id);
+  if (!idRange) return;
+  var sheet = idRange.getSheet();
+  var idCol = idRange.getColumn();
+  var nameCol = ss.getRangeByName(cfg.rangeNames.name).getColumn();
+  var skuCol = ss.getRangeByName(cfg.rangeNames.sku).getColumn();
+  var snCol = ss.getRangeByName(cfg.rangeNames.sn).getColumn();
+  var dateCol = ss.getRangeByName(cfg.rangeNames.date).getColumn();
+  var priceCol = ss.getRangeByName(cfg.rangeNames.price).getColumn();
+  var paidCol = ss.getRangeByName(cfg.rangeNames.paid).getColumn();
+
+  var idValues = idRange.getValues().map(function(r){ return r[0]; });
+  var nextIndex = 0;
+  while (nextIndex < idValues.length && idValues[nextIndex]) {
+    nextIndex++;
+  }
+  var nextRow = idRange.getRow() + nextIndex;
+
+  var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [];
+  items.forEach(function(it) {
+    ids.push([orderId]);
+    names.push([it.name]);
+    skus.push([it.sku]);
+    sns.push([it.serial]);
+    dates.push([dateStr]);
+    prices.push([it.price]);
+    paid.push([it.paid]);
+  });
+  sheet.getRange(nextRow, idCol, items.length, 1).setValues(ids);
+  sheet.getRange(nextRow, nameCol, items.length, 1).setValues(names);
+  sheet.getRange(nextRow, skuCol, items.length, 1).setValues(skus);
+  sheet.getRange(nextRow, snCol, items.length, 1).setValues(sns);
+  sheet.getRange(nextRow, dateCol, items.length, 1).setValues(dates);
+  sheet.getRange(nextRow, priceCol, items.length, 1).setValues(prices);
+  sheet.getRange(nextRow, paidCol, items.length, 1).setValues(paid);
+
+  items.forEach(function(it) {
+    var invRange = ss.getRangeByName(cfg.inventoryRange);
+    if (!invRange) return;
+    var values = invRange.getValues().map(function(r){ return r[0]; });
+    var idx = values.indexOf(it.serial);
+    if (idx > -1) {
+      invRange.getSheet().deleteRow(invRange.getRow() + idx);
+    }
+  });
 }
 
 function getPersianDateTime() {
