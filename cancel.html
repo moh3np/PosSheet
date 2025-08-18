@@ -6,15 +6,23 @@
       body {
         font-family: Arial, sans-serif;
         direction: rtl;
+        background:#f5f5f5;
         padding:20px;
+        padding-bottom:150px;
       }
       #orderSearch {
-        width:50%;
-        padding:8px;
-        border:1px solid #aaa;
-        border-radius:6px;
+        width:30%;
+        font-size:18px;
+        text-align:center;
         display:block;
-        margin:0 auto;
+        margin:0 auto 10px;
+        padding:8px;
+        border-radius:6px;
+        border:1px solid #aaa;
+        position:sticky;
+        top:0;
+        background:#fff;
+        z-index:1;
       }
       table {
         width:100%;
@@ -36,12 +44,33 @@
         font-size:12px;
         color:#d32f2f;
       }
-      #footer {
-        margin-top:15px;
+      #totals {
+        position:fixed;
+        left:0;
+        right:0;
+        bottom:60px;
+        background:#fff;
+        border-top:1px solid #ccc;
+      }
+      #totalDiv {
+        padding:10px;
         text-align:center;
+        font-size:20px;
+        font-weight:bold;
+      }
+      #footer {
+        position:fixed;
+        bottom:0;
+        left:0;
+        right:0;
+        background:#fff;
+        border-top:1px solid #ccc;
+        text-align:center;
+        padding:10px;
       }
       #footer button {
-        padding:8px 16px;
+        padding:10px 20px;
+        margin:0 5px;
         border:none;
         border-radius:4px;
         background:#f44336;
@@ -55,7 +84,7 @@
     <table id="orderTable">
       <thead>
         <tr>
-          <th></th>
+          <th>انتخاب</th>
           <th>شماره سفارش</th>
           <th>تاریخ</th>
           <th>نام محصول</th>
@@ -66,73 +95,131 @@
       </thead>
       <tbody></tbody>
     </table>
+    <div id="totals">
+      <div id="totalDiv">جمع کل: <span id="total">۰</span> تومان</div>
+    </div>
     <div id="footer">
       <button id="cancelBtn">لغو سفارش</button>
     </div>
     <script>
       const orderData = <?!= JSON.stringify(orderData) ?>;
       const tbody = document.querySelector('#orderTable tbody');
-      orderData.ids.forEach((id, i) => {
-        const tr = document.createElement('tr');
-        tr.dataset.id = orderData.ids[i];
-        const chkTd = document.createElement('td');
-        const chk = document.createElement('input');
-        chk.type = 'checkbox';
-        chkTd.appendChild(chk);
-        tr.appendChild(chkTd);
-        const fields = [orderData.ids[i], orderData.dates[i], orderData.names[i], orderData.sns[i], orderData.prices[i], orderData.paidPrices[i]];
-        fields.forEach((f, idx) => {
-          const td = document.createElement('td');
-          if (idx === 5) {
-            td.textContent = f;
-            const diff = Number(orderData.prices[i]) - Number(orderData.paidPrices[i]);
-            if (diff > 0 && Number(orderData.prices[i])) {
-              const pct = Math.round(diff / Number(orderData.prices[i]) * 100);
-              const info = document.createElement('div');
-              info.className = 'discount-info';
-              info.textContent = '-' + diff + ' (' + pct + '%)';
-              td.appendChild(info);
-            }
-          } else {
-            td.textContent = f;
-          }
-          tr.appendChild(td);
-        });
-        tr.addEventListener('click', (e) => {
-          if (e.target.tagName !== 'INPUT') chk.checked = !chk.checked;
-          tr.classList.toggle('selected', chk.checked);
-          const search = document.getElementById('orderSearch');
-          if (search.value) {
-            search.value = '';
-            filterOrders();
-            search.focus();
-          }
-        });
-        tbody.appendChild(tr);
-      });
-      function toEnglishDigits(str){
-        const persian = '۰۱۲۳۴۵۶۷۸۹';
-        return String(str).replace(/[۰-۹]/g, d => persian.indexOf(d));
+      const totalEl = document.getElementById('total');
+      const selectedIds = new Set();
+      const idIndex = orderData.ids.reduce((o,id,i)=>(o[id]=i,o),{});
+      const MAX_DISPLAY = 200;
+      const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+
+      function formatNumber(num){
+        return Number(num || 0).toLocaleString('fa-IR').replace(/٬/g, ',');
       }
+      function toEnglishDigits(str){
+        return String(str).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+      }
+
+      const allIndices = orderData.ids.map((_,i)=>i);
+
+      function renderRows(indices){
+        tbody.innerHTML = '';
+        indices.slice(0, MAX_DISPLAY).forEach(i => {
+          const tr = document.createElement('tr');
+          tr.dataset.id = orderData.ids[i];
+          const chkTd = document.createElement('td');
+          const chk = document.createElement('input');
+          chk.type = 'checkbox';
+          chk.checked = selectedIds.has(orderData.ids[i]);
+          chk.addEventListener('click', e => {
+            e.stopPropagation();
+            toggle(orderData.ids[i], chk.checked, tr);
+          });
+          chkTd.appendChild(chk);
+          tr.appendChild(chkTd);
+          const fields = [
+            orderData.ids[i],
+            orderData.persianDates[i],
+            orderData.names[i],
+            orderData.sns[i],
+            orderData.prices[i],
+            orderData.paidPrices[i]
+          ];
+          fields.forEach((f, idx) => {
+            const td = document.createElement('td');
+            if (idx >= 4) {
+              td.textContent = formatNumber(f);
+              if (idx === 5) {
+                const diff = Number(orderData.prices[i]) - Number(orderData.paidPrices[i]);
+                if (diff > 0 && Number(orderData.prices[i])) {
+                  const pct = Math.round(diff / Number(orderData.prices[i]) * 100);
+                  const info = document.createElement('div');
+                  info.className = 'discount-info';
+                  info.textContent = '-' + formatNumber(diff) + ' (' + formatNumber(pct) + '%)';
+                  td.appendChild(info);
+                }
+              }
+            } else {
+              td.textContent = f;
+            }
+            tr.appendChild(td);
+          });
+          tr.addEventListener('click', () => {
+            const checked = !chk.checked;
+            chk.checked = checked;
+            toggle(orderData.ids[i], checked, tr);
+            const search = document.getElementById('orderSearch');
+            if (search.value) {
+              search.value = '';
+              renderRows(allIndices);
+              search.focus();
+            }
+          });
+          tr.classList.toggle('selected', chk.checked);
+          tbody.appendChild(tr);
+        });
+        updateTotal();
+      }
+
+      function toggle(id, checked, tr){
+        tr.classList.toggle('selected', checked);
+        if (checked) {
+          selectedIds.add(id);
+        } else {
+          selectedIds.delete(id);
+        }
+        updateTotal();
+      }
+
+      function updateTotal(){
+        let sum = 0;
+        selectedIds.forEach(id => {
+          const i = idIndex[id];
+          sum += Number(orderData.paidPrices[i]) || 0;
+        });
+        totalEl.textContent = formatNumber(sum);
+      }
+
       function filterOrders(){
         const q = document.getElementById('orderSearch').value.trim().toLowerCase();
         const en = toEnglishDigits(q);
-        Array.from(tbody.rows).forEach((row, i) => {
+        const filtered = allIndices.filter(i => {
           const data = [
             orderData.ids[i], orderData.persianIds[i],
             orderData.sns[i], orderData.persianSNS[i],
             orderData.names[i].toLowerCase(),
-            String(orderData.dates[i]).split(' ')[0]
+            orderData.persianDates[i].split(' ')[0]
           ].join(' ');
           const dataEn = toEnglishDigits(data);
-          const show = data.indexOf(q) > -1 || dataEn.indexOf(en) > -1;
-          row.style.display = show ? '' : 'none';
+          return data.indexOf(q) > -1 || dataEn.indexOf(en) > -1;
         });
+        renderRows(filtered);
       }
+
       document.getElementById('orderSearch').addEventListener('input', filterOrders);
       document.getElementById('orderSearch').focus();
+
+      renderRows(allIndices);
+
       document.getElementById('cancelBtn').addEventListener('click', () => {
-        const selected = Array.from(tbody.querySelectorAll('input[type="checkbox"]')).filter(c => c.checked).map(c => c.closest('tr').dataset.id);
+        const selected = Array.from(selectedIds);
         google.script.run.withSuccessHandler(() => google.script.host.close()).cancelOrders(selected);
       });
     </script>
