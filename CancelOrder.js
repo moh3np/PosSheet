@@ -1,19 +1,23 @@
 function showCancelDialog() {
   var ss = SpreadsheetApp.getActive();
+  var getValuesByName = function(name) {
+    var range = ss.getRangeByName(name);
+    return range ? range.getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}) : [];
+  };
   var orderData = {
-    ids: ss.getRangeByName('OrderID').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    persianIds: ss.getRangeByName('OrderPersianID').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    names: ss.getRangeByName('OrderName').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    dates: ss.getRangeByName('OrderDate').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    persianDates: ss.getRangeByName('OrderPersianDate').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    sns: ss.getRangeByName('OrderSN').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    persianSNS: ss.getRangeByName('OrderPersianSN').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    prices: ss.getRangeByName('OrderPrice').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    paidPrices: ss.getRangeByName('OrderPaidPrice').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    skus: ss.getRangeByName('OrderSKU').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    uniqueCodes: ss.getRangeByName('OrderUniqueCode').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    sellers: ss.getRangeByName('OrderSeller').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;}),
-    locations: ss.getRangeByName('OrderLocation').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;})
+    ids: getValuesByName('OrderID'),
+    persianIds: getValuesByName('OrderPersianID'),
+    names: getValuesByName('OrderName'),
+    dates: getValuesByName('OrderDate'),
+    persianDates: getValuesByName('OrderPersianDate'),
+    sns: getValuesByName('OrderSN'),
+    persianSNS: getValuesByName('OrderPersianSN'),
+    prices: getValuesByName('OrderPrice'),
+    paidPrices: getValuesByName('OrderPaidPrice'),
+    skus: getValuesByName('OrderSKU'),
+    uniqueCodes: getValuesByName('OrderUniqueCode'),
+    sellers: getValuesByName('OrderSeller'),
+    locations: getValuesByName('OrderLocation')
   };
   var template = HtmlService.createTemplateFromFile('cancel');
   template.orderData = orderData;
