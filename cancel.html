@@ -120,13 +120,17 @@
       function toEnglishDigits(str){
         return String(str).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
       }
+      function toPersianDigits(str){
+        return String(str).replace(/\d/g, d => persianDigits[d]);
+      }
       function formatDateStr(str){
         if(!str) return '';
         const d = new Date(str);
         if(isNaN(d)) return str;
         const pad = n => n.toString().padStart(2,'0');
-        return d.getFullYear() + '/' + pad(d.getMonth()+1) + '/' + pad(d.getDate()) + ' ' +
+        const formatted = d.getFullYear() + '/' + pad(d.getMonth()+1) + '/' + pad(d.getDate()) + ' ' +
                pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+        return toPersianDigits(formatted);
       }
 
       const allIndices = orderData.ids.map((_,i)=>i);
