@@ -29,67 +29,11 @@ function submitOrder(items) {
   if (!items || !items.length) {
     return;
   }
-  var ss = SpreadsheetApp.getActive();
-  var idRange = ss.getRangeByName('OrderID');
-  var sheet = idRange.getSheet();
-  var idCol = idRange.getColumn();
-  var nameCol = ss.getRangeByName('OrderName').getColumn();
-  var skuCol = ss.getRangeByName('OrderSKU').getColumn();
-  var snCol = ss.getRangeByName('OrderSN').getColumn();
-  var dateCol = ss.getRangeByName('OrderDate').getColumn();
-  var priceCol = ss.getRangeByName('OrderPrice').getColumn();
-  var paidCol = ss.getRangeByName('OrderPaidPrice').getColumn();
-  var uniqueCodeCol = ss.getRangeByName('OrderUniqueCode').getColumn();
-  var locationCol = ss.getRangeByName('OrderLocation').getColumn();
-  var sellerCol = ss.getRangeByName('OrderSeller').getColumn();
-  var brandCol = ss.getRangeByName('OrderBrand').getColumn();
-
-  var idValues = idRange.getValues().map(function(r){ return r[0]; });
-  var lastId = 109;
-  idValues.forEach(function(v){
-    var num = Number(v);
-    if (!isNaN(num) && num > lastId) {
-      lastId = num;
-    }
-  });
-  var orderId = lastId + 1;
-  var nextIndex = 0;
-  while (nextIndex < idValues.length && idValues[nextIndex]) {
-    nextIndex++;
-  }
-  var nextRow = idRange.getRow() + nextIndex;
-
-  var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [], uniqueCodes = [], locations = [], sellers = [], brands = [];
   var dateStr = getPersianDateTime();
-  items.forEach(function(it) {
-    ids.push([orderId]);
-    names.push([it.name]);
-    skus.push([it.sku]);
-    sns.push([it.serial]);
-    dates.push([dateStr]);
-    prices.push([it.price]);
-    paid.push([it.paid]);
-    uniqueCodes.push([it.uniqueCode]);
-    locations.push([it.location]);
-    sellers.push([it.seller]);
-    brands.push([it.brand]);
-  });
-  sheet.getRange(nextRow, idCol, items.length, 1).setValues(ids);
-  sheet.getRange(nextRow, nameCol, items.length, 1).setValues(names);
-  sheet.getRange(nextRow, skuCol, items.length, 1).setValues(skus);
-  sheet.getRange(nextRow, snCol, items.length, 1).setValues(sns);
-  sheet.getRange(nextRow, dateCol, items.length, 1).setValues(dates);
-  sheet.getRange(nextRow, priceCol, items.length, 1).setValues(prices);
-  sheet.getRange(nextRow, paidCol, items.length, 1).setValues(paid);
-  sheet.getRange(nextRow, uniqueCodeCol, items.length, 1).setValues(uniqueCodes);
-  sheet.getRange(nextRow, locationCol, items.length, 1).setValues(locations);
-  sheet.getRange(nextRow, sellerCol, items.length, 1).setValues(sellers);
-  sheet.getRange(nextRow, brandCol, items.length, 1).setValues(brands);
-
-  handleExternalOrders(orderId, dateStr, items);
+  handleExternalOrders(dateStr, items);
 }
 
-function handleExternalOrders(orderId, dateStr, items) {
+function handleExternalOrders(dateStr, items) {
   var tlItems = items.filter(function(it){ return it.sku && it.sku.indexOf('TL') === 0; });
   if (tlItems.length) {
     processExternalOrder({
@@ -108,7 +52,7 @@ function handleExternalOrders(orderId, dateStr, items) {
         brand: 'OrderBrand'
       },
       inventoryRange: 'InventorySN'
-    }, tlItems, orderId, dateStr);
+    }, tlItems, dateStr);
   }
   var brItems = items.filter(function(it){ return it.sku && it.sku.indexOf('BR') === 0; });
   if (brItems.length) {
@@ -128,11 +72,11 @@ function handleExternalOrders(orderId, dateStr, items) {
         brand: 'StoreOrderBrand'
       },
       inventoryRange: 'InventorySN'
-    }, brItems, orderId, dateStr);
+    }, brItems, dateStr);
   }
 }
 
-function processExternalOrder(cfg, items, orderId, dateStr) {
+function processExternalOrder(cfg, items, dateStr) {
   var ss = SpreadsheetApp.openById(cfg.spreadsheetId);
   var idRange = ss.getRangeByName(cfg.rangeNames.id);
   if (!idRange) return;
@@ -154,6 +98,14 @@ function processExternalOrder(cfg, items, orderId, dateStr) {
   var brandCol = brandRange ? brandRange.getColumn() : null;
 
   var idValues = idRange.getValues().map(function(r){ return r[0]; });
+  var lastId = 0;
+  idValues.forEach(function(v){
+    var num = Number(v);
+    if (!isNaN(num) && num > lastId) {
+      lastId = num;
+    }
+  });
+  var orderId = lastId + 1;
   var nextIndex = 0;
   while (nextIndex < idValues.length && idValues[nextIndex]) {
     nextIndex++;
@@ -164,7 +116,7 @@ function processExternalOrder(cfg, items, orderId, dateStr) {
   items.forEach(function(it) {
     ids.push([orderId]);
     names.push([it.name]);
-    skus.push([it.sku]);
+    skus.push([it.sku ? it.sku.replace(/\D/g, '') : '']);
     sns.push([it.serial]);
     dates.push([dateStr]);
     prices.push([it.price]);
