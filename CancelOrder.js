@@ -4,7 +4,7 @@ function showCancelDialog() {
     var range = ss.getRangeByName(name);
     return range ? range.getValues().map(function(r){return r[0];}) : [];
   };
-  var ids = getValuesByName('OrderID').slice(1).filter(String);
+  var ids = getValuesByName('OrderID').slice(1).filter(String).map(String);
   var len = ids.length;
   var slice = function(arr){ return arr.slice(1, len + 1); };
   var orderData = {
@@ -32,11 +32,12 @@ function showCancelDialog() {
 
 function cancelOrders(orderIds) {
   if (!orderIds || !orderIds.length) return;
+  orderIds = orderIds.map(String);
   var tlSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
   var getValues = function(ss, name){
     return ss.getRangeByName(name).getValues().map(function(r){ return r[0]; });
   };
-  var ids = getValues(tlSs, 'OrderID').slice(1);
+  var ids = getValues(tlSs, 'OrderID').slice(1).map(String);
   var len = ids.length;
   var skus = getValues(tlSs, 'OrderSKU').slice(1, len + 1);
   var locations = getValues(tlSs, 'OrderLocation').slice(1, len + 1);
