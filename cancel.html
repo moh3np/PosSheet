@@ -40,6 +40,11 @@
       tr {
         cursor:pointer;
       }
+      tr.cancelled {
+        background:#e0e0e0;
+        color:#888;
+        cursor:default;
+      }
       .discount-info {
         font-size:12px;
         color:#d32f2f;
@@ -92,6 +97,7 @@
           <th>شماره سفارش</th>
           <th>تاریخ</th>
           <th>نام محصول</th>
+          <th>برند</th>
           <th>سریال</th>
           <th>قیمت محصول</th>
           <th>مبلغ پرداختی</th>
@@ -144,10 +150,6 @@
           const chk = document.createElement('input');
           chk.type = 'checkbox';
           chk.checked = selectedIds.has(orderData.ids[i]);
-          chk.addEventListener('click', e => {
-            e.stopPropagation();
-            toggle(orderData.ids[i], chk.checked, tr);
-          });
           chkTd.appendChild(chk);
           tr.appendChild(chkTd);
           const date = formatDateStr(orderData.persianDates[i] || orderData.dates[i] || '');
@@ -155,15 +157,16 @@
             orderData.ids[i],
             date,
             orderData.names[i],
+            orderData.brands[i],
             orderData.sns[i],
             orderData.prices[i],
             orderData.paidPrices[i]
           ];
           fields.forEach((f, idx) => {
             const td = document.createElement('td');
-            if (idx >= 4) {
+            if (idx >= 5) {
               td.textContent = formatNumber(f);
-              if (idx === 5) {
+              if (idx === 6) {
                 const diff = Number(orderData.prices[i]) - Number(orderData.paidPrices[i]);
                 if (diff > 0 && Number(orderData.prices[i])) {
                   const pct = Math.round(diff / Number(orderData.prices[i]) * 100);
@@ -181,17 +184,26 @@
             }
             tr.appendChild(td);
           });
-          tr.addEventListener('click', () => {
-            const checked = !chk.checked;
-            chk.checked = checked;
-            toggle(orderData.ids[i], checked, tr);
-            const search = document.getElementById('orderSearch');
-            if (search.value) {
-              search.value = '';
-              renderRows(allIndices);
-              search.focus();
-            }
-          });
+          if (!orderData.cancellations[i]) {
+            chk.addEventListener('click', e => {
+              e.stopPropagation();
+              toggle(orderData.ids[i], chk.checked, tr);
+            });
+            tr.addEventListener('click', () => {
+              const checked = !chk.checked;
+              chk.checked = checked;
+              toggle(orderData.ids[i], checked, tr);
+              const search = document.getElementById('orderSearch');
+              if (search.value) {
+                search.value = '';
+                renderRows(allIndices);
+                search.focus();
+              }
+            });
+          } else {
+            chk.disabled = true;
+            tr.classList.add('cancelled');
+          }
           tr.classList.toggle('selected', chk.checked);
           tbody.appendChild(tr);
         });
@@ -226,7 +238,7 @@
           const data = [
             orderData.ids[i], orderData.persianIds[i],
             orderData.sns[i], orderData.persianSNS[i],
-            name,
+            name, orderData.brands[i],
             date
           ].join(' ');
           const dataEn = toEnglishDigits(data);
