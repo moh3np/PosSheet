@@ -41,7 +41,7 @@ function cancelOrders(orderIds) {
   var skus = getValues(tlSs, 'OrderSKU').slice(1, len + 1);
   var locations = getValues(tlSs, 'OrderLocation').slice(1, len + 1);
   var names = getValues(tlSs, 'OrderName').slice(1, len + 1);
-  var prices = getValues(tlSs, 'OrderPrice').slice(1, len + 1);
+  // price values are intentionally ignored when returning cancelled items to inventory
   var sellers = getValues(tlSs, 'OrderSeller').slice(1, len + 1);
   var sns = getValues(tlSs, 'OrderSN').slice(1, len + 1);
   var uniques = getValues(tlSs, 'OrderUniqueCode').slice(1, len + 1);
@@ -64,7 +64,6 @@ function cancelOrders(orderIds) {
     appendToInventory(tlSs, {
       location: locations[idx],
       name: names[idx],
-      price: prices[idx],
       seller: sellers[idx],
       sku: skus[idx],
       sn: sns[idx],
@@ -82,7 +81,6 @@ function cancelOrders(orderIds) {
     var data = {
       location: brSs.getRangeByName('StoreOrderLocation').getCell(idx + 2, 1).getValue(),
       name: brSs.getRangeByName('StoreOrderName').getCell(idx + 2, 1).getValue(),
-      price: brSs.getRangeByName('StoreOrderPrice').getCell(idx + 2, 1).getValue(),
       seller: brSs.getRangeByName('StoreOrderSeller').getCell(idx + 2, 1).getValue(),
       sku: sku,
       sn: brSs.getRangeByName('StoreOrderSN').getCell(idx + 2, 1).getValue(),
@@ -98,7 +96,6 @@ function cancelOrders(orderIds) {
     var row = sheet.getLastRow() + 1;
     sheet.getRange(row, locRange.getColumn()).setValue(data.location);
     sheet.getRange(row, ss.getRangeByName(isStore ? 'InventoryProductName' : 'InventoryName').getColumn()).setValue(data.name);
-    sheet.getRange(row, ss.getRangeByName('InventoryPrice').getColumn()).setValue(data.price);
     sheet.getRange(row, ss.getRangeByName('InventorySupplier').getColumn()).setValue(data.seller);
     sheet.getRange(row, ss.getRangeByName('InventorySKU').getColumn()).setValue(data.sku);
     sheet.getRange(row, ss.getRangeByName('InventorySN').getColumn()).setValue(data.sn);
