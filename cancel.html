@@ -122,9 +122,6 @@
       function formatNumber(num){
         return Number(num || 0).toLocaleString('fa-IR').replace(/٬/g, ',');
       }
-      function parseNumber(str){
-        return Number(String(str).replace(/,/g, '').replace(/[۰-۹]/g, d => persianDigits.indexOf(d))) || 0;
-      }
       function toEnglishDigits(str){
         return String(str).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
       }
@@ -168,11 +165,9 @@
             if (idx >= 4) {
               td.textContent = formatNumber(f);
               if (idx === 5) {
-                const price = parseNumber(orderData.prices[i]);
-                const paid = parseNumber(orderData.paidPrices[i]);
-                const diff = price - paid;
-                if (diff > 0 && price) {
-                  const pct = Math.round(diff / price * 100);
+                const diff = Number(orderData.prices[i]) - Number(orderData.paidPrices[i]);
+                if (diff > 0 && Number(orderData.prices[i])) {
+                  const pct = Math.round(diff / Number(orderData.prices[i]) * 100);
                   const info = document.createElement('div');
                   info.className = 'discount-info';
                   info.textContent = '-' + formatNumber(diff) + ' (' + formatNumber(pct) + '%)';
@@ -227,7 +222,7 @@
         let sum = 0;
         selectedIds.forEach(id => {
           const i = idIndex[id];
-          sum += parseNumber(orderData.paidPrices[i]);
+          sum += Number(orderData.paidPrices[i]) || 0;
         });
         totalEl.textContent = formatNumber(sum);
       }
@@ -257,7 +252,6 @@
 
       document.getElementById('cancelBtn').addEventListener('click', () => {
         const selected = Array.from(selectedIds);
-        if (!selected.length) return;
         google.script.run.withSuccessHandler(() => {
           google.script.host.close();
           google.script.run.showSaleDialog();
