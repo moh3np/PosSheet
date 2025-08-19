@@ -123,32 +123,56 @@ function cancelOrders(orderIds) {
   var cancelRange = tlSs.getRangeByName('OrderCancellation');
   Logger.log('رنج OrderCancellation دریافت شد.');
 
+  // دریافت داده‌های شیت BR برای پشتیبانی از لغو سفارشات با پیشوند BR
+  var brSs = SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8');
+  Logger.log('شیت BR با موفقیت باز شد.');
+  var brIds = getValues(brSs, 'StoreOrderID').map(function(id){ return String(id); });
+  Logger.log('تعداد شناسه‌های BR: %s', brIds.length);
+  var brSkus = getValues(brSs, 'StoreOrderSKU')
+    .map(function(s){ return s != null ? String(s) : ''; })
+    .slice(0, brIds.length);
+  var brLocations = getValues(brSs, 'StoreOrderLocation').slice(0, brIds.length);
+  var brNames = getValues(brSs, 'StoreOrderName').slice(0, brIds.length);
+  var brSellers = getValues(brSs, 'StoreOrderSeller').slice(0, brIds.length);
+  var brSns = getValues(brSs, 'StoreOrderSN').slice(0, brIds.length);
+  var brUniques = getValues(brSs, 'StoreOrderUniqueCode').slice(0, brIds.length);
+  var brBrands = getValues(brSs, 'StoreOrderBrand').slice(0, brIds.length);
+  var brCancelRange = brSs.getRangeByName('StoreOrderCancellation');
+  Logger.log('رنج StoreOrderCancellation دریافت شد.');
+
   orderIds.forEach(function(id){
     Logger.log('--- بررسی شناسه %s (نوع: %s) ---', id, typeof id);
     Logger.log('آرایه شناسه‌ها: %s', JSON.stringify(ids));
     var idx = ids.indexOf(id);
-    if (idx < 0) {
-      Logger.log('شناسه %s در TL یافت نشد. آرایه: %s', id, JSON.stringify(ids));
-      return;
-    }
-    Logger.log('شناسه در سطر %s یافت شد', idx + 2);
-    var sku = String(skus[idx] || '');
-    Logger.log('SKU مربوطه: %s', sku);
-    Logger.log('اطلاعات ردیف انتخاب‌شده: location=%s, name=%s, seller=%s, sn=%s, unique=%s, brand=%s',
-               locations[idx], names[idx], sellers[idx], sns[idx], uniques[idx], brands[idx]);
-    var prefix = sku.slice(0,2).toUpperCase();
-    if (prefix === 'BR') {
-      Logger.log('نوع سفارش BR است، اجرای handleBR');
-      handleBR(sku);
-    } else if (prefix === 'TL' || /^\d+$/.test(sku)) {
-      if (prefix === 'TL') {
-        Logger.log('نوع سفارش TL است، اجرای handleTL');
+    if (idx >= 0) {
+      Logger.log('شناسه در TL و در سطر %s یافت شد', idx + 2);
+      var sku = String(skus[idx] || '');
+      Logger.log('SKU مربوطه: %s', sku);
+      Logger.log('اطلاعات ردیف انتخاب‌شده: location=%s, name=%s, seller=%s, sn=%s, unique=%s, brand=%s',
+                 locations[idx], names[idx], sellers[idx], sns[idx], uniques[idx], brands[idx]);
+      var prefix = sku.slice(0,2).toUpperCase();
+      if (prefix === 'BR') {
+        Logger.log('نوع سفارش BR است، اجرای handleBR');
+        handleBR(brIds.indexOf(id));
+      } else if (prefix === 'TL' || /^\d+$/.test(sku)) {
+        if (prefix === 'TL') {
+          Logger.log('نوع سفارش TL است، اجرای handleTL');
+        } else {
+          Logger.log('پیشوند SKU موجود نیست یا شناخته نشد، انجام handleTL به طور پیش‌فرض');
+        }
+        handleTL(idx);
       } else {
-        Logger.log('پیشوند SKU موجود نیست یا شناخته نشد، انجام handleTL به طور پیش‌فرض');
+        Logger.log('پیشوند SKU ناشناخته است: %s', sku);
       }
-      handleTL(idx);
     } else {
-      Logger.log('پیشوند SKU ناشناخته است: %s', sku);
+      // تلاش برای یافتن شناسه در شیت BR
+      var brIdx = brIds.indexOf(id);
+      if (brIdx >= 0) {
+        Logger.log('شناسه %s در BR و در سطر %s یافت شد', id, brIdx + 2);
+        handleBR(brIdx);
+      } else {
+        Logger.log('شناسه %s نه در TL و نه در BR یافت نشد', id);
+      }
     }
   });
 
@@ -175,32 +199,26 @@ function cancelOrders(orderIds) {
     appendToInventory(tlSs, data, false);
   }
 
-  function handleBR(sku){
-    Logger.log('شروع handleBR برای SKU: %s', sku);
-    var brSs = SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8');
-    Logger.log('شیت BR با موفقیت باز شد');
-    var bSkus = getValues(brSs, 'StoreOrderSKU');
-    Logger.log('تعداد SKU های BR: %s', bSkus.length);
-    Logger.log('لیست SKU های BR: %s', JSON.stringify(bSkus));
-    var idx = bSkus.indexOf(sku);
+  function handleBR(idx){
     if (idx < 0) {
-      Logger.log('SKU %s در BR یافت نشد', sku);
+      Logger.log('شاخص نامعتبر برای BR: %s', idx);
       return;
     }
+    Logger.log('شروع handleBR برای سطر %s', idx + 2);
     try {
-      brSs.getRangeByName('StoreOrderCancellation').getCell(idx + 2, 1).setValue(true);
+      brCancelRange.getCell(idx + 2, 1).setValue(true);
       Logger.log('لغو سفارش BR در سطر %s ثبت شد', idx + 2);
     } catch(e) {
       Logger.log('خطا در تنظیم لغو سفارش BR: %s', e);
     }
     var data = {
-      location: brSs.getRangeByName('StoreOrderLocation').getCell(idx + 2, 1).getValue(),
-      name: brSs.getRangeByName('StoreOrderName').getCell(idx + 2, 1).getValue(),
-      seller: brSs.getRangeByName('StoreOrderSeller').getCell(idx + 2, 1).getValue(),
-      sku: sku,
-      sn: brSs.getRangeByName('StoreOrderSN').getCell(idx + 2, 1).getValue(),
-      unique: brSs.getRangeByName('StoreOrderUniqueCode').getCell(idx + 2, 1).getValue(),
-      brand: brSs.getRangeByName('StoreOrderBrand').getCell(idx + 2, 1).getValue()
+      location: brLocations[idx],
+      name: brNames[idx],
+      seller: brSellers[idx],
+      sku: brSkus[idx],
+      sn: brSns[idx],
+      unique: brUniques[idx],
+      brand: brBrands[idx]
     };
     Logger.log('داده‌های ارسال به موجودی BR: %s', JSON.stringify(data));
     appendToInventory(brSs, data, true);
