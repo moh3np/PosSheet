@@ -96,7 +96,7 @@ function cancelOrders(orderIds) {
     if (idx < 0) return;
     var sku = skus[idx] || '';
     if (sku.slice(0,2).toUpperCase() === 'BR') {
-      handleBR(sku);
+      handleBR(sku, sns[idx]);
     } else if (sku.slice(0,2).toUpperCase() === 'TL') {
       handleTL(idx);
     }
@@ -115,10 +115,10 @@ function cancelOrders(orderIds) {
     }, false);
   }
 
-  function handleBR(sku){
+  function handleBR(sku, sn){
     var brSs = SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8');
-    var bSkus = getValues(brSs, 'StoreOrderSKU');
-    var idx = bSkus.indexOf(sku);
+    var bSns = getValues(brSs, 'StoreOrderSN');
+    var idx = bSns.indexOf(sn);
     if (idx < 0) return;
     brSs.getRangeByName('StoreOrderCancellation').getCell(idx + 2, 1).setValue(true);
     var data = {
@@ -126,7 +126,7 @@ function cancelOrders(orderIds) {
       name: brSs.getRangeByName('StoreOrderName').getCell(idx + 2, 1).getValue(),
       seller: brSs.getRangeByName('StoreOrderSeller').getCell(idx + 2, 1).getValue(),
       sku: sku,
-      sn: brSs.getRangeByName('StoreOrderSN').getCell(idx + 2, 1).getValue(),
+      sn: sn,
       unique: brSs.getRangeByName('StoreOrderUniqueCode').getCell(idx + 2, 1).getValue(),
       brand: brSs.getRangeByName('StoreOrderBrand').getCell(idx + 2, 1).getValue()
     };
