@@ -7,10 +7,8 @@ function onOpen() {
 }
 
 function showSaleDialog() {
-  var data = getInventoryData();
-  var template = HtmlService.createTemplateFromFile('sale');
-  template.inventoryData = data;
-  var html = template.evaluate()
+  var html = HtmlService.createTemplateFromFile('sale')
+    .evaluate()
     .setWidth(1200)
     .setHeight(800);
   SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
