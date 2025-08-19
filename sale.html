@@ -294,7 +294,7 @@
       <button class="submit">ثبت سفارش</button>
     </div>
     <script>
-      let inventoryData = <?!= JSON.stringify(inventoryData) ?>;
+      let inventoryData = {};
       const productList = document.getElementById('productList');
       let snIndex, persianSnIndex, nameIndex, inventoryCounts, uniqueNames;
 
@@ -325,10 +325,13 @@
           opt.value = name;
           productList.appendChild(opt);
         });
+        snInput.disabled = false;
+        snInput.focus();
       }
 
-      loadInventoryData(inventoryData);
       const snInput = document.querySelector('.sn');
+      snInput.disabled = true;
+      google.script.run.withSuccessHandler(loadInventoryData).getInventoryData();
       const tbody = document.querySelector('#productTable tbody');
       const totalEl = document.getElementById('total');
       const finalAmountInput = document.getElementById('finalAmount');
@@ -693,8 +696,6 @@
           google.script.run.withSuccessHandler(loadInventoryData).getInventoryData();
         }, 5000);
       }
-
-      setTimeout(() => snInput.focus(), 0);
     </script>
   </body>
 </html>
