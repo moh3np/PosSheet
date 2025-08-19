@@ -1,19 +1,19 @@
 function showCancelDialog() {
   var ss = SpreadsheetApp.getActive();
+  var baseRange = ss.getRangeByName('OrderID');
+  if (!baseRange) return;
+  var sheet = baseRange.getSheet();
+  var lastRow = sheet.getLastRow();
   var getValuesByName = function(name) {
     var range = ss.getRangeByName(name);
     if (!range) return [];
-    var sheet = range.getSheet();
     var startRow = range.getRow() + 1;
     var col = range.getColumn();
-    var lastRow = sheet.getRange(sheet.getMaxRows(), col)
-      .getNextDataCell(SpreadsheetApp.Direction.UP)
-      .getRow();
     if (lastRow < startRow) return [];
-    return sheet.getRange(startRow, col, lastRow - startRow + 1, 1)
+    return sheet
+      .getRange(startRow, col, lastRow - startRow + 1, 1)
       .getValues()
-      .map(function(r){return r[0];})
-      .filter(String);
+      .map(function(r){return r[0];});
   };
   var ids = getValuesByName('OrderID');
   var len = ids.length;
@@ -44,20 +44,24 @@ function showCancelDialog() {
 function cancelOrders(orderIds) {
   if (!orderIds || !orderIds.length) return;
   var tlSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
+  var lastRows = {};
   var getValues = function(ss, name){
     var range = ss.getRangeByName(name);
     if (!range) return [];
     var sheet = range.getSheet();
+    var sheetId = sheet.getSheetId();
+    var lastRow = lastRows[sheetId];
+    if (!lastRow) {
+      lastRow = sheet.getLastRow();
+      lastRows[sheetId] = lastRow;
+    }
     var startRow = range.getRow() + 1;
     var col = range.getColumn();
-    var lastRow = sheet.getRange(sheet.getMaxRows(), col)
-      .getNextDataCell(SpreadsheetApp.Direction.UP)
-      .getRow();
     if (lastRow < startRow) return [];
-    return sheet.getRange(startRow, col, lastRow - startRow + 1, 1)
+    return sheet
+      .getRange(startRow, col, lastRow - startRow + 1, 1)
       .getValues()
-      .map(function(r){return r[0];})
-      .filter(String);
+      .map(function(r){return r[0];});
   };
   var ids = getValues(tlSs, 'OrderID');
   var len = ids.length;

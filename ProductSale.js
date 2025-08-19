@@ -16,32 +16,39 @@ function showSaleDialog() {
   SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
 }
 
-function getColumnValues(rangeName) {
+function getColumnValues(rangeName, sheet, lastRow) {
   var range = SpreadsheetApp.getActive().getRangeByName(rangeName);
   if (!range) return [];
-  var sheet = range.getSheet();
+  sheet = sheet || range.getSheet();
+  if (lastRow === undefined) {
+    lastRow = sheet.getLastRow();
+  }
   var startRow = range.getRow() + 1;
   var col = range.getColumn();
-  var lastRow = sheet.getRange(sheet.getMaxRows(), col)
-    .getNextDataCell(SpreadsheetApp.Direction.UP)
-    .getRow();
   if (lastRow < startRow) return [];
-  return sheet.getRange(startRow, col, lastRow - startRow + 1, 1)
+  return sheet
+    .getRange(startRow, col, lastRow - startRow + 1, 1)
     .getValues()
-    .map(function(r){return r[0];})
-    .filter(String);
+    .map(function(r){return r[0];});
 }
 
 function getInventoryData() {
-  var names = getColumnValues('InventoryName');
-  var sns = getColumnValues('InventorySN');
-  var persianSns = getColumnValues('InventoryPersianSN');
-  var skus = getColumnValues('InventorySKU');
-  var locations = getColumnValues('InventoryLocation');
-  var prices = getColumnValues('InventoryPrice');
-  var uniqueCodes = getColumnValues('InventoryUniqueCode');
-  var brands = getColumnValues('InventoryBrand');
-  var sellers = getColumnValues('InventorySeller');
+  var ss = SpreadsheetApp.getActive();
+  var baseRange = ss.getRangeByName('InventoryName');
+  if (!baseRange) {
+    return {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
+  }
+  var sheet = baseRange.getSheet();
+  var lastRow = sheet.getLastRow();
+  var names = getColumnValues('InventoryName', sheet, lastRow);
+  var sns = getColumnValues('InventorySN', sheet, lastRow);
+  var persianSns = getColumnValues('InventoryPersianSN', sheet, lastRow);
+  var skus = getColumnValues('InventorySKU', sheet, lastRow);
+  var locations = getColumnValues('InventoryLocation', sheet, lastRow);
+  var prices = getColumnValues('InventoryPrice', sheet, lastRow);
+  var uniqueCodes = getColumnValues('InventoryUniqueCode', sheet, lastRow);
+  var brands = getColumnValues('InventoryBrand', sheet, lastRow);
+  var sellers = getColumnValues('InventorySeller', sheet, lastRow);
   return {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
 }
 
