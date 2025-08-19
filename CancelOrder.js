@@ -102,7 +102,9 @@ function cancelOrders(orderIds) {
   Logger.log('لیست شناسه‌ها: %s', JSON.stringify(ids));
   Logger.log('انواع عناصر شناسه‌ها: %s', JSON.stringify(ids.map(function(x){return typeof x;})));
 
-  var skus = getValues(tlSs, 'OrderSKU').slice(0, len);
+  var skus = getValues(tlSs, 'OrderSKU')
+    .map(function(s){ return s != null ? String(s) : ''; })
+    .slice(0, len);
   Logger.log('لیست SKU ها: %s', JSON.stringify(skus));
 
   var locations = getValues(tlSs, 'OrderLocation').slice(0, len);
@@ -130,7 +132,7 @@ function cancelOrders(orderIds) {
       return;
     }
     Logger.log('شناسه در سطر %s یافت شد', idx + 2);
-    var sku = skus[idx] || '';
+    var sku = String(skus[idx] || '');
     Logger.log('SKU مربوطه: %s', sku);
     Logger.log('اطلاعات ردیف انتخاب‌شده: location=%s, name=%s, seller=%s, sn=%s, unique=%s, brand=%s',
                locations[idx], names[idx], sellers[idx], sns[idx], uniques[idx], brands[idx]);
