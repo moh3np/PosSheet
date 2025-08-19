@@ -294,7 +294,7 @@
       <button class="submit">ثبت سفارش</button>
     </div>
     <script>
-      let inventoryData = {};
+      let inventoryData = <?!= JSON.stringify(inventoryData) ?>;
       const productList = document.getElementById('productList');
       let snIndex, persianSnIndex, nameIndex, inventoryCounts, uniqueNames;
 
@@ -327,7 +327,7 @@
         });
       }
 
-      google.script.run.withSuccessHandler(loadInventoryData).getInventoryData();
+      loadInventoryData(inventoryData);
       const snInput = document.querySelector('.sn');
       const tbody = document.querySelector('#productTable tbody');
       const totalEl = document.getElementById('total');
