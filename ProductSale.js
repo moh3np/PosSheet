@@ -146,8 +146,11 @@ function processExternalOrder(cfg, items, dateStr) {
   items.forEach(function(it) {
     var invRange = ss.getRangeByName(cfg.inventoryRange);
     if (!invRange) return;
-    var values = invRange.getValues().map(function(r){ return r[0]; });
-    var idx = values.indexOf(it.serial);
+    var values = invRange.getValues().map(function(r){
+      return String(r[0]).trim();
+    });
+    var targetSn = String(it.serial).trim();
+    var idx = values.indexOf(targetSn);
     if (idx > -1) {
       invRange.getSheet().deleteRow(invRange.getRow() + idx);
     }
