@@ -108,7 +108,8 @@ function processExternalOrder(cfg, items, dateStr) {
   var sellerCol = sellerRange ? sellerRange.getColumn() : null;
   var brandCol = brandRange ? brandRange.getColumn() : null;
 
-  var idValues = idRange.getValues().map(function(r){ return r[0]; });
+  var idValuesRange = sheet.getRange(idRange.getRow(), idCol, sheet.getLastRow() - idRange.getRow() + 1, 1);
+  var idValues = idValuesRange.getValues().map(function(r){ return r[0]; });
   var lastId = 0;
   idValues.forEach(function(v){
     var num = Number(v);
