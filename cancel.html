@@ -115,7 +115,6 @@
       const tbody = document.querySelector('#orderTable tbody');
       const totalEl = document.getElementById('total');
       const selectedIds = new Set();
-      const idIndex = orderData.ids.reduce((o,id,i)=>(o[id]=i,o),{});
       const MAX_DISPLAY = 200;
       const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
 
@@ -145,6 +144,7 @@
         indices.slice(0, MAX_DISPLAY).forEach(i => {
           const tr = document.createElement('tr');
           tr.dataset.id = orderData.ids[i];
+          tr.dataset.paid = orderData.paidPrices[i] || 0;
           const chkTd = document.createElement('td');
           const chk = document.createElement('input');
           chk.type = 'checkbox';
@@ -220,9 +220,9 @@
 
       function updateTotal(){
         let sum = 0;
-        selectedIds.forEach(id => {
-          const i = idIndex[id];
-          sum += Number(orderData.paidPrices[i]) || 0;
+        tbody.querySelectorAll('input[type="checkbox"]:checked').forEach(chk => {
+          const tr = chk.closest('tr');
+          sum += Number(tr.dataset.paid) || 0;
         });
         totalEl.textContent = formatNumber(sum);
       }
@@ -251,7 +251,8 @@
       renderRows(allIndices);
 
       document.getElementById('cancelBtn').addEventListener('click', () => {
-        const selected = Array.from(selectedIds);
+        const selected = Array.from(tbody.querySelectorAll('input[type="checkbox"]:checked'))
+          .map(chk => chk.closest('tr').dataset.id);
         google.script.run.withSuccessHandler(() => {
           google.script.host.close();
           google.script.run.showSaleDialog();
