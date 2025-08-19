@@ -57,7 +57,7 @@ function handleExternalOrders(dateStr, items) {
   var brItems = items.filter(function(it){ return it.sku && it.sku.indexOf('BR') === 0; });
   if (brItems.length) {
     processExternalOrder({
-      spreadsheetId: 'Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8',
+      spreadsheetId: '12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8',
       rangeNames: {
         id: 'StoreOrderID',
         name: 'StoreOrderName',
