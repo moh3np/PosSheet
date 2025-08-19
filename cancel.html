@@ -114,7 +114,7 @@
       const orderData = <?!= JSON.stringify(orderData) ?>;
       const tbody = document.querySelector('#orderTable tbody');
       const totalEl = document.getElementById('total');
-      const selectedIds = new Set();
+      const selectedMap = new Map(); // sn -> sku
       const MAX_DISPLAY = 200;
       const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
 
@@ -143,12 +143,15 @@
         tbody.innerHTML = '';
         indices.slice(0, MAX_DISPLAY).forEach(i => {
           const tr = document.createElement('tr');
-          tr.dataset.id = orderData.ids[i];
+          const sn = String(orderData.sns[i]);
+          const sku = String(orderData.skus[i] || '');
+          tr.dataset.sn = sn;
+          tr.dataset.sku = sku;
           tr.dataset.paid = orderData.paidPrices[i] || 0;
           const chkTd = document.createElement('td');
           const chk = document.createElement('input');
           chk.type = 'checkbox';
-          chk.checked = selectedIds.has(orderData.ids[i]);
+          chk.checked = selectedMap.has(sn);
           chkTd.appendChild(chk);
           tr.appendChild(chkTd);
           const date = formatDateStr(orderData.persianDates[i] || orderData.dates[i] || '');
@@ -185,12 +188,12 @@
           if (!orderData.cancellations[i]) {
             chk.addEventListener('click', e => {
               e.stopPropagation();
-              toggle(orderData.ids[i], chk.checked, tr);
+              toggle(sn, sku, chk.checked, tr);
             });
             tr.addEventListener('click', () => {
               const checked = !chk.checked;
               chk.checked = checked;
-              toggle(orderData.ids[i], checked, tr);
+              toggle(sn, sku, checked, tr);
               const search = document.getElementById('orderSearch');
               if (search.value) {
                 search.value = '';
@@ -208,12 +211,12 @@
         updateTotal();
       }
 
-      function toggle(id, checked, tr){
+      function toggle(sn, sku, checked, tr){
         tr.classList.toggle('selected', checked);
         if (checked) {
-          selectedIds.add(id);
+          selectedMap.set(sn, sku);
         } else {
-          selectedIds.delete(id);
+          selectedMap.delete(sn);
         }
         updateTotal();
       }
@@ -251,8 +254,8 @@
       renderRows(allIndices);
 
       document.getElementById('cancelBtn').addEventListener('click', () => {
-        const selected = Array.from(tbody.querySelectorAll('input[type="checkbox"]:checked'))
-          .map(chk => chk.closest('tr').dataset.id);
+        const selected = Array.from(selectedMap.entries())
+          .map(([sn, sku]) => ({ sn, sku }));
         google.script.run.withSuccessHandler(() => {
           google.script.host.close();
           google.script.run.showSaleDialog();
