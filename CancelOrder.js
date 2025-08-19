@@ -63,6 +63,8 @@ function cancelOrders(orderIds) {
     Logger.log('هیچ شناسه‌ای برای لغو سفارش ارسال نشده است.');
     return;
   }
+  // تبدیل شناسه‌های ورودی به رشته برای جلوگیری از ناسازگاری نوعی
+  orderIds = orderIds.map(String);
   var tlSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
   Logger.log('شیت TL با موفقیت باز شد.');
   var lastRows = {};
@@ -94,21 +96,28 @@ function cancelOrders(orderIds) {
     Logger.log('%s مقدار از رنج %s خوانده شد', vals.length, name);
     return vals;
   };
-  var ids = getValues(tlSs, 'OrderID');
+  var ids = getValues(tlSs, 'OrderID').map(function(id){ return String(id); });
   var len = ids.length;
   Logger.log('تعداد سفارشات موجود: %s', len);
   Logger.log('لیست شناسه‌ها: %s', JSON.stringify(ids));
+  Logger.log('انواع عناصر شناسه‌ها: %s', JSON.stringify(ids.map(function(x){return typeof x;})));
 
   var skus = getValues(tlSs, 'OrderSKU').slice(0, len);
   Logger.log('لیست SKU ها: %s', JSON.stringify(skus));
 
   var locations = getValues(tlSs, 'OrderLocation').slice(0, len);
+  Logger.log('لیست موقعیت‌ها: %s', JSON.stringify(locations));
   var names = getValues(tlSs, 'OrderName').slice(0, len);
+  Logger.log('لیست نام‌ها: %s', JSON.stringify(names));
   // price values are intentionally ignored when returning cancelled items to inventory
   var sellers = getValues(tlSs, 'OrderSeller').slice(0, len);
+  Logger.log('لیست فروشنده‌ها: %s', JSON.stringify(sellers));
   var sns = getValues(tlSs, 'OrderSN').slice(0, len);
+  Logger.log('لیست سریال‌ها: %s', JSON.stringify(sns));
   var uniques = getValues(tlSs, 'OrderUniqueCode').slice(0, len);
+  Logger.log('لیست کدهای یکتا: %s', JSON.stringify(uniques));
   var brands = getValues(tlSs, 'OrderBrand').slice(0, len);
+  Logger.log('لیست برندها: %s', JSON.stringify(brands));
   var cancelRange = tlSs.getRangeByName('OrderCancellation');
   Logger.log('رنج OrderCancellation دریافت شد.');
 
@@ -123,6 +132,8 @@ function cancelOrders(orderIds) {
     Logger.log('شناسه در سطر %s یافت شد', idx + 2);
     var sku = skus[idx] || '';
     Logger.log('SKU مربوطه: %s', sku);
+    Logger.log('اطلاعات ردیف انتخاب‌شده: location=%s, name=%s, seller=%s, sn=%s, unique=%s, brand=%s',
+               locations[idx], names[idx], sellers[idx], sns[idx], uniques[idx], brands[idx]);
     if (sku.slice(0,2).toUpperCase() === 'BR') {
       Logger.log('نوع سفارش BR است، اجرای handleBR');
       handleBR(sku);
@@ -163,6 +174,7 @@ function cancelOrders(orderIds) {
     Logger.log('شیت BR با موفقیت باز شد');
     var bSkus = getValues(brSs, 'StoreOrderSKU');
     Logger.log('تعداد SKU های BR: %s', bSkus.length);
+    Logger.log('لیست SKU های BR: %s', JSON.stringify(bSkus));
     var idx = bSkus.indexOf(sku);
     if (idx < 0) {
       Logger.log('SKU %s در BR یافت نشد', sku);
