@@ -294,32 +294,40 @@
       <button class="submit">ثبت سفارش</button>
     </div>
     <script>
-      const inventoryData = <?!= JSON.stringify(inventoryData) ?>;
-      const snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
-      const persianSnIndex = inventoryData.persianSNS.reduce((o, sn, i) => (o[sn] = i, o), {});
-      const nameIndex = inventoryData.names.reduce((o, name, i) => {
-        const key = name.toLowerCase();
-        (o[key] = o[key] || []).push(i);
-        return o;
-      }, {});
-      const inventoryCounts = inventoryData.names.reduce((o, name) => (o[name] = (o[name] || 0) + 1, o), {});
+      let inventoryData = <?!= JSON.stringify(inventoryData) ?>;
       const productList = document.getElementById('productList');
-      inventoryData.sns.forEach(sn => {
-        const opt = document.createElement('option');
-        opt.value = sn;
-        productList.appendChild(opt);
-      });
-      inventoryData.persianSNS.forEach(sn => {
-        const opt = document.createElement('option');
-        opt.value = sn;
-        productList.appendChild(opt);
-      });
-      const uniqueNames = Array.from(new Set(inventoryData.names));
-      uniqueNames.forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        productList.appendChild(opt);
-      });
+      let snIndex, persianSnIndex, nameIndex, inventoryCounts, uniqueNames;
+
+      function loadInventoryData(data){
+        inventoryData = data;
+        snIndex = inventoryData.sns.reduce((o, sn, i) => (o[sn] = i, o), {});
+        persianSnIndex = inventoryData.persianSNS.reduce((o, sn, i) => (o[sn] = i, o), {});
+        nameIndex = inventoryData.names.reduce((o, name, i) => {
+          const key = name.toLowerCase();
+          (o[key] = o[key] || []).push(i);
+          return o;
+        }, {});
+        inventoryCounts = inventoryData.names.reduce((o, name) => (o[name] = (o[name] || 0) + 1, o), {});
+        productList.innerHTML = '';
+        inventoryData.sns.forEach(sn => {
+          const opt = document.createElement('option');
+          opt.value = sn;
+          productList.appendChild(opt);
+        });
+        inventoryData.persianSNS.forEach(sn => {
+          const opt = document.createElement('option');
+          opt.value = sn;
+          productList.appendChild(opt);
+        });
+        uniqueNames = Array.from(new Set(inventoryData.names));
+        uniqueNames.forEach(name => {
+          const opt = document.createElement('option');
+          opt.value = name;
+          productList.appendChild(opt);
+        });
+      }
+
+      loadInventoryData(inventoryData);
       const snInput = document.querySelector('.sn');
       const tbody = document.querySelector('#productTable tbody');
       const totalEl = document.getElementById('total');
@@ -681,6 +689,9 @@
         updateInventoryDisplay();
         snInput.value = '';
         snInput.focus();
+        setTimeout(() => {
+          google.script.run.withSuccessHandler(loadInventoryData).getInventoryData();
+        }, 5000);
       }
 
       setTimeout(() => snInput.focus(), 0);

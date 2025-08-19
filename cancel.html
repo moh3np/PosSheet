@@ -252,7 +252,10 @@
 
       document.getElementById('cancelBtn').addEventListener('click', () => {
         const selected = Array.from(selectedIds);
-        google.script.run.withSuccessHandler(() => google.script.host.close()).cancelOrders(selected);
+        google.script.run.withSuccessHandler(() => {
+          google.script.host.close();
+          google.script.run.showSaleDialog();
+        }).cancelOrders(selected);
       });
     </script>
   </body>

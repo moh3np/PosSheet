@@ -7,6 +7,16 @@ function onOpen() {
 }
 
 function showSaleDialog() {
+  var data = getInventoryData();
+  var template = HtmlService.createTemplateFromFile('sale');
+  template.inventoryData = data;
+  var html = template.evaluate()
+    .setWidth(1200)
+    .setHeight(800);
+  SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
+}
+
+function getInventoryData() {
   var ss = SpreadsheetApp.getActive();
   var names = ss.getRangeByName('InventoryName').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
   var sns = ss.getRangeByName('InventorySN').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
@@ -17,12 +27,7 @@ function showSaleDialog() {
   var uniqueCodes = ss.getRangeByName('InventoryUniqueCode').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
   var brands = ss.getRangeByName('InventoryBrand').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
   var sellers = ss.getRangeByName('InventorySeller').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var template = HtmlService.createTemplateFromFile('sale');
-  template.inventoryData = {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
-  var html = template.evaluate()
-    .setWidth(1200)
-    .setHeight(800);
-  SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
+  return {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
 }
 
 function submitOrder(items) {
