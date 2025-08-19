@@ -16,17 +16,32 @@ function showSaleDialog() {
   SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
 }
 
+function getColumnValues(rangeName) {
+  var range = SpreadsheetApp.getActive().getRangeByName(rangeName);
+  if (!range) return [];
+  var sheet = range.getSheet();
+  var startRow = range.getRow() + 1;
+  var col = range.getColumn();
+  var lastRow = sheet.getRange(sheet.getMaxRows(), col)
+    .getNextDataCell(SpreadsheetApp.Direction.UP)
+    .getRow();
+  if (lastRow < startRow) return [];
+  return sheet.getRange(startRow, col, lastRow - startRow + 1, 1)
+    .getValues()
+    .map(function(r){return r[0];})
+    .filter(String);
+}
+
 function getInventoryData() {
-  var ss = SpreadsheetApp.getActive();
-  var names = ss.getRangeByName('InventoryName').getValues().slice(1).map(function(r){return r[0];});
-  var sns = ss.getRangeByName('InventorySN').getValues().slice(1).map(function(r){return r[0];});
-  var persianSns = ss.getRangeByName('InventoryPersianSN').getValues().slice(1).map(function(r){return r[0];});
-  var skus = ss.getRangeByName('InventorySKU').getValues().slice(1).map(function(r){return r[0];});
-  var locations = ss.getRangeByName('InventoryLocation').getValues().slice(1).map(function(r){return r[0];});
-  var prices = ss.getRangeByName('InventoryPrice').getValues().slice(1).map(function(r){return r[0];});
-  var uniqueCodes = ss.getRangeByName('InventoryUniqueCode').getValues().slice(1).map(function(r){return r[0];});
-  var brands = ss.getRangeByName('InventoryBrand').getValues().slice(1).map(function(r){return r[0];});
-  var sellers = ss.getRangeByName('InventorySeller').getValues().slice(1).map(function(r){return r[0];});
+  var names = getColumnValues('InventoryName');
+  var sns = getColumnValues('InventorySN');
+  var persianSns = getColumnValues('InventoryPersianSN');
+  var skus = getColumnValues('InventorySKU');
+  var locations = getColumnValues('InventoryLocation');
+  var prices = getColumnValues('InventoryPrice');
+  var uniqueCodes = getColumnValues('InventoryUniqueCode');
+  var brands = getColumnValues('InventoryBrand');
+  var sellers = getColumnValues('InventorySeller');
   return {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
 }
 
