@@ -2,11 +2,22 @@ function showCancelDialog() {
   var ss = SpreadsheetApp.getActive();
   var getValuesByName = function(name) {
     var range = ss.getRangeByName(name);
-    return range ? range.getValues().map(function(r){return r[0];}) : [];
+    if (!range) return [];
+    var sheet = range.getSheet();
+    var startRow = range.getRow() + 1;
+    var col = range.getColumn();
+    var lastRow = sheet.getRange(sheet.getMaxRows(), col)
+      .getNextDataCell(SpreadsheetApp.Direction.UP)
+      .getRow();
+    if (lastRow < startRow) return [];
+    return sheet.getRange(startRow, col, lastRow - startRow + 1, 1)
+      .getValues()
+      .map(function(r){return r[0];})
+      .filter(String);
   };
-  var ids = getValuesByName('OrderID').slice(1).filter(String);
+  var ids = getValuesByName('OrderID');
   var len = ids.length;
-  var slice = function(arr){ return arr.slice(1, len + 1); };
+  var slice = function(arr){ return arr.slice(0, len); };
   var orderData = {
     ids: ids,
     persianIds: slice(getValuesByName('OrderPersianID')),
@@ -34,18 +45,30 @@ function cancelOrders(orderIds) {
   if (!orderIds || !orderIds.length) return;
   var tlSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
   var getValues = function(ss, name){
-    return ss.getRangeByName(name).getValues().map(function(r){ return r[0]; });
+    var range = ss.getRangeByName(name);
+    if (!range) return [];
+    var sheet = range.getSheet();
+    var startRow = range.getRow() + 1;
+    var col = range.getColumn();
+    var lastRow = sheet.getRange(sheet.getMaxRows(), col)
+      .getNextDataCell(SpreadsheetApp.Direction.UP)
+      .getRow();
+    if (lastRow < startRow) return [];
+    return sheet.getRange(startRow, col, lastRow - startRow + 1, 1)
+      .getValues()
+      .map(function(r){return r[0];})
+      .filter(String);
   };
-  var ids = getValues(tlSs, 'OrderID').slice(1);
+  var ids = getValues(tlSs, 'OrderID');
   var len = ids.length;
-  var skus = getValues(tlSs, 'OrderSKU').slice(1, len + 1);
-  var locations = getValues(tlSs, 'OrderLocation').slice(1, len + 1);
-  var names = getValues(tlSs, 'OrderName').slice(1, len + 1);
+  var skus = getValues(tlSs, 'OrderSKU').slice(0, len);
+  var locations = getValues(tlSs, 'OrderLocation').slice(0, len);
+  var names = getValues(tlSs, 'OrderName').slice(0, len);
   // price values are intentionally ignored when returning cancelled items to inventory
-  var sellers = getValues(tlSs, 'OrderSeller').slice(1, len + 1);
-  var sns = getValues(tlSs, 'OrderSN').slice(1, len + 1);
-  var uniques = getValues(tlSs, 'OrderUniqueCode').slice(1, len + 1);
-  var brands = getValues(tlSs, 'OrderBrand').slice(1, len + 1);
+  var sellers = getValues(tlSs, 'OrderSeller').slice(0, len);
+  var sns = getValues(tlSs, 'OrderSN').slice(0, len);
+  var uniques = getValues(tlSs, 'OrderUniqueCode').slice(0, len);
+  var brands = getValues(tlSs, 'OrderBrand').slice(0, len);
   var cancelRange = tlSs.getRangeByName('OrderCancellation');
 
   orderIds.forEach(function(id){
@@ -74,7 +97,7 @@ function cancelOrders(orderIds) {
 
   function handleBR(sku){
     var brSs = SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8');
-    var bSkus = getValues(brSs, 'StoreOrderSKU').slice(1);
+    var bSkus = getValues(brSs, 'StoreOrderSKU');
     var idx = bSkus.indexOf(sku);
     if (idx < 0) return;
     brSs.getRangeByName('StoreOrderCancellation').getCell(idx + 2, 1).setValue(true);
