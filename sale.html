@@ -657,6 +657,12 @@
       });
       const submitBtn = document.querySelector('#footer .submit');
       submitBtn.addEventListener('click', function(){
+        if(finalAmountInput.value.trim() !== '' && finalAmountReminder.style.display !== 'none'){
+          const val = parseNumber(finalAmountInput.value);
+          finalAmountInput.value = formatNumber(val);
+          finalAmountReminder.style.display = 'none';
+          applyExtraDiscount(val);
+        }
         const rows = Array.from(tbody.querySelectorAll('tr'));
         if(!rows.length) return;
         const items = rows.map(row => {
