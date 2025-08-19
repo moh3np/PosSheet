@@ -18,15 +18,15 @@ function showSaleDialog() {
 
 function getInventoryData() {
   var ss = SpreadsheetApp.getActive();
-  var names = ss.getRangeByName('InventoryName').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var sns = ss.getRangeByName('InventorySN').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var persianSns = ss.getRangeByName('InventoryPersianSN').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var skus = ss.getRangeByName('InventorySKU').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var locations = ss.getRangeByName('InventoryLocation').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var prices = ss.getRangeByName('InventoryPrice').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var uniqueCodes = ss.getRangeByName('InventoryUniqueCode').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var brands = ss.getRangeByName('InventoryBrand').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
-  var sellers = ss.getRangeByName('InventorySeller').getValues().map(function(r){return r[0];}).filter(function(v,i){return v && i>0;});
+  var names = ss.getRangeByName('InventoryName').getValues().slice(1).map(function(r){return r[0];});
+  var sns = ss.getRangeByName('InventorySN').getValues().slice(1).map(function(r){return r[0];});
+  var persianSns = ss.getRangeByName('InventoryPersianSN').getValues().slice(1).map(function(r){return r[0];});
+  var skus = ss.getRangeByName('InventorySKU').getValues().slice(1).map(function(r){return r[0];});
+  var locations = ss.getRangeByName('InventoryLocation').getValues().slice(1).map(function(r){return r[0];});
+  var prices = ss.getRangeByName('InventoryPrice').getValues().slice(1).map(function(r){return r[0];});
+  var uniqueCodes = ss.getRangeByName('InventoryUniqueCode').getValues().slice(1).map(function(r){return r[0];});
+  var brands = ss.getRangeByName('InventoryBrand').getValues().slice(1).map(function(r){return r[0];});
+  var sellers = ss.getRangeByName('InventorySeller').getValues().slice(1).map(function(r){return r[0];});
   return {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
 }
 
