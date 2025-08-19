@@ -136,11 +136,16 @@ function cancelOrders(orderIds) {
     Logger.log('SKU مربوطه: %s', sku);
     Logger.log('اطلاعات ردیف انتخاب‌شده: location=%s, name=%s, seller=%s, sn=%s, unique=%s, brand=%s',
                locations[idx], names[idx], sellers[idx], sns[idx], uniques[idx], brands[idx]);
-    if (sku.slice(0,2).toUpperCase() === 'BR') {
+    var prefix = sku.slice(0,2).toUpperCase();
+    if (prefix === 'BR') {
       Logger.log('نوع سفارش BR است، اجرای handleBR');
       handleBR(sku);
-    } else if (sku.slice(0,2).toUpperCase() === 'TL') {
-      Logger.log('نوع سفارش TL است، اجرای handleTL');
+    } else if (prefix === 'TL' || /^\d+$/.test(sku)) {
+      if (prefix === 'TL') {
+        Logger.log('نوع سفارش TL است، اجرای handleTL');
+      } else {
+        Logger.log('پیشوند SKU موجود نیست یا شناخته نشد، انجام handleTL به طور پیش‌فرض');
+      }
       handleTL(idx);
     } else {
       Logger.log('پیشوند SKU ناشناخته است: %s', sku);
