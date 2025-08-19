@@ -213,7 +213,8 @@ function cancelOrders(orderIds) {
     var sheet = locRange.getSheet();
     var row = sheet.getLastRow() + 1;
     Logger.log('سطر جدید موجودی: %s', row);
-    sheet.getRange(row, locRange.getColumn()).setValue(data.location);
+    var locationValue = data.location === 'مغازه' ? 'STORE' : data.location;
+    sheet.getRange(row, locRange.getColumn()).setValue(locationValue);
     sheet.getRange(row, ss.getRangeByName(isStore ? 'InventoryProductName' : 'InventoryName').getColumn()).setValue(data.name);
     sheet.getRange(row, ss.getRangeByName('InventorySupplier').getColumn()).setValue(data.seller);
     sheet.getRange(row, ss.getRangeByName('InventorySKU').getColumn()).setValue(data.sku);
