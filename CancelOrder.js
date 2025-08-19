@@ -106,4 +106,5 @@ function cancelOrders(orderIds) {
     cell.insertCheckboxes();
     cell.setValue(false);
   }
+  CacheService.getDocumentCache().remove('inventoryData');
 }
