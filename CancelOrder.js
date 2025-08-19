@@ -97,7 +97,11 @@ function cancelOrders(orderIds) {
   var ids = getValues(tlSs, 'OrderID');
   var len = ids.length;
   Logger.log('تعداد سفارشات موجود: %s', len);
+  Logger.log('لیست شناسه‌ها: %s', JSON.stringify(ids));
+
   var skus = getValues(tlSs, 'OrderSKU').slice(0, len);
+  Logger.log('لیست SKU ها: %s', JSON.stringify(skus));
+
   var locations = getValues(tlSs, 'OrderLocation').slice(0, len);
   var names = getValues(tlSs, 'OrderName').slice(0, len);
   // price values are intentionally ignored when returning cancelled items to inventory
@@ -109,10 +113,11 @@ function cancelOrders(orderIds) {
   Logger.log('رنج OrderCancellation دریافت شد.');
 
   orderIds.forEach(function(id){
-    Logger.log('--- بررسی شناسه %s ---', id);
+    Logger.log('--- بررسی شناسه %s (نوع: %s) ---', id, typeof id);
+    Logger.log('آرایه شناسه‌ها: %s', JSON.stringify(ids));
     var idx = ids.indexOf(id);
     if (idx < 0) {
-      Logger.log('شناسه %s در TL یافت نشد', id);
+      Logger.log('شناسه %s در TL یافت نشد. آرایه: %s', id, JSON.stringify(ids));
       return;
     }
     Logger.log('شناسه در سطر %s یافت شد', idx + 2);
@@ -132,7 +137,9 @@ function cancelOrders(orderIds) {
   function handleTL(idx){
     Logger.log('شروع handleTL برای سطر %s', idx + 2);
     try {
-      cancelRange.getCell(idx + 2, 1).setValue(true);
+      var cell = cancelRange.getCell(idx + 2, 1);
+      Logger.log('مقدار فعلی لغو سفارش: %s', cell.getValue());
+      cell.setValue(true);
       Logger.log('لغو سفارش در TL به true تنظیم شد');
     } catch(e) {
       Logger.log('خطا در تنظیم لغو سفارش TL: %s', e);
@@ -182,6 +189,7 @@ function cancelOrders(orderIds) {
 
   function appendToInventory(ss, data, isStore){
     Logger.log('افزودن به موجودی، isStore=%s , sku=%s', isStore, data.sku);
+    Logger.log('داده‌های افزوده‌شونده به موجودی: %s', JSON.stringify(data));
     var locRange = ss.getRangeByName('InventoryLocation');
     var sheet = locRange.getSheet();
     var row = sheet.getLastRow() + 1;
