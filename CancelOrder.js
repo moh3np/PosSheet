@@ -1,9 +1,25 @@
+function getLastRowInRange(sheet, startCol, endCol) {
+  var lastRow = sheet.getLastRow();
+  var values = sheet
+    .getRange(1, startCol, lastRow, endCol - startCol + 1)
+    .getValues();
+  for (var i = values.length - 1; i >= 0; i--) {
+    var row = values[i];
+    for (var j = 0; j < row.length; j++) {
+      if (row[j] !== '' && row[j] !== null) {
+        return i + 1;
+      }
+    }
+  }
+  return 0;
+}
+
 function showCancelDialog() {
   var ss = SpreadsheetApp.getActive();
   var baseRange = ss.getRangeByName('OrderID');
   if (!baseRange) return;
   var sheet = baseRange.getSheet();
-  var lastRow = sheet.getLastRow();
+  var lastRow = getLastRowInRange(sheet, 1, 4);
   var getValuesByName = function(name) {
     var range = ss.getRangeByName(name);
     if (!range) return [];
@@ -52,7 +68,7 @@ function cancelOrders(orderIds) {
     var sheetId = sheet.getSheetId();
     var lastRow = lastRows[sheetId];
     if (!lastRow) {
-      lastRow = sheet.getLastRow();
+      lastRow = getLastRowInRange(sheet, 1, 4);
       lastRows[sheetId] = lastRow;
     }
     var startRow = range.getRow() + 1;

@@ -32,6 +32,22 @@ function getColumnValues(rangeName, sheet, lastRow) {
     .map(function(r){return r[0];});
 }
 
+function getLastRowInRange(sheet, startCol, endCol) {
+  var lastRow = sheet.getLastRow();
+  var values = sheet
+    .getRange(1, startCol, lastRow, endCol - startCol + 1)
+    .getValues();
+  for (var i = values.length - 1; i >= 0; i--) {
+    var row = values[i];
+    for (var j = 0; j < row.length; j++) {
+      if (row[j] !== '' && row[j] !== null) {
+        return i + 1;
+      }
+    }
+  }
+  return 0;
+}
+
 function getInventoryData() {
   var ss = SpreadsheetApp.getActive();
   var baseRange = ss.getRangeByName('InventoryName');
@@ -39,7 +55,7 @@ function getInventoryData() {
     return {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
   }
   var sheet = baseRange.getSheet();
-  var lastRow = sheet.getLastRow();
+  var lastRow = getLastRowInRange(sheet, 1, 5);
   var names = getColumnValues('InventoryName', sheet, lastRow);
   var sns = getColumnValues('InventorySN', sheet, lastRow);
   var persianSns = getColumnValues('InventoryPersianSN', sheet, lastRow);
