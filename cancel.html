@@ -97,7 +97,6 @@
           <th>شماره سفارش</th>
           <th>تاریخ</th>
           <th>نام محصول</th>
-          <th>برند</th>
           <th>سریال</th>
           <th>قیمت محصول</th>
           <th>مبلغ پرداختی</th>
@@ -157,16 +156,15 @@
             orderData.ids[i],
             date,
             orderData.names[i],
-            orderData.brands[i],
             orderData.sns[i],
             orderData.prices[i],
             orderData.paidPrices[i]
           ];
           fields.forEach((f, idx) => {
             const td = document.createElement('td');
-            if (idx >= 5) {
+            if (idx >= 4) {
               td.textContent = formatNumber(f);
-              if (idx === 6) {
+              if (idx === 5) {
                 const diff = Number(orderData.prices[i]) - Number(orderData.paidPrices[i]);
                 if (diff > 0 && Number(orderData.prices[i])) {
                   const pct = Math.round(diff / Number(orderData.prices[i]) * 100);
