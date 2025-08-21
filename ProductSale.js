@@ -41,27 +41,11 @@ function showSaleDialog() {
   SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
 }
 
-function getColumnValues(rangeName, sheet, lastRow) {
-  var range = SpreadsheetApp.getActive().getRangeByName(rangeName);
-  if (!range) return [];
-  sheet = sheet || range.getSheet();
-  if (lastRow === undefined) {
-    lastRow = sheet.getLastRow();
-  }
-  var startRow = range.getRow() + 1;
-  var col = range.getColumn();
-  if (lastRow < startRow) return [];
-  return sheet
-    .getRange(startRow, col, lastRow - startRow + 1, 1)
-    .getValues()
-    .map(function(r){return r[0];});
-}
-
-function getLastDataRow(range) {
-  var sheet = range.getSheet();
-  var startRow = range.getRow() + 1;
-  var col = range.getColumn();
-  var lastRow = sheet.getLastRow();
+  function getLastDataRow(range) {
+    var sheet = range.getSheet();
+    var startRow = range.getRow() + 1;
+    var col = range.getColumn();
+    var lastRow = sheet.getLastRow();
   var numRows = lastRow - range.getRow();
   if (numRows < 1) return range.getRow();
   var values = sheet.getRange(startRow, col, numRows, 1).getValues();
@@ -76,23 +60,31 @@ function getLastDataRow(range) {
 
 function getInventoryData() {
   var ss = SpreadsheetApp.getActive();
-  var snRange = ss.getRangeByName('InventorySN');
-  if (!snRange) {
+  var invRange = ss.getRangeByName('Inventory');
+  if (!invRange) {
     return {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
   }
-  var sheet = snRange.getSheet();
-  var lastRow = getLastDataRow(snRange);
-  var names = getColumnValues('InventoryName', sheet, lastRow);
-  var sns = getColumnValues('InventorySN', sheet, lastRow);
-  var persianSns = getColumnValues('InventoryPersianSN', sheet, lastRow);
-  var skus = getColumnValues('InventorySKU', sheet, lastRow);
-  var locations = getColumnValues('InventoryLocation', sheet, lastRow);
-  var prices = getColumnValues('InventoryPrice', sheet, lastRow);
-  var uniqueCodes = getColumnValues('InventoryUniqueCode', sheet, lastRow);
-  var brands = getColumnValues('InventoryBrand', sheet, lastRow);
-  var sellers = getColumnValues('InventorySeller', sheet, lastRow);
+  var sheet = invRange.getSheet();
+  var lastRow = getLastDataRow(invRange);
+  var numRows = lastRow - invRange.getRow();
+  if (numRows < 1) {
+    return {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
+  }
+  var values = sheet.getRange(invRange.getRow() + 1, invRange.getColumn(), numRows, invRange.getNumColumns()).getValues();
+  var names = [], brands = [], uniqueCodes = [], sns = [], sellers = [], prices = [], locations = [], skus = [], persianSns = [];
+  values.forEach(function(r){
+    names.push(r[0]);
+    brands.push(r[1]);
+    uniqueCodes.push(r[3]);
+    sns.push(r[4]);
+    sellers.push(r[5]);
+    prices.push(r[6]);
+    locations.push(r[7]);
+    skus.push(r[8]);
+    persianSns.push(r[9]);
+  });
   return {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
-}
+  }
 
 function submitOrder(items) {
   if (!items || !items.length) {
@@ -120,7 +112,7 @@ function handleExternalOrders(dateStr, items) {
         seller: 'OrderSeller',
         brand: 'OrderBrand'
       },
-      inventoryRange: 'InventorySN'
+        inventoryRange: 'Inventory'
     }, tlItems, dateStr);
   }
   var brItems = items.filter(function(it){ return it.sku && it.sku.indexOf('BR') === 0; });
@@ -140,7 +132,7 @@ function handleExternalOrders(dateStr, items) {
         seller: 'StoreOrderSeller',
         brand: 'StoreOrderBrand'
       },
-      inventoryRange: 'InventorySN'
+        inventoryRange: 'Inventory'
     }, brItems, dateStr);
   }
 }
@@ -210,16 +202,17 @@ function processExternalOrder(cfg, items, dateStr) {
 
   var invRange = ss.getRangeByName(cfg.inventoryRange);
   var invSheet = invRange ? invRange.getSheet() : null;
-  var invValues = invRange ? invRange.getValues().map(function(r){
-    return String(r[0]).trim();
-  }) : [];
+  var invValues = invRange ? invRange.getValues() : [];
   items.forEach(function(it) {
     if (!invRange) return;
     var targetSn = String(it.serial).trim();
-    var idx = invValues.indexOf(targetSn);
-    if (idx > -1) {
-      invSheet.deleteRow(invRange.getRow() + idx);
-      invValues.splice(idx, 1);
+    for (var i = 0; i < invValues.length; i++) {
+      var sn = String(invValues[i][4]).trim();
+      if (sn === targetSn) {
+        invSheet.deleteRow(invRange.getRow() + i);
+        invValues.splice(i, 1);
+        break;
+      }
     }
   });
 }
@@ -264,9 +257,8 @@ function gregorianToJalali(gy, gm, gd) {
 
 addTiming([
   'onOpen',
-  'showSaleDialog',
-  'getColumnValues',
-  'getLastDataRow',
+    'showSaleDialog',
+    'getLastDataRow',
   'getInventoryData',
   'submitOrder',
   'handleExternalOrders',

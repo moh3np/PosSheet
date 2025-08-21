@@ -206,36 +206,37 @@ function cancelOrders(items) {
       function appendToInventory(ss, data, isStore){
         var endAI = startTimer('appendToInventory');
         try {
-          var locRange = timeStep('appendToInventory:getLocationRange', function(){
-            return ss.getRangeByName('InventoryLocation');
+          var invRange = timeStep('appendToInventory:getInventoryRange', function(){
+            return ss.getRangeByName('Inventory');
           });
           var sheet = timeStep('appendToInventory:getSheet', function(){
-            return locRange.getSheet();
+            return invRange.getSheet();
           });
           var row = timeStep('appendToInventory:getLastRow', function(){
             return sheet.getLastRow() + 1;
           });
+          var baseCol = invRange.getColumn();
           var locationValue = data.location === 'مغازه' ? 'STORE' : data.location;
           timeStep('appendToInventory:setLocation', function(){
-            sheet.getRange(row, locRange.getColumn()).setValue(locationValue);
+            sheet.getRange(row, baseCol + 7).setValue(locationValue);
           });
           timeStep('appendToInventory:setName', function(){
-            sheet.getRange(row, ss.getRangeByName(isStore ? 'InventoryProductName' : 'InventoryName').getColumn()).setValue(data.name);
+            sheet.getRange(row, baseCol + 0).setValue(data.name);
           });
-          timeStep('appendToInventory:setSupplier', function(){
-            sheet.getRange(row, ss.getRangeByName('InventorySupplier').getColumn()).setValue(data.seller);
+          timeStep('appendToInventory:setSeller', function(){
+            sheet.getRange(row, baseCol + 5).setValue(data.seller);
           });
           timeStep('appendToInventory:setSKU', function(){
-            sheet.getRange(row, ss.getRangeByName('InventorySKU').getColumn()).setValue(data.sku);
+            sheet.getRange(row, baseCol + 8).setValue(data.sku);
           });
           timeStep('appendToInventory:setSN', function(){
-            sheet.getRange(row, ss.getRangeByName('InventorySN').getColumn()).setValue(data.sn);
+            sheet.getRange(row, baseCol + 4).setValue(data.sn);
           });
           timeStep('appendToInventory:setUnique', function(){
-            sheet.getRange(row, ss.getRangeByName('InventoryUniqueCode').getColumn()).setValue(data.unique);
+            sheet.getRange(row, baseCol + 3).setValue(data.unique);
           });
           timeStep('appendToInventory:setBrand', function(){
-            sheet.getRange(row, ss.getRangeByName(isStore ? 'InventoryProductBrand' : 'InventoryBrand').getColumn()).setValue(data.brand);
+            sheet.getRange(row, baseCol + 1).setValue(data.brand);
           });
           timeStep('appendToInventory:insertLabel', function(){
             var lblRange = ss.getRangeByName('InventoryLablePrinted');
