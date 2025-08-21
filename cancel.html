@@ -114,7 +114,7 @@
       const orderData = <?!= JSON.stringify(orderData) ?>;
       const tbody = document.querySelector('#orderTable tbody');
       const totalEl = document.getElementById('total');
-      const selectedMap = new Map(); // (sn|sku) -> {sn, sku}
+      const selectedMap = new Map(); // sn -> sku
       const MAX_DISPLAY = 200;
       const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
 
@@ -151,8 +151,7 @@
           const chkTd = document.createElement('td');
           const chk = document.createElement('input');
           chk.type = 'checkbox';
-          const key = sn + '|' + sku;
-          chk.checked = selectedMap.has(key);
+          chk.checked = selectedMap.has(sn);
           chkTd.appendChild(chk);
           tr.appendChild(chkTd);
           const date = formatDateStr(orderData.persianDates[i] || orderData.dates[i] || '');
@@ -214,11 +213,10 @@
 
       function toggle(sn, sku, checked, tr){
         tr.classList.toggle('selected', checked);
-        const key = sn + '|' + sku;
         if (checked) {
-          selectedMap.set(key, { sn, sku });
+          selectedMap.set(sn, sku);
         } else {
-          selectedMap.delete(key);
+          selectedMap.delete(sn);
         }
         updateTotal();
       }
@@ -256,7 +254,8 @@
       renderRows(allIndices);
 
       document.getElementById('cancelBtn').addEventListener('click', () => {
-        const selected = Array.from(selectedMap.values());
+        const selected = Array.from(selectedMap.entries())
+          .map(([sn, sku]) => ({ sn, sku }));
         google.script.run.withSuccessHandler(() => {
           google.script.host.close();
           google.script.run.showSaleDialog();
