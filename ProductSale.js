@@ -1,3 +1,28 @@
+var global = this;
+
+function startTimer(name){
+  var start = Date.now();
+  return function(){
+    console.log(name + ' took ' + (Date.now() - start) + 'ms');
+  };
+}
+
+function addTiming(names){
+  names.forEach(function(name){
+    var fn = global[name];
+    if (typeof fn === 'function'){
+      global[name] = function(){
+        var end = startTimer(name);
+        try {
+          return fn.apply(this, arguments);
+        } finally {
+          end();
+        }
+      };
+    }
+  });
+}
+
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('فروش')
@@ -236,3 +261,16 @@ function gregorianToJalali(gy, gm, gd) {
   var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
   return [jy, jm, jd];
 }
+
+addTiming([
+  'onOpen',
+  'showSaleDialog',
+  'getColumnValues',
+  'getLastDataRow',
+  'getInventoryData',
+  'submitOrder',
+  'handleExternalOrders',
+  'processExternalOrder',
+  'getPersianDateTime',
+  'gregorianToJalali'
+]);
