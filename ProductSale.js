@@ -99,40 +99,66 @@ function handleExternalOrders(dateStr, items) {
   if (tlItems.length) {
     processExternalOrder({
       spreadsheetId: '1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s',
-      rangeName: 'Orders',
-      inventoryRange: 'Inventory'
+      rangeNames: {
+        id: 'OrderID',
+        name: 'OrderName',
+        sku: 'OrderSKU',
+        sn: 'OrderSN',
+        date: 'OrderDate',
+        price: 'OrderPrice',
+        paid: 'OrderPaidPrice',
+        uniqueCode: 'OrderUniqueCode',
+        location: 'OrderLocation',
+        seller: 'OrderSeller',
+        brand: 'OrderBrand'
+      },
+        inventoryRange: 'Inventory'
     }, tlItems, dateStr);
   }
   var brItems = items.filter(function(it){ return it.sku && it.sku.indexOf('BR') === 0; });
   if (brItems.length) {
     processExternalOrder({
       spreadsheetId: '12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8',
-      rangeName: 'StoreOrders',
-      inventoryRange: 'Inventory'
+      rangeNames: {
+        id: 'StoreOrderID',
+        name: 'StoreOrderName',
+        sku: 'StoreOrderSKU',
+        sn: 'StoreOrderSN',
+        date: 'StoreOrderDate',
+        price: 'StoreOrderPrice',
+        paid: 'StoreOrderPaidPrice',
+        uniqueCode: 'StoreOrderUniqueCode',
+        location: 'StoreOrderLocation',
+        seller: 'StoreOrderSeller',
+        brand: 'StoreOrderBrand'
+      },
+        inventoryRange: 'Inventory'
     }, brItems, dateStr);
   }
 }
 
 function processExternalOrder(cfg, items, dateStr) {
   var ss = SpreadsheetApp.openById(cfg.spreadsheetId);
-  var baseRange = ss.getRangeByName(cfg.rangeName);
-  if (!baseRange) return;
-  var sheet = baseRange.getSheet();
-  var baseCol = baseRange.getColumn();
-  var startRow = baseRange.getRow();
-  var idCol = baseCol + 0;
-  var nameCol = baseCol + 1;
-  var skuCol = baseCol + 2;
-  var snCol = baseCol + 3;
-  var dateCol = baseCol + 4;
-  var priceCol = baseCol + 5;
-  var paidCol = baseCol + 6;
-  var locationCol = baseCol + 7;
-  var sellerCol = baseCol + 8;
-  var brandCol = baseCol + 9;
-  var uniqueCodeCol = baseCol + 10;
+  var idRange = ss.getRangeByName(cfg.rangeNames.id);
+  if (!idRange) return;
+  var sheet = idRange.getSheet();
+  var idCol = idRange.getColumn();
+  var nameCol = ss.getRangeByName(cfg.rangeNames.name).getColumn();
+  var skuCol = ss.getRangeByName(cfg.rangeNames.sku).getColumn();
+  var snCol = ss.getRangeByName(cfg.rangeNames.sn).getColumn();
+  var dateCol = ss.getRangeByName(cfg.rangeNames.date).getColumn();
+  var priceCol = ss.getRangeByName(cfg.rangeNames.price).getColumn();
+  var paidCol = ss.getRangeByName(cfg.rangeNames.paid).getColumn();
+  var uniqueCodeRange = ss.getRangeByName(cfg.rangeNames.uniqueCode);
+  var locationRange = ss.getRangeByName(cfg.rangeNames.location);
+  var sellerRange = ss.getRangeByName(cfg.rangeNames.seller);
+  var brandRange = ss.getRangeByName(cfg.rangeNames.brand);
+  var uniqueCodeCol = uniqueCodeRange ? uniqueCodeRange.getColumn() : null;
+  var locationCol = locationRange ? locationRange.getColumn() : null;
+  var sellerCol = sellerRange ? sellerRange.getColumn() : null;
+  var brandCol = brandRange ? brandRange.getColumn() : null;
 
-  var idValuesRange = sheet.getRange(startRow, idCol, sheet.getLastRow() - startRow + 1, 1);
+  var idValuesRange = sheet.getRange(idRange.getRow(), idCol, sheet.getLastRow() - idRange.getRow() + 1, 1);
   var idValues = idValuesRange.getValues().map(function(r){ return r[0]; });
   var lastId = 0;
   idValues.forEach(function(v){
@@ -146,7 +172,7 @@ function processExternalOrder(cfg, items, dateStr) {
   while (nextIndex < idValues.length && idValues[nextIndex]) {
     nextIndex++;
   }
-  var nextRow = startRow + nextIndex;
+  var nextRow = idRange.getRow() + nextIndex;
 
   var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [], uniqueCodes = [], locations = [], sellers = [], brands = [];
   items.forEach(function(it) {
@@ -169,10 +195,10 @@ function processExternalOrder(cfg, items, dateStr) {
   sheet.getRange(nextRow, dateCol, items.length, 1).setValues(dates);
   sheet.getRange(nextRow, priceCol, items.length, 1).setValues(prices);
   sheet.getRange(nextRow, paidCol, items.length, 1).setValues(paid);
-  sheet.getRange(nextRow, locationCol, items.length, 1).setValues(locations);
-  sheet.getRange(nextRow, sellerCol, items.length, 1).setValues(sellers);
-  sheet.getRange(nextRow, brandCol, items.length, 1).setValues(brands);
-  sheet.getRange(nextRow, uniqueCodeCol, items.length, 1).setValues(uniqueCodes);
+  if (uniqueCodeCol) sheet.getRange(nextRow, uniqueCodeCol, items.length, 1).setValues(uniqueCodes);
+  if (locationCol) sheet.getRange(nextRow, locationCol, items.length, 1).setValues(locations);
+  if (sellerCol) sheet.getRange(nextRow, sellerCol, items.length, 1).setValues(sellers);
+  if (brandCol) sheet.getRange(nextRow, brandCol, items.length, 1).setValues(brands);
 
   var invRange = ss.getRangeByName(cfg.inventoryRange);
   var invSheet = invRange ? invRange.getSheet() : null;
