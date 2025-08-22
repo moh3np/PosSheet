@@ -118,26 +118,7 @@
       const MAX_DISPLAY = 200;
       const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
 
-      function startTimer(name){
-        const start = performance.now();
-        return () => console.log(name + ' took ' + (performance.now() - start).toFixed(2) + 'ms');
-      }
-
-      function addTiming(names){
-        names.forEach(name => {
-          const fn = window[name];
-          if (typeof fn === 'function'){
-            window[name] = function(...args){
-              const end = startTimer(name);
-              try {
-                return fn.apply(this, args);
-              } finally {
-                end();
-              }
-            };
-          }
-        });
-      }
+      // Timing utilities removed
 
       function formatNumber(num){
         return Number(num || 0).toLocaleString('fa-IR').replace(/٬/g, ',');
@@ -275,16 +256,12 @@
       renderRows(allIndices);
 
       document.getElementById('cancelBtn').addEventListener('click', () => {
-        const end = startTimer('cancelOrders');
         const selected = Array.from(selectedMap.entries())
           .map(([sn, sku]) => ({ sn, sku }));
         google.script.run.withSuccessHandler(() => {
-          end();
           google.script.host.close();
         }).cancelOrders(selected);
       });
-
-      addTiming(['formatNumber','toEnglishDigits','toPersianDigits','formatDateStr','renderRows','toggle','updateTotal','filterOrders']);
     </script>
   </body>
 </html>
