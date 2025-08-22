@@ -58,9 +58,9 @@ function cancelOrders(items) {
       return { sn: String(it.sn), sku: it.sku != null ? String(it.sku) : '' };
     });
     var tlSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
-    var tlOrders = tlSs.getRangeByName('Orders');
+    var tlOrders = tlSs.getRangeByName('ToylandOrders');
     var brSs = SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8');
-    var brOrders = brSs.getRangeByName('StoreOrders');
+    var brOrders = brSs.getRangeByName('BuyruzPosOrders');
     var lastRows = {};
     lastRows[tlOrders.getSheet().getSheetId()] = getLastDataRow(tlOrders.offset(0,3,tlOrders.getNumRows(),1));
     lastRows[brOrders.getSheet().getSheetId()] = getLastDataRow(brOrders.offset(0,3,brOrders.getNumRows(),1));
