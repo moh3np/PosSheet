@@ -2,40 +2,47 @@
 
 function showCancelDialog() {
   var ss = SpreadsheetApp.getActive();
-  var snRange = ss.getRangeByName('OrderSN');
-  if (!snRange) return;
-  var sheet = snRange.getSheet();
-  var lastRow = getLastDataRow(snRange);
-  var getValuesByName = function(name) {
-    var range = ss.getRangeByName(name);
-    if (!range) return [];
-    var startRow = range.getRow() + 1;
-    var col = range.getColumn();
-    if (lastRow < startRow) return [];
-    return sheet
-      .getRange(startRow, col, lastRow - startRow + 1, 1)
-      .getValues()
-      .map(function(r){return r[0];});
-  };
-  var ids = getValuesByName('OrderID');
-  var len = ids.length;
-  var slice = function(arr){ return arr.slice(0, len); };
+  var posRange = ss.getRangeByName('PosOrders');
+  if (!posRange) return;
+  var sheet = posRange.getSheet();
+  var lastRow = getLastDataRow(posRange.offset(0, 3));
+  var startRow = posRange.getRow() + 1;
+  if (lastRow < startRow) return;
+  var numRows = lastRow - startRow + 1;
+  var values = sheet
+    .getRange(startRow, posRange.getColumn(), numRows, posRange.getNumColumns())
+    .getValues();
+  var ids = values.map(function(r){ return r[0]; });
+  var names = values.map(function(r){ return r[1]; });
+  var sns = values.map(function(r){ return r[3]; });
+  var dates = values.map(function(r){ return r[4]; });
+  var prices = values.map(function(r){ return r[5]; });
+  var paidPrices = values.map(function(r){ return r[6]; });
+  var locations = values.map(function(r){ return r[7]; });
+  var sellers = values.map(function(r){ return r[8]; });
+  var brands = values.map(function(r){ return r[9]; });
+  var uniqueCodes = values.map(function(r){ return r[10]; });
+  var cancellations = values.map(function(r){ return r[11]; });
+  var skus = values.map(function(r){ return r[12]; });
+  var persianSNS = values.map(function(r){ return r[13]; });
+  var persianIds = values.map(function(r){ return r[14]; });
+  var persianDates = values.map(function(r){ return r[15]; });
   var orderData = {
     ids: ids,
-    persianIds: slice(getValuesByName('OrderPersianID')),
-    names: slice(getValuesByName('OrderName')),
-    dates: slice(getValuesByName('OrderDate')),
-    persianDates: slice(getValuesByName('OrderPersianDate')),
-    sns: slice(getValuesByName('OrderSN')).map(String),
-    persianSNS: slice(getValuesByName('OrderPersianSN')),
-    prices: slice(getValuesByName('OrderPrice')),
-    paidPrices: slice(getValuesByName('OrderPaidPrice')),
-    skus: slice(getValuesByName('OrderSKU')).map(function(s){return s != null ? String(s) : ''; }),
-    uniqueCodes: slice(getValuesByName('OrderUniqueCode')),
-    sellers: slice(getValuesByName('OrderSeller')),
-    locations: slice(getValuesByName('OrderLocation')),
-    brands: slice(getValuesByName('OrderBrand')),
-    cancellations: slice(getValuesByName('OrderCancellation'))
+    persianIds: persianIds,
+    names: names,
+    dates: dates,
+    persianDates: persianDates,
+    sns: sns.map(String),
+    persianSNS: persianSNS,
+    prices: prices,
+    paidPrices: paidPrices,
+    skus: skus.map(function(s){return s != null ? String(s) : ''; }),
+    uniqueCodes: uniqueCodes,
+    sellers: sellers,
+    locations: locations,
+    brands: brands,
+    cancellations: cancellations
   };
   var template = HtmlService.createTemplateFromFile('cancel');
   template.orderData = orderData;
