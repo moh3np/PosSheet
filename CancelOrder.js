@@ -158,11 +158,9 @@ function cancelOrders(items) {
         rowValues[7] = locationValue;
         rowValues[8] = data.sku;
         sheet.getRange(row, baseCol, 1, 9).setValues([rowValues]);
-        var lblRangeName = rangeName + 'LablePrinted';
-        var lblRange = ss.getRangeByName(lblRangeName);
-        var cell = sheet.getRange(row, lblRange.getColumn());
-        cell.insertCheckboxes();
-        cell.setValue(false);
+        var labelCell = sheet.getRange(row, baseCol + 8);
+        labelCell.insertCheckboxes();
+        labelCell.setValue(false);
       }
 }
 
