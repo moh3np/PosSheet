@@ -122,7 +122,7 @@ function cancelOrders(items) {
           unique: uniques[idx],
           brand: brands[idx]
         };
-        appendToInventory(tlSs, data);
+        appendToInventory(tlSs, data, 'ToylandInventory');
     }
 
       function handleBR(idx){
@@ -137,11 +137,12 @@ function cancelOrders(items) {
           unique: brUniques[idx],
           brand: brBrands[idx]
         };
-        appendToInventory(brSs, data);
+        appendToInventory(brSs, data, 'BuyruzInventory');
     }
 
-      function appendToInventory(ss, data){
-        var invRange = ss.getRangeByName('Inventory');
+      function appendToInventory(ss, data, rangeName){
+        rangeName = rangeName || 'Inventory';
+        var invRange = ss.getRangeByName(rangeName);
         var sheet = invRange.getSheet();
         var row = sheet.getLastRow() + 1;
         var baseCol = invRange.getColumn();
@@ -157,7 +158,8 @@ function cancelOrders(items) {
         rowValues[7] = locationValue;
         rowValues[8] = data.sku;
         sheet.getRange(row, baseCol, 1, 9).setValues([rowValues]);
-        var lblRange = ss.getRangeByName('InventoryLablePrinted');
+        var lblRangeName = rangeName + 'LablePrinted';
+        var lblRange = ss.getRangeByName(lblRangeName);
         var cell = sheet.getRange(row, lblRange.getColumn());
         cell.insertCheckboxes();
         cell.setValue(false);
