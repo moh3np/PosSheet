@@ -1,22 +1,5 @@
 // Removed logging and timing utilities to simplify code and avoid side effects.
 
-function getLastDataRow(range) {
-  var sheet = range.getSheet();
-  var startRow = range.getRow() + 1;
-  var col = range.getColumn();
-  var lastRow = sheet.getLastRow();
-  var numRows = lastRow - range.getRow();
-  if (numRows < 1) return range.getRow();
-  var values = sheet.getRange(startRow, col, numRows, 1).getValues();
-  for (var i = values.length - 1; i >= 0; i--) {
-    var val = values[i][0];
-    if (val !== '' && val !== null) {
-      return startRow + i;
-    }
-  }
-  return range.getRow();
-}
-
 function showCancelDialog() {
   var ss = SpreadsheetApp.getActive();
   var snRange = ss.getRangeByName('OrderSN');
@@ -132,7 +115,7 @@ function cancelOrders(items) {
           unique: uniques[idx],
           brand: brands[idx]
         };
-        appendToInventory(tlSs, data, false);
+        appendToInventory(tlSs, data);
     }
 
       function handleBR(idx){
@@ -147,22 +130,26 @@ function cancelOrders(items) {
           unique: brUniques[idx],
           brand: brBrands[idx]
         };
-        appendToInventory(brSs, data, true);
+        appendToInventory(brSs, data);
     }
 
-      function appendToInventory(ss, data, isStore){
+      function appendToInventory(ss, data){
         var invRange = ss.getRangeByName('Inventory');
         var sheet = invRange.getSheet();
         var row = sheet.getLastRow() + 1;
         var baseCol = invRange.getColumn();
         var locationValue = data.location === 'مغازه' ? 'STORE' : data.location;
-        sheet.getRange(row, baseCol + 7).setValue(locationValue);
-        sheet.getRange(row, baseCol + 0).setValue(data.name);
-        sheet.getRange(row, baseCol + 5).setValue(data.seller);
-        sheet.getRange(row, baseCol + 8).setValue(data.sku);
-        sheet.getRange(row, baseCol + 4).setValue(data.sn);
-        sheet.getRange(row, baseCol + 3).setValue(data.unique);
-        sheet.getRange(row, baseCol + 1).setValue(data.brand);
+        var rowValues = [];
+        rowValues[0] = data.name;
+        rowValues[1] = data.brand;
+        rowValues[2] = '';
+        rowValues[3] = data.unique;
+        rowValues[4] = data.sn;
+        rowValues[5] = data.seller;
+        rowValues[6] = '';
+        rowValues[7] = locationValue;
+        rowValues[8] = data.sku;
+        sheet.getRange(row, baseCol, 1, 9).setValues([rowValues]);
         var lblRange = ss.getRangeByName('InventoryLablePrinted');
         var cell = sheet.getRange(row, lblRange.getColumn());
         cell.insertCheckboxes();
