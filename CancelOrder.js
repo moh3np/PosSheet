@@ -112,9 +112,7 @@ function cancelOrders(items) {
     });
 
       function handleTL(idx){
-        try {
-          cancelRange.offset(1, 0, cancelRange.getNumRows() - 1).setValue(true);
-        } catch(e) {}
+        try { cancelRange.getCell(idx + 2, 1).setValue(true); } catch(e) {}
         var data = {
           location: locations[idx],
           name: names[idx],
@@ -129,9 +127,7 @@ function cancelOrders(items) {
 
       function handleBR(idx){
         if (idx < 0) return;
-        try {
-          brCancelRange.offset(1, 0, brCancelRange.getNumRows() - 1).setValue(true);
-        } catch(e) {}
+        try { brCancelRange.getCell(idx + 2, 1).setValue(true); } catch(e) {}
         var data = {
           location: brLocations[idx],
           name: brNames[idx],
