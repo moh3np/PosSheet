@@ -104,21 +104,20 @@ function cancelOrders(items) {
       return { sn: String(it.sn), sku: it.sku != null ? String(it.sku) : '' };
     });
     var tlSs = timeStep('open:tlSs', function(){ return SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s'); });
-    var tlSnRange = timeStep('tlSs:getRangeByName:OrderSN', function(){ return tlSs.getRangeByName('OrderSN'); });
+    var tlOrders = timeStep('tlSs:getRangeByName:Orders', function(){ return tlSs.getRangeByName('Orders'); });
     var brSs = timeStep('open:brSs', function(){ return SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8'); });
-    var brSnRange = timeStep('brSs:getRangeByName:StoreOrderSN', function(){ return brSs.getRangeByName('StoreOrderSN'); });
+    var brOrders = timeStep('brSs:getRangeByName:StoreOrders', function(){ return brSs.getRangeByName('StoreOrders'); });
     var lastRows = {};
-    lastRows[tlSnRange.getSheet().getSheetId()] = getLastDataRow(tlSnRange);
-    lastRows[brSnRange.getSheet().getSheetId()] = getLastDataRow(brSnRange);
-    var getValues = function(ss, name){
-      return timeStep('getValues:' + name, function(){
-        var range = ss.getRangeByName(name);
+    lastRows[tlOrders.getSheet().getSheetId()] = getLastDataRow(tlOrders.offset(0,3,tlOrders.getNumRows(),1));
+    lastRows[brOrders.getSheet().getSheetId()] = getLastDataRow(brOrders.offset(0,3,brOrders.getNumRows(),1));
+    var getValues = function(range, idx){
+      return timeStep('getValues:idx' + idx, function(){
         if (!range) return [];
         var sheet = range.getSheet();
         var sheetId = sheet.getSheetId();
         var lastRow = lastRows[sheetId];
         var startRow = range.getRow() + 1;
-        var col = range.getColumn();
+        var col = range.getColumn() + idx;
         if (lastRow < startRow) return [];
         return sheet
           .getRange(startRow, col, lastRow - startRow + 1, 1)
@@ -126,24 +125,24 @@ function cancelOrders(items) {
           .map(function(r){return r[0];});
       });
     };
-    var sns = getValues(tlSs, 'OrderSN').map(function(s){ return s != null ? String(s) : ''; });
+    var sns = getValues(tlOrders, 3).map(function(s){ return s != null ? String(s) : ''; });
     var len = sns.length;
-    var skus = getValues(tlSs, 'OrderSKU').map(function(s){ return s != null ? String(s) : ''; }).slice(0, len);
-    var locations = getValues(tlSs, 'OrderLocation').slice(0, len);
-    var names = getValues(tlSs, 'OrderName').slice(0, len);
-    var sellers = getValues(tlSs, 'OrderSeller').slice(0, len);
-    var uniques = getValues(tlSs, 'OrderUniqueCode').slice(0, len);
-    var brands = getValues(tlSs, 'OrderBrand').slice(0, len);
-    var cancelRange = tlSs.getRangeByName('OrderCancellation');
+    var skus = getValues(tlOrders, 2).map(function(s){ return s != null ? String(s) : ''; }).slice(0, len);
+    var locations = getValues(tlOrders, 7).slice(0, len);
+    var names = getValues(tlOrders, 1).slice(0, len);
+    var sellers = getValues(tlOrders, 8).slice(0, len);
+    var uniques = getValues(tlOrders, 10).slice(0, len);
+    var brands = getValues(tlOrders, 9).slice(0, len);
+    var cancelRange = tlOrders.offset(0,11,tlOrders.getNumRows(),1);
 
-    var brSns = getValues(brSs, 'StoreOrderSN').map(function(s){ return s != null ? String(s) : ''; });
-    var brSkus = getValues(brSs, 'StoreOrderSKU').map(function(s){ return s != null ? String(s) : ''; }).slice(0, brSns.length);
-    var brLocations = getValues(brSs, 'StoreOrderLocation').slice(0, brSns.length);
-    var brNames = getValues(brSs, 'StoreOrderName').slice(0, brSns.length);
-    var brSellers = getValues(brSs, 'StoreOrderSeller').slice(0, brSns.length);
-    var brUniques = getValues(brSs, 'StoreOrderUniqueCode').slice(0, brSns.length);
-    var brBrands = getValues(brSs, 'StoreOrderBrand').slice(0, brSns.length);
-    var brCancelRange = brSs.getRangeByName('StoreOrderCancellation');
+    var brSns = getValues(brOrders, 3).map(function(s){ return s != null ? String(s) : ''; });
+    var brSkus = getValues(brOrders, 2).map(function(s){ return s != null ? String(s) : ''; }).slice(0, brSns.length);
+    var brLocations = getValues(brOrders, 7).slice(0, brSns.length);
+    var brNames = getValues(brOrders, 1).slice(0, brSns.length);
+    var brSellers = getValues(brOrders, 8).slice(0, brSns.length);
+    var brUniques = getValues(brOrders, 10).slice(0, brSns.length);
+    var brBrands = getValues(brOrders, 9).slice(0, brSns.length);
+    var brCancelRange = brOrders.offset(0,11,brOrders.getNumRows(),1);
 
     items.forEach(function(item){
       var prefix = item.sku.slice(0,2).toUpperCase();
