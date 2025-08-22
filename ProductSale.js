@@ -17,39 +17,19 @@ function showSaleDialog() {
     .setHeight(800);
   SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
 }
-
-  function getLastDataRow(range) {
-    var sheet = range.getSheet();
-    var startRow = range.getRow() + 1;
-    var col = range.getColumn();
-    var lastRow = sheet.getLastRow();
-  var numRows = lastRow - range.getRow();
-  if (numRows < 1) return range.getRow();
-  var values = sheet.getRange(startRow, col, numRows, 1).getValues();
-  for (var i = values.length - 1; i >= 0; i--) {
-    var val = values[i][0];
-    if (val !== '' && val !== null) {
-      return startRow + i;
-    }
-  }
-  return range.getRow();
-}
+var EMPTY_INVENTORY_DATA = {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
 
 function getInventoryData() {
-  var ss = SpreadsheetApp.getActive();
-  var invRange = ss.getRangeByName('Inventory');
-  if (!invRange) {
-    return {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
-  }
+  var invRange = SpreadsheetApp.getActive().getRangeByName('Inventory');
+  if (!invRange) return EMPTY_INVENTORY_DATA;
   var sheet = invRange.getSheet();
   var lastRow = getLastDataRow(invRange);
   var numRows = lastRow - invRange.getRow();
-  if (numRows < 1) {
-    return {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
-  }
+  if (numRows < 1) return EMPTY_INVENTORY_DATA;
   var values = sheet.getRange(invRange.getRow() + 1, invRange.getColumn(), numRows, invRange.getNumColumns()).getValues();
   var names = [], brands = [], uniqueCodes = [], sns = [], sellers = [], prices = [], locations = [], skus = [], persianSns = [];
-  values.forEach(function(r){
+  for (var i = 0; i < values.length; i++) {
+    var r = values[i];
     names.push(r[0]);
     brands.push(r[1]);
     uniqueCodes.push(r[3]);
@@ -59,9 +39,9 @@ function getInventoryData() {
     locations.push(r[7]);
     skus.push(r[8]);
     persianSns.push(r[9]);
-  });
-  return {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
   }
+  return {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
+}
 
 function submitOrder(items) {
   if (!items || !items.length) {
