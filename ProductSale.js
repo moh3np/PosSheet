@@ -1,27 +1,4 @@
-var global = this;
-
-function startTimer(name){
-  var start = Date.now();
-  return function(){
-    console.log(name + ' took ' + (Date.now() - start) + 'ms');
-  };
-}
-
-function addTiming(names){
-  names.forEach(function(name){
-    var fn = global[name];
-    if (typeof fn === 'function'){
-      global[name] = function(){
-        var end = startTimer(name);
-        try {
-          return fn.apply(this, arguments);
-        } finally {
-          end();
-        }
-      };
-    }
-  });
-}
+// Removed logging and timing utilities to simplify code and avoid side effects.
 
 function onOpen() {
   var ui = SpreadsheetApp.getUi();
@@ -231,14 +208,3 @@ function gregorianToJalali(gy, gm, gd) {
   return [jy, jm, jd];
 }
 
-addTiming([
-  'onOpen',
-    'showSaleDialog',
-    'getLastDataRow',
-  'getInventoryData',
-  'submitOrder',
-  'handleExternalOrders',
-  'processExternalOrder',
-  'getPersianDateTime',
-  'gregorianToJalali'
-]);
