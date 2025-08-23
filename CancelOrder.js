@@ -54,113 +54,62 @@ function cancelOrders(items) {
   if (!items || !items.length) {
     return;
   }
-    items = items.map(function(it){
-      return { sn: String(it.sn), sku: it.sku != null ? String(it.sku) : '' };
-    });
+  items = items.map(function(it){
+    return { sn: String(it.sn), sku: it.sku != null ? String(it.sku) : '' };
+  });
+  var tlItems = [];
+  var brItems = [];
+  items.forEach(function(it){
+    var prefix = it.sku.slice(0,2).toUpperCase();
+    if (prefix === 'BR') brItems.push(it); else tlItems.push(it);
+  });
+
+  if (tlItems.length) {
     var tlSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
-    var tlOrders = tlSs.getRangeByName('ToylandOrders');
+    processCancelGroup(tlSs, tlItems, 'ToylandOrders', 'ToylandInventory');
+  }
+  if (brItems.length) {
     var brSs = SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8');
-    var brOrders = brSs.getRangeByName('BuyruzPosOrders');
-    var lastRows = {};
-    lastRows[tlOrders.getSheet().getSheetId()] = getLastDataRow(tlOrders.offset(0,3,tlOrders.getNumRows(),1));
-    lastRows[brOrders.getSheet().getSheetId()] = getLastDataRow(brOrders.offset(0,3,brOrders.getNumRows(),1));
-    var getValues = function(range, idx){
-      if (!range) return [];
-      var sheet = range.getSheet();
-      var sheetId = sheet.getSheetId();
-      var lastRow = lastRows[sheetId];
-      var startRow = range.getRow() + 1;
-      var col = range.getColumn() + idx;
-      if (lastRow < startRow) return [];
-      return sheet
-        .getRange(startRow, col, lastRow - startRow + 1, 1)
-        .getValues()
-        .map(function(r){return r[0];});
-    };
-    var sns = getValues(tlOrders, 3).map(function(s){ return s != null ? String(s) : ''; });
-    var len = sns.length;
-    var skus = getValues(tlOrders, 2).map(function(s){ return s != null ? String(s) : ''; }).slice(0, len);
-    var locations = getValues(tlOrders, 7).slice(0, len);
-    var names = getValues(tlOrders, 1).slice(0, len);
-    var sellers = getValues(tlOrders, 8).slice(0, len);
-    var uniques = getValues(tlOrders, 10).slice(0, len);
-    var brands = getValues(tlOrders, 9).slice(0, len);
-    var cancelRange = tlOrders.offset(0,11,tlOrders.getNumRows(),1);
+    processCancelGroup(brSs, brItems, 'BuyruzPosOrders', 'BuyruzInventory');
+  }
+}
 
-    var brSns = getValues(brOrders, 3).map(function(s){ return s != null ? String(s) : ''; });
-    var brSkus = getValues(brOrders, 2).map(function(s){ return s != null ? String(s) : ''; }).slice(0, brSns.length);
-    var brLocations = getValues(brOrders, 7).slice(0, brSns.length);
-    var brNames = getValues(brOrders, 1).slice(0, brSns.length);
-    var brSellers = getValues(brOrders, 8).slice(0, brSns.length);
-    var brUniques = getValues(brOrders, 10).slice(0, brSns.length);
-    var brBrands = getValues(brOrders, 9).slice(0, brSns.length);
-    var brCancelRange = brOrders.offset(0,11,brOrders.getNumRows(),1);
-
-    items.forEach(function(item){
-      var prefix = item.sku.slice(0,2).toUpperCase();
-      if (prefix === 'BR') {
-        var brIdx = brSns.indexOf(item.sn);
-        if (brIdx >= 0) {
-          handleBR(brIdx);
-        }
-      } else {
-        var idx = sns.indexOf(item.sn);
-        if (idx >= 0) {
-          handleTL(idx);
-        }
-      }
-    });
-
-      function handleTL(idx){
-        try { cancelRange.getCell(idx + 2, 1).setValue(true); } catch(e) {}
-        var data = {
-          location: locations[idx],
-          name: names[idx],
-          seller: sellers[idx],
-          sku: skus[idx],
-          sn: sns[idx],
-          unique: uniques[idx],
-          brand: brands[idx]
-        };
-        appendToInventory(tlSs, data, 'ToylandInventory');
+function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName) {
+  var ordersRange = ss.getRangeByName(ordersRangeName);
+  if (!ordersRange) return;
+  var sheet = ordersRange.getSheet();
+  var lastRow = getLastDataRow(ordersRange.offset(0,3,ordersRange.getNumRows(),1));
+  var startRow = ordersRange.getRow() + 1;
+  if (lastRow < startRow) return;
+  var dataRows = lastRow - startRow + 1;
+  var numCols = ordersRange.getNumColumns();
+  var data = sheet.getRange(startRow, ordersRange.getColumn(), dataRows, numCols).getValues();
+  var snMap = {};
+  for (var i = 0; i < data.length; i++) {
+    snMap[String(data[i][3]).trim()] = i;
+  }
+  var cancelCol = ordersRange.getColumn() + 11;
+  var cancelValues = sheet.getRange(startRow, cancelCol, dataRows, 1).getValues();
+  var invRows = [];
+  items.forEach(function(it){
+    var idx = snMap[it.sn];
+    if (idx != null) {
+      cancelValues[idx][0] = true;
+      var row = data[idx];
+      var locationValue = row[7] === 'مغازه' ? 'STORE' : row[7];
+      invRows.push([row[1], row[9], '', row[10], row[3], row[8], '', locationValue, row[2]]);
     }
-
-      function handleBR(idx){
-        if (idx < 0) return;
-        try { brCancelRange.getCell(idx + 2, 1).setValue(true); } catch(e) {}
-        var data = {
-          location: brLocations[idx],
-          name: brNames[idx],
-          seller: brSellers[idx],
-          sku: brSkus[idx],
-          sn: brSns[idx],
-          unique: brUniques[idx],
-          brand: brBrands[idx]
-        };
-        appendToInventory(brSs, data, 'BuyruzInventory');
-    }
-
-      function appendToInventory(ss, data, rangeName){
-        rangeName = rangeName || 'Inventory';
-        var invRange = ss.getRangeByName(rangeName);
-        var sheet = invRange.getSheet();
-        var row = sheet.getLastRow() + 1;
-        var baseCol = invRange.getColumn();
-        var locationValue = data.location === 'مغازه' ? 'STORE' : data.location;
-        var rowValues = [];
-        rowValues[0] = data.name;
-        rowValues[1] = data.brand;
-        rowValues[2] = '';
-        rowValues[3] = data.unique;
-        rowValues[4] = data.sn;
-        rowValues[5] = data.seller;
-        rowValues[6] = '';
-        rowValues[7] = locationValue;
-        rowValues[8] = data.sku;
-        sheet.getRange(row, baseCol, 1, 9).setValues([rowValues]);
-        var labelCell = sheet.getRange(row, baseCol + 8);
-        labelCell.insertCheckboxes();
-        labelCell.setValue(false);
-      }
+  });
+  sheet.getRange(startRow, cancelCol, dataRows, 1).setValues(cancelValues);
+  if (invRows.length) {
+    var invRange = ss.getRangeByName(inventoryRangeName);
+    var invSheet = invRange.getSheet();
+    var baseCol = invRange.getColumn();
+    var start = invSheet.getLastRow() + 1;
+    invSheet.getRange(start, baseCol, invRows.length, invRange.getNumColumns()).setValues(invRows);
+    var labelRange = invSheet.getRange(start, baseCol + 8, invRows.length, 1);
+    labelRange.insertCheckboxes();
+    labelRange.setValues(Array(invRows.length).fill([false]));
+  }
 }
 
