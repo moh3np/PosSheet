@@ -107,46 +107,40 @@ function processExternalOrder(cfg, items, dateStr) {
   }
   var nextRow = headerRow + nextIndex;
 
-  var ids = [], names = [], skus = [], sns = [], dates = [], prices = [], paid = [], uniqueCodes = [], locations = [], sellers = [], brands = [];
-  items.forEach(function(it) {
-    ids.push([orderId]);
-    names.push([it.name]);
-    skus.push([it.sku ? it.sku.replace(/\D/g, '') : '']);
-    sns.push([it.serial]);
-    dates.push([dateStr]);
-    prices.push([it.price]);
-    paid.push([it.paid]);
-    uniqueCodes.push([it.uniqueCode]);
-    locations.push([it.location]);
-    sellers.push([it.seller]);
-    brands.push([it.brand]);
+  var rows = items.map(function(it) {
+    var row = new Array(numCols);
+    row[idCol - baseCol] = orderId;
+    row[nameCol - baseCol] = it.name;
+    row[skuCol - baseCol] = it.sku ? it.sku.replace(/\D/g, '') : '';
+    row[snCol - baseCol] = it.serial;
+    row[dateCol - baseCol] = dateStr;
+    row[priceCol - baseCol] = it.price;
+    row[paidCol - baseCol] = it.paid;
+    if (locationCol != null) row[locationCol - baseCol] = it.location;
+    if (sellerCol != null) row[sellerCol - baseCol] = it.seller;
+    if (brandCol != null) row[brandCol - baseCol] = it.brand;
+    if (uniqueCodeCol != null) row[uniqueCodeCol - baseCol] = it.uniqueCode;
+    return row;
   });
-  sheet.getRange(nextRow, idCol, items.length, 1).setValues(ids);
-  sheet.getRange(nextRow, nameCol, items.length, 1).setValues(names);
-  sheet.getRange(nextRow, skuCol, items.length, 1).setValues(skus);
-  sheet.getRange(nextRow, snCol, items.length, 1).setValues(sns);
-  sheet.getRange(nextRow, dateCol, items.length, 1).setValues(dates);
-  sheet.getRange(nextRow, priceCol, items.length, 1).setValues(prices);
-  sheet.getRange(nextRow, paidCol, items.length, 1).setValues(paid);
-  if (uniqueCodeCol != null) sheet.getRange(nextRow, uniqueCodeCol, items.length, 1).setValues(uniqueCodes);
-  if (locationCol != null) sheet.getRange(nextRow, locationCol, items.length, 1).setValues(locations);
-  if (sellerCol != null) sheet.getRange(nextRow, sellerCol, items.length, 1).setValues(sellers);
-  if (brandCol != null) sheet.getRange(nextRow, brandCol, items.length, 1).setValues(brands);
+  sheet.getRange(nextRow, baseCol, rows.length, numCols).setValues(rows);
 
   var invRange = ss.getRangeByName(cfg.inventoryRange);
-  var invSheet = invRange ? invRange.getSheet() : null;
-  var invValues = invRange ? invRange.getValues() : [];
-  items.forEach(function(it) {
-    if (!invRange) return;
-    var targetSn = String(it.serial).trim();
-    for (var i = 0; i < invValues.length; i++) {
-      var sn = String(invValues[i][4]).trim();
-      if (sn === targetSn) {
-        invSheet.deleteRow(invRange.getRow() + i);
-        invValues.splice(i, 1);
-        break;
-      }
+  if (invRange) {
+    var invSheet = invRange.getSheet();
+    var dataStart = invRange.getRow() + 1;
+    var numInvCols = invRange.getNumColumns();
+    var dataRows = invSheet.getLastRow() - invRange.getRow();
+    var invValues = dataRows > 0 ? invSheet.getRange(dataStart, invRange.getColumn(), dataRows, numInvCols).getValues() : [];
+    var removeSet = items.map(function(it){ return String(it.serial).trim(); });
+    var filtered = invValues.filter(function(r){ return removeSet.indexOf(String(r[4]).trim()) === -1; });
+    if (dataRows > 0) {
+      invSheet.getRange(dataStart, invRange.getColumn(), dataRows, numInvCols).clearContent();
     }
-  });
+    if (filtered.length) {
+      var targetRange = invSheet.getRange(dataStart, invRange.getColumn(), filtered.length, numInvCols);
+      targetRange.setValues(filtered);
+      invSheet.getRange(dataStart, invRange.getColumn() + 8, filtered.length, 1).insertCheckboxes();
+    }
+  }
 }
 
