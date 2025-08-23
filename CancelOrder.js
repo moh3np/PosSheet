@@ -97,7 +97,7 @@ function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName) {
       cancelValues[idx][0] = true;
       var row = data[idx];
       var locationValue = row[7] === 'مغازه' ? 'STORE' : row[7];
-      invRows.push([row[1], row[9], '', row[10], row[3], row[8], '', locationValue, row[2]]);
+      invRows.push([row[1], row[9], row[2], row[10], row[3], row[8], '', locationValue, '']);
     }
   });
   sheet.getRange(startRow, cancelCol, dataRows, 1).setValues(cancelValues);
