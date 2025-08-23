@@ -66,15 +66,15 @@ function cancelOrders(items) {
 
   if (tlItems.length) {
     var tlSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
-    processCancelGroup(tlSs, tlItems, 'ToylandOrders', 'ToylandInventory');
+    processCancelGroup(tlSs, tlItems, 'ToylandOrders', 'ToylandInventory', true);
   }
   if (brItems.length) {
     var brSs = SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8');
-    processCancelGroup(brSs, brItems, 'BuyruzPosOrders', 'BuyruzInventory');
+    processCancelGroup(brSs, brItems, 'BuyruzPosOrders', 'BuyruzInventory', false);
   }
 }
 
-function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName) {
+function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName, transferPrice) {
   var ordersRange = ss.getRangeByName(ordersRangeName);
   if (!ordersRange) return;
   var sheet = ordersRange.getSheet();
@@ -89,7 +89,7 @@ function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName) {
     snMap[String(data[i][3]).trim()] = i;
   }
   var cancelCol = ordersRange.getColumn() + 11;
-  var cancelValues = sheet.getRange(startRow, cancelCol, dataRows, 1).getValues();
+  var cancelValues = data.map(function(row){ return [row[11]]; });
   var invRows = [];
   items.forEach(function(it){
     var idx = snMap[it.sn];
@@ -97,7 +97,8 @@ function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName) {
       cancelValues[idx][0] = true;
       var row = data[idx];
       var locationValue = row[7] === 'مغازه' ? 'STORE' : row[7];
-      invRows.push([row[1], row[9], row[2], row[10], row[3], row[8], '', locationValue, '']);
+      var priceValue = transferPrice ? row[5] : '';
+      invRows.push([row[1], row[9], row[2], row[10], row[3], row[8], priceValue, locationValue, '']);
     }
   });
   sheet.getRange(startRow, cancelCol, dataRows, 1).setValues(cancelValues);
