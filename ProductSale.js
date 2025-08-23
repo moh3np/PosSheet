@@ -127,19 +127,29 @@ function processExternalOrder(cfg, items, dateStr) {
   var invRange = ss.getRangeByName(cfg.inventoryRange);
   if (invRange) {
     var invSheet = invRange.getSheet();
+    var startCol = invRange.getColumn();
     var dataStart = invRange.getRow() + 1;
     var numInvCols = invRange.getNumColumns();
     var dataRows = invSheet.getLastRow() - invRange.getRow();
-    var invValues = dataRows > 0 ? invSheet.getRange(dataStart, invRange.getColumn(), dataRows, numInvCols).getValues() : [];
+    var invValues = dataRows > 0 ? invSheet.getRange(dataStart, startCol, dataRows, numInvCols).getValues() : [];
     var removeSet = items.map(function(it){ return String(it.serial).trim(); });
     var filtered = invValues.filter(function(r){ return removeSet.indexOf(String(r[4]).trim()) === -1; });
+    if (cfg.inventoryRange === 'BuyruzInventory') {
+      filtered.forEach(function(r){ r[6] = ''; });
+    }
     if (dataRows > 0) {
-      invSheet.getRange(dataStart, invRange.getColumn(), dataRows, numInvCols).clearContent();
+      invSheet.getRange(dataStart, startCol, dataRows, numInvCols).clearContent();
+      invSheet.getRange(dataStart, startCol + 8, dataRows, 1).clearDataValidations();
     }
     if (filtered.length) {
-      var targetRange = invSheet.getRange(dataStart, invRange.getColumn(), filtered.length, numInvCols);
+      var targetRange = invSheet.getRange(dataStart, startCol, filtered.length, numInvCols);
       targetRange.setValues(filtered);
-      invSheet.getRange(dataStart, invRange.getColumn() + 8, filtered.length, 1).insertCheckboxes();
+      var cbRange = invSheet.getRange(dataStart, startCol + 8, filtered.length, 1);
+      cbRange.insertCheckboxes();
+    }
+    if (cfg.inventoryRange === 'BuyruzInventory') {
+      var formula = "=ARRAYFORMULA(IFERROR(XLOOKUP(VALUE(C2:C), VALUE('قیمت محصولات'!Z:Z), 'قیمت محصولات'!C:C, \"\"), \"\"))";
+      invSheet.getRange(dataStart, startCol + 6).setFormula(formula);
     }
   }
 }
