@@ -48,40 +48,9 @@ function submitOrder(items) {
   if (!items || !items.length) {
     return;
   }
-  ensureSerialAvailability(items);
   var dateStr = getPersianDateTime();
   var orderId = getNextOrderId();
   handleExternalOrders(dateStr, items, orderId);
-}
-
-function ensureSerialAvailability(items) {
-  var ss = SpreadsheetApp.getActive();
-  var posOrdersRange = ss.getRangeByName('PosOrders');
-  if (!posOrdersRange) return;
-  var sheet = posOrdersRange.getSheet();
-  var serialCol = posOrdersRange.getColumn() + 3;
-  var dataStart = getDataStartRow(posOrdersRange);
-  var lastRow = getLastDataRow(posOrdersRange);
-  var dataRows = lastRow >= dataStart ? lastRow - dataStart + 1 : 0;
-  var existing = {};
-  if (dataRows > 0) {
-    var vals = sheet.getRange(dataStart, serialCol, dataRows, 1).getValues();
-    for (var i = 0; i < vals.length; i++) {
-      var s = String(vals[i][0]).trim();
-      if (s) existing[s] = true;
-    }
-  }
-  var seen = {};
-  var duplicates = [];
-  items.forEach(function(it) {
-    var s = String(it.serial).trim();
-    if (!s) return;
-    if (existing[s] || seen[s]) duplicates.push(s);
-    seen[s] = true;
-  });
-  if (duplicates.length) {
-    throw new Error('سریال ' + duplicates.join(', ') + ' قبلا به فروش رفته و موجود نیست');
-  }
 }
 
 function handleExternalOrders(dateStr, items, orderId) {
