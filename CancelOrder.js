@@ -6,7 +6,7 @@ function showCancelDialog() {
   if (!posRange) return;
   var sheet = posRange.getSheet();
   var lastRow = getLastDataRow(posRange.offset(0, 3));
-  var startRow = posRange.getRow() + 1;
+  var startRow = getDataStartRow(posRange);
   if (lastRow < startRow) return;
   var numRows = lastRow - startRow + 1;
   var values = sheet
@@ -79,7 +79,7 @@ function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName, tran
   if (!ordersRange) return;
   var sheet = ordersRange.getSheet();
   var lastRow = getLastDataRow(ordersRange.offset(0,3,ordersRange.getNumRows(),1));
-  var startRow = ordersRange.getRow() + 1;
+  var startRow = getDataStartRow(ordersRange);
   if (lastRow < startRow) return;
   var dataRows = lastRow - startRow + 1;
   var numCols = ordersRange.getNumColumns();
@@ -106,7 +106,7 @@ function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName, tran
     var invRange = ss.getRangeByName(inventoryRangeName);
     var invSheet = invRange.getSheet();
     var baseCol = invRange.getColumn();
-    var start = invSheet.getLastRow() + 1;
+    var start = getLastDataRow(invRange) + 1;
     invSheet.getRange(start, baseCol, invRows.length, invRange.getNumColumns()).setValues(invRows);
     var labelRange = invSheet.getRange(start, baseCol + 8, invRows.length, 1);
     labelRange.insertCheckboxes();
