@@ -129,6 +129,12 @@ function processExternalOrder(cfg, items, dateStr, orderId) {
     var invValues = invDataRows > 0 ? invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, numInvCols).getValues() : [];
     var removeSet = items.map(function(it){ return String(it.serial).trim(); });
     var filtered = invValues.filter(function(r){ return removeSet.indexOf(String(r[4]).trim()) === -1; });
+    if (cfg.inventoryRange === 'BuyruzInventory') {
+      filtered = filtered.map(function(r){
+        r[6] = '';
+        return r;
+      });
+    }
     if (invDataRows > 0) {
       var clearRange = invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, numInvCols);
       clearRange.clearContent();
