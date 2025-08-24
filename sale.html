@@ -682,9 +682,14 @@
             brand: row.dataset.brand || ''
           };
         });
-        google.script.run.withSuccessHandler(() => {
-          resetForm();
-        }).submitOrder(items);
+        google.script.run
+          .withSuccessHandler(() => {
+            resetForm();
+          })
+          .withFailureHandler(err => {
+            alert(err.message);
+          })
+          .submitOrder(items);
       });
 
       function resetForm(){
