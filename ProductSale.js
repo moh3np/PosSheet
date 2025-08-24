@@ -48,17 +48,18 @@ function submitOrder(items) {
     return;
   }
   var dateStr = getPersianDateTime();
-  handleExternalOrders(dateStr, items);
+  var orderId = getNextOrderId();
+  handleExternalOrders(dateStr, items, orderId);
 }
 
-function handleExternalOrders(dateStr, items) {
+function handleExternalOrders(dateStr, items, orderId) {
   var tlItems = items.filter(function(it){ return it.sku && it.sku.indexOf('TL') === 0; });
   if (tlItems.length) {
     processExternalOrder({
       spreadsheetId: '1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s',
       ordersRange: 'ToylandOrders',
       inventoryRange: 'ToylandInventory'
-    }, tlItems, dateStr);
+    }, tlItems, dateStr, orderId);
   }
   var brItems = items.filter(function(it){ return it.sku && it.sku.indexOf('BR') === 0; });
   if (brItems.length) {
@@ -66,11 +67,11 @@ function handleExternalOrders(dateStr, items) {
       spreadsheetId: '12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8',
       ordersRange: 'BuyruzPosOrders',
       inventoryRange: 'BuyruzInventory'
-    }, brItems, dateStr);
+    }, brItems, dateStr, orderId);
   }
 }
 
-function processExternalOrder(cfg, items, dateStr) {
+function processExternalOrder(cfg, items, dateStr, orderId) {
   var ss = SpreadsheetApp.openById(cfg.spreadsheetId);
   var ordersRange = ss.getRangeByName(cfg.ordersRange);
   if (!ordersRange) return;
@@ -91,21 +92,14 @@ function processExternalOrder(cfg, items, dateStr) {
   var uniqueCodeCol = col(10);
 
   var headerRow = ordersRange.getRow();
-  var idValuesRange = sheet.getRange(headerRow, idCol, sheet.getLastRow() - headerRow + 1, 1);
-  var idValues = idValuesRange.getValues().map(function(r){ return r[0]; });
-  var lastId = 0;
-  idValues.forEach(function(v){
-    var num = parseInt(String(v).replace(/\D/g, ''), 10);
-    if (!isNaN(num) && num > lastId) {
-      lastId = num;
-    }
-  });
-  var orderId = lastId + 1;
+  var dataStart = headerRow + 1;
+  var dataRows = sheet.getLastRow() - headerRow;
+  var idValues = dataRows > 0 ? sheet.getRange(dataStart, idCol, dataRows, 1).getValues().map(function(r){ return r[0]; }) : [];
   var nextIndex = 0;
   while (nextIndex < idValues.length && idValues[nextIndex]) {
     nextIndex++;
   }
-  var nextRow = headerRow + nextIndex;
+  var nextRow = dataStart + nextIndex;
 
   var rows = items.map(function(it) {
     var row = new Array(numCols);
@@ -127,20 +121,42 @@ function processExternalOrder(cfg, items, dateStr) {
   var invRange = ss.getRangeByName(cfg.inventoryRange);
   if (invRange) {
     var invSheet = invRange.getSheet();
-    var dataStart = invRange.getRow() + 1;
+    var invDataStart = invRange.getRow() + 1;
     var numInvCols = invRange.getNumColumns();
-    var dataRows = invSheet.getLastRow() - invRange.getRow();
-    var invValues = dataRows > 0 ? invSheet.getRange(dataStart, invRange.getColumn(), dataRows, numInvCols).getValues() : [];
+    var invDataRows = invSheet.getLastRow() - invRange.getRow();
+    var invValues = invDataRows > 0 ? invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, numInvCols).getValues() : [];
     var removeSet = items.map(function(it){ return String(it.serial).trim(); });
     var filtered = invValues.filter(function(r){ return removeSet.indexOf(String(r[4]).trim()) === -1; });
-    if (dataRows > 0) {
-      invSheet.getRange(dataStart, invRange.getColumn(), dataRows, numInvCols).clearContent();
+    if (invDataRows > 0) {
+      var clearRange = invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, numInvCols);
+      clearRange.clearContent();
+      clearRange.clearDataValidations();
     }
     if (filtered.length) {
-      var targetRange = invSheet.getRange(dataStart, invRange.getColumn(), filtered.length, numInvCols);
+      var targetRange = invSheet.getRange(invDataStart, invRange.getColumn(), filtered.length, numInvCols);
       targetRange.setValues(filtered);
-      invSheet.getRange(dataStart, invRange.getColumn() + 8, filtered.length, 1).insertCheckboxes();
+      invSheet.getRange(invDataStart, invRange.getColumn() + 8, filtered.length, 1).insertCheckboxes();
     }
   }
+}
+
+function getNextOrderId() {
+  var ss = SpreadsheetApp.getActive();
+  var posOrdersRange = ss.getRangeByName('PosOrders');
+  if (!posOrdersRange) return 1;
+  var sheet = posOrdersRange.getSheet();
+  var headerRow = posOrdersRange.getRow();
+  var idCol = posOrdersRange.getColumn();
+  var dataRows = sheet.getLastRow() - headerRow;
+  if (dataRows < 1) return 1;
+  var values = sheet.getRange(headerRow + 1, idCol, dataRows, 1).getValues();
+  var lastId = 0;
+  values.forEach(function(r) {
+    var num = parseInt(String(r[0]).replace(/\D/g, ''), 10);
+    if (!isNaN(num) && num > lastId) {
+      lastId = num;
+    }
+  });
+  return lastId + 1;
 }
 
