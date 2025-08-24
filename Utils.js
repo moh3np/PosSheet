@@ -1,18 +1,26 @@
+function getDataStartRow(range) {
+  var sheet = range.getSheet();
+  var frozenRows = sheet.getFrozenRows();
+  return range.getRow() <= frozenRows ? frozenRows + 1 : range.getRow();
+}
+
 function getLastDataRow(range) {
   var sheet = range.getSheet();
-  var startRow = range.getRow() + 1;
-  var col = range.getColumn();
-  var lastRow = sheet.getLastRow();
-  var numRows = lastRow - range.getRow();
-  if (numRows < 1) return range.getRow();
-  var values = sheet.getRange(startRow, col, numRows, 1).getValues();
+  var startRow = getDataStartRow(range);
+  var startCol = range.getColumn();
+  var numRows = range.getNumRows() - (startRow - range.getRow());
+  var numCols = range.getNumColumns();
+  if (numRows < 1) return startRow - 1;
+  var values = sheet.getRange(startRow, startCol, numRows, numCols).getValues();
   for (var i = values.length - 1; i >= 0; i--) {
-    var val = values[i][0];
-    if (val !== '' && val !== null) {
-      return startRow + i;
+    for (var j = 0; j < numCols; j++) {
+      var val = values[i][j];
+      if (val !== '' && val !== null) {
+        return startRow + i;
+      }
     }
   }
-  return range.getRow();
+  return startRow - 1;
 }
 
 function getPersianDateTime() {

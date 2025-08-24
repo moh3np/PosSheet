@@ -23,10 +23,11 @@ function getInventoryData() {
   var empty = {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
   if (!invRange) return empty;
   var sheet = invRange.getSheet();
+  var startRow = getDataStartRow(invRange);
   var lastRow = getLastDataRow(invRange);
-  var numRows = lastRow - invRange.getRow();
+  var numRows = lastRow - startRow + 1;
   if (numRows < 1) return empty;
-  var values = sheet.getRange(invRange.getRow() + 1, invRange.getColumn(), numRows, invRange.getNumColumns()).getValues();
+  var values = sheet.getRange(startRow, invRange.getColumn(), numRows, invRange.getNumColumns()).getValues();
   var names = [], brands = [], uniqueCodes = [], sns = [], sellers = [], prices = [], locations = [], skus = [], persianSns = [];
   for (var i = 0; i < values.length; i++) {
     var r = values[i];
@@ -91,9 +92,9 @@ function processExternalOrder(cfg, items, dateStr, orderId) {
   var brandCol = col(9);
   var uniqueCodeCol = col(10);
 
-  var headerRow = ordersRange.getRow();
-  var dataStart = headerRow + 1;
-  var dataRows = sheet.getLastRow() - headerRow;
+  var dataStart = getDataStartRow(ordersRange);
+  var lastOrderRow = getLastDataRow(ordersRange);
+  var dataRows = lastOrderRow >= dataStart ? lastOrderRow - dataStart + 1 : 0;
   var idValues = dataRows > 0 ? sheet.getRange(dataStart, idCol, dataRows, 1).getValues().map(function(r){ return r[0]; }) : [];
   var nextIndex = 0;
   while (nextIndex < idValues.length && idValues[nextIndex]) {
@@ -121,9 +122,10 @@ function processExternalOrder(cfg, items, dateStr, orderId) {
   var invRange = ss.getRangeByName(cfg.inventoryRange);
   if (invRange) {
     var invSheet = invRange.getSheet();
-    var invDataStart = invRange.getRow() + 1;
+    var invDataStart = getDataStartRow(invRange);
     var numInvCols = invRange.getNumColumns();
-    var invDataRows = invSheet.getLastRow() - invRange.getRow();
+    var invLastRow = getLastDataRow(invRange);
+    var invDataRows = invLastRow >= invDataStart ? invLastRow - invDataStart + 1 : 0;
     var invValues = invDataRows > 0 ? invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, numInvCols).getValues() : [];
     var removeSet = items.map(function(it){ return String(it.serial).trim(); });
     var filtered = invValues.filter(function(r){ return removeSet.indexOf(String(r[4]).trim()) === -1; });
@@ -145,11 +147,12 @@ function getNextOrderId() {
   var posOrdersRange = ss.getRangeByName('PosOrders');
   if (!posOrdersRange) return 1;
   var sheet = posOrdersRange.getSheet();
-  var headerRow = posOrdersRange.getRow();
   var idCol = posOrdersRange.getColumn();
-  var dataRows = sheet.getLastRow() - headerRow;
+  var dataStart = getDataStartRow(posOrdersRange);
+  var lastRow = getLastDataRow(posOrdersRange);
+  var dataRows = lastRow >= dataStart ? lastRow - dataStart + 1 : 0;
   if (dataRows < 1) return 1;
-  var values = sheet.getRange(headerRow + 1, idCol, dataRows, 1).getValues();
+  var values = sheet.getRange(dataStart, idCol, dataRows, 1).getValues();
   var lastId = 0;
   values.forEach(function(r) {
     var num = parseInt(String(r[0]).replace(/\D/g, ''), 10);
