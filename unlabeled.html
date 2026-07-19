@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        direction: rtl;
+        background: #f5f5f5;
+        padding: 20px;
+        padding-bottom: 140px;
+      }
+      #selectorWrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+      #searchInput {
+        min-width: 320px;
+        max-width: 420px;
+        width: 40%;
+        font-size: 18px;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #bbb;
+        text-align: center;
+      }
+      datalist option {
+        direction: rtl;
+      }
+      .info-box {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px 16px;
+        font-weight: bold;
+        min-width: 200px;
+        text-align: center;
+      }
+      #detailsCard {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 16px;
+        max-width: 520px;
+        margin: 0 auto 24px;
+        text-align: center;
+        display: none;
+      }
+      #detailsCard h2 {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+      #detailsCard p {
+        margin: 6px 0;
+        font-size: 16px;
+      }
+      #quantityForm {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+      }
+      #quantityForm label {
+        font-weight: bold;
+      }
+      #quantityInput {
+        width: 120px;
+        padding: 6px;
+        border-radius: 6px;
+        border: 1px solid #bbb;
+        text-align: center;
+        font-size: 16px;
+      }
+      #quantityForm button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        background: #4caf50;
+        color: #fff;
+        cursor: pointer;
+      }
+      #quantityForm button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: center;
+      }
+      th {
+        background: #f0f0f0;
+        font-weight: bold;
+      }
+      tbody tr:nth-child(even) {
+        background: #fafafa;
+      }
+      tbody tr:hover {
+        background: #eef8ff;
+      }
+      tbody tr.selected {
+        background: #d7ecff;
+      }
+      #emptyState {
+        text-align: center;
+        margin-top: 40px;
+        color: #777;
+        font-size: 18px;
+        display: none;
+      }
+      .feedback-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        font-family: inherit;
+      }
+      .feedback-overlay.visible {
+        display: flex;
+      }
+      .feedback-dialog {
+        background: #fff;
+        border-radius: 14px;
+        padding: 28px 32px;
+        box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+        text-align: center;
+        max-width: 320px;
+        width: calc(100% - 32px);
+      }
+      .feedback-icon {
+        font-size: 36px;
+        margin-bottom: 12px;
+        color: #2e7d32;
+      }
+      .feedback-title {
+        margin: 0 0 10px;
+        font-size: 20px;
+        color: #222;
+      }
+      .feedback-message {
+        margin: 0 0 16px;
+        font-size: 16px;
+        color: #444;
+        line-height: 1.6;
+      }
+      .feedback-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        border-radius: 8px;
+        background: #43a047;
+        color: #fff;
+        padding: 10px 28px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .feedback-button:focus {
+        outline: 2px solid #b2ff59;
+        outline-offset: 2px;
+      }
+      .feedback-overlay.error .feedback-icon {
+        color: #c62828;
+      }
+      .feedback-overlay.error .feedback-button {
+        background: #c62828;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="selectorWrapper">
+      <input id="searchInput" list="skuList" placeholder="جستجو SKU یا نام محصول" autofocus>
+      <datalist id="skuList"></datalist>
+      <div class="info-box">تعداد یونیک: <span id="totalCount">۰</span></div>
+      <div class="info-box">جمع موجودی کل: <span id="totalStock">۰</span></div>
+      <div class="info-box">تعداد نمایش داده شده: <span id="visibleCount">۰</span></div>
+      <div class="info-box">جمع موجودی نمایش داده شده: <span id="visibleStock">۰</span></div>
+    </div>
+
+    <div id="detailsCard">
+      <h2 id="selectedName"></h2>
+      <p>SKU: <span id="selectedSku"></span></p>
+      <p>تعداد موجود: <span id="selectedCount"></span></p>
+      <form id="quantityForm">
+        <label for="quantityInput">موجودی فعلی</label>
+        <input type="text" id="quantityInput" inputmode="numeric" pattern="[0-9۰-۹٠-٩]*" required>
+        <button type="submit">ثبت</button>
+      </form>
+    </div>
+
+    <table id="resultTable">
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>نام محصول</th>
+          <th>تعداد موجود</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="emptyState">محصول بی‌لیبل پیدا نشد.</div>
+    <div id="feedbackOverlay" class="feedback-overlay" role="alertdialog" aria-modal="true" aria-labelledby="feedbackTitle" aria-describedby="feedbackMessage">
+      <div class="feedback-dialog">
+        <div id="feedbackIcon" class="feedback-icon">✔️</div>
+        <h3 id="feedbackTitle" class="feedback-title">عملیات موفق</h3>
+        <p id="feedbackMessage" class="feedback-message">موجودی با موفقیت به‌روزرسانی شد.</p>
+        <button id="feedbackButton" type="button" class="feedback-button">باشه</button>
+      </div>
+    </div>
+
+    <script>
+      const data = <?!= JSON.stringify(inventoryData) ?>;
+      const items = (data && data.items) ? data.items : [];
+      const searchInput = document.getElementById('searchInput');
+      const datalist = document.getElementById('skuList');
+      const totalCountEl = document.getElementById('totalCount');
+      const totalStockEl = document.getElementById('totalStock');
+      const visibleCountEl = document.getElementById('visibleCount');
+      const visibleStockEl = document.getElementById('visibleStock');
+      const tbody = document.querySelector('#resultTable tbody');
+      const emptyState = document.getElementById('emptyState');
+      const detailsCard = document.getElementById('detailsCard');
+      const selectedNameEl = document.getElementById('selectedName');
+      const selectedSkuEl = document.getElementById('selectedSku');
+      const selectedCountEl = document.getElementById('selectedCount');
+      const quantityForm = document.getElementById('quantityForm');
+      const quantityInput = document.getElementById('quantityInput');
+      const feedbackOverlay = document.getElementById('feedbackOverlay');
+      const feedbackIcon = document.getElementById('feedbackIcon');
+      const feedbackTitle = document.getElementById('feedbackTitle');
+      const feedbackMessage = document.getElementById('feedbackMessage');
+      const feedbackButton = document.getElementById('feedbackButton');
+
+      const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+      const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
+      const englishDigits = '0123456789';
+
+      function toPersianDigits(str) {
+        return String(str).replace(/[0-9]/g, d => persianDigits[d]);
+      }
+
+      function toEnglishDigits(str) {
+        return String(str)
+          .replace(/[۰-۹]/g, d => englishDigits[persianDigits.indexOf(d)])
+          .replace(/[٠-٩]/g, d => englishDigits[arabicDigits.indexOf(d)]);
+      }
+
+      function sanitizeNumericInput(value) {
+        let sanitized = '';
+        const raw = String(value || '');
+        for (let i = 0; i < raw.length; i++) {
+          const ch = raw[i];
+          if (englishDigits.indexOf(ch) !== -1) {
+            sanitized += ch;
+            continue;
+          }
+          const persianIndex = persianDigits.indexOf(ch);
+          if (persianIndex !== -1) {
+            sanitized += persianDigits[persianIndex];
+            continue;
+          }
+          const arabicIndex = arabicDigits.indexOf(ch);
+          if (arabicIndex !== -1) {
+            sanitized += persianDigits[arabicIndex];
+          }
+        }
+        return sanitized;
+      }
+
+      function showFeedback(options) {
+        options = options || {};
+        const type = options.type === 'error' ? 'error' : 'success';
+        const icon = type === 'error' ? '⚠️' : '✔️';
+        const title = options.title || (type === 'error' ? 'خطا' : 'عملیات موفق');
+        const message = options.message || '';
+        feedbackOverlay.classList.remove('success', 'error');
+        feedbackOverlay.classList.add(type);
+        feedbackIcon.textContent = icon;
+        feedbackTitle.textContent = title;
+        feedbackMessage.textContent = message;
+        feedbackOverlay.classList.add('visible');
+        feedbackButton.focus();
+      }
+
+      function hideFeedback() {
+        const wasVisible = feedbackOverlay.classList.contains('visible');
+        feedbackOverlay.classList.remove('visible', 'success', 'error');
+        if (wasVisible) {
+          quantityInput.focus();
+          setTimeout(() => quantityInput.select(), 0);
+        }
+      }
+
+      feedbackButton.addEventListener('click', hideFeedback);
+      feedbackOverlay.addEventListener('click', evt => {
+        if (evt.target === feedbackOverlay) {
+          hideFeedback();
+        }
+      });
+      document.addEventListener('keydown', evt => {
+        if (evt.key === 'Escape' && feedbackOverlay.classList.contains('visible')) {
+          evt.preventDefault();
+          hideFeedback();
+        }
+      });
+
+      let currentItem = null;
+      let lastRendered = [];
+
+      const normalizedItems = items.map(item => {
+        const sku = String(item.sku || '').trim();
+        const displaySku = String(item.displaySku || sku).trim();
+        const name = String(item.name || '').trim();
+        return {
+          key: (sku + ' ' + name + ' ' + displaySku).trim().toLowerCase(),
+          sku: sku,
+          displaySku: displaySku,
+          name: name,
+          count: Number(item.count || 0) || 0
+        };
+      });
+
+      const uniqueMap = new Map();
+      normalizedItems.forEach(item => {
+        if (!item.sku && !item.name) return;
+        const key = item.key || item.sku.toLowerCase();
+        if (!uniqueMap.has(key)) {
+          uniqueMap.set(key, { sku: item.sku, displaySku: item.displaySku, name: item.name, count: item.count });
+        } else {
+          const existing = uniqueMap.get(key);
+          existing.count += item.count;
+          if (!existing.displaySku && item.displaySku) {
+            existing.displaySku = item.displaySku;
+          }
+        }
+      });
+      const uniqueList = Array.from(uniqueMap.values());
+      uniqueList.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'fa')); 
+
+      uniqueList.forEach(item => {
+        if (item.sku) {
+          const opt = document.createElement('option');
+          opt.value = item.sku;
+          opt.label = item.name ? `${item.name}` : item.displaySku || item.sku;
+          datalist.appendChild(opt);
+        }
+        if (item.name) {
+          const optName = document.createElement('option');
+          optName.value = item.name;
+          optName.label = item.sku ? `${item.name} (${item.sku})` : item.name;
+          datalist.appendChild(optName);
+        }
+      });
+
+      function sumCount(list) {
+        return list.reduce((sum, item) => sum + (Number(item.count) || 0), 0);
+      }
+
+      function render(list) {
+        tbody.innerHTML = '';
+        if (!list.length) {
+          emptyState.style.display = 'block';
+        } else {
+          emptyState.style.display = 'none';
+        }
+        list.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${item.displaySku || item.sku || '—'}</td><td>${item.name || '—'}</td><td>${toPersianDigits(item.count)}</td>`;
+          tr.addEventListener('click', () => {
+            populateCard(item);
+          });
+          if (currentItem && (currentItem === item || (currentItem.sku === item.sku && currentItem.name === item.name))) {
+            tr.classList.add('selected');
+          }
+          tbody.appendChild(tr);
+        });
+        visibleStockEl.textContent = toPersianDigits(sumCount(list));
+        visibleCountEl.textContent = toPersianDigits(list.length);
+        lastRendered = list;
+      }
+
+      function populateCard(item) {
+        selectedNameEl.textContent = item.name || '—';
+        selectedSkuEl.textContent = item.displaySku || item.sku || '—';
+        selectedCountEl.textContent = toPersianDigits(item.count);
+        quantityInput.value = sanitizeNumericInput(toPersianDigits(item.count));
+        quantityForm.dataset.sku = item.sku || '';
+        quantityForm.dataset.name = item.name || '';
+        currentItem = item;
+        detailsCard.style.display = 'block';
+        quantityInput.focus();
+        setTimeout(() => quantityInput.select(), 0);
+        render(findMatches(searchInput.value.trim()));
+      }
+
+      function findMatches(query) {
+        if (!query) return uniqueList;
+        const lower = query.toLowerCase();
+        const normalized = toEnglishDigits(lower);
+        return uniqueList.filter(item => {
+        const text = `${item.sku} ${item.displaySku} ${item.name}`.toLowerCase();
+        const englishText = toEnglishDigits(text);
+          return text.includes(lower) || englishText.includes(normalized);
+        });
+      }
+
+      searchInput.addEventListener('input', () => {
+        const val = searchInput.value.trim();
+        const matches = findMatches(val);
+        render(matches);
+        if (matches.length === 1 && val) {
+          populateCard(matches[0]);
+        }
+      });
+
+      searchInput.addEventListener('keydown', evt => {
+        if (evt.key === 'Enter') {
+          evt.preventDefault();
+          const val = searchInput.value.trim();
+          if (!val) return;
+          const matches = findMatches(val);
+          if (matches.length) {
+            populateCard(matches[0]);
+          }
+        }
+      });
+
+      quantityInput.addEventListener('focus', () => {
+        setTimeout(() => quantityInput.select(), 0);
+      });
+
+      quantityInput.addEventListener('input', () => {
+        const sanitized = sanitizeNumericInput(quantityInput.value);
+        if (quantityInput.value !== sanitized) {
+          quantityInput.value = sanitized;
+        }
+      });
+
+      function submitUpdate(payload) {
+        return new Promise((resolve, reject) => {
+          if (typeof google !== 'undefined' && google.script && google.script.run) {
+            google.script.run
+              .withSuccessHandler(resolve)
+              .withFailureHandler(reject)
+              .updateUnlabeledInventoryStatus(payload);
+          } else {
+            resolve({ desiredCount: payload.desiredCount, totalCount: payload.desiredCount, missingCount: 0 });
+          }
+        });
+      }
+
+      function setFormDisabled(disabled) {
+        quantityInput.disabled = disabled;
+        quantityForm.querySelector('button[type="submit"]').disabled = disabled;
+      }
+
+      quantityForm.addEventListener('submit', evt => {
+        evt.preventDefault();
+        const sku = quantityForm.dataset.sku;
+        const name = quantityForm.dataset.name;
+        const value = Number(toEnglishDigits(quantityInput.value));
+        if (!sku && !name) return;
+        if (Number.isNaN(value)) return;
+        setFormDisabled(true);
+        submitUpdate({ sku, name, desiredCount: value })
+          .then(res => {
+            const desired = Number(res && res.desiredCount);
+            const applied = Number.isNaN(desired) ? value : Math.max(0, desired);
+            if (currentItem) {
+              currentItem.count = applied;
+              selectedCountEl.textContent = toPersianDigits(applied);
+              quantityInput.value = sanitizeNumericInput(toPersianDigits(applied));
+            }
+            totalStockEl.textContent = toPersianDigits(sumCount(uniqueList));
+            render(findMatches(searchInput.value.trim()));
+            visibleStockEl.textContent = toPersianDigits(sumCount(lastRendered));
+            visibleCountEl.textContent = toPersianDigits(lastRendered.length);
+            showFeedback({
+              type: 'success',
+              title: 'عملیات موفق',
+              message: 'موجودی با موفقیت به‌روزرسانی شد.'
+            });
+          })
+          .catch(err => {
+            const message = err && err.message ? err.message : err;
+            showFeedback({
+              type: 'error',
+              title: 'عملیات ناموفق',
+              message: 'خطا در به‌روزرسانی موجودی: ' + message
+            });
+          })
+          .finally(() => {
+            setFormDisabled(false);
+            quantityInput.focus();
+            setTimeout(() => quantityInput.select(), 0);
+          });
+      });
+
+      totalCountEl.textContent = toPersianDigits(uniqueList.length);
+      totalStockEl.textContent = toPersianDigits(sumCount(uniqueList));
+      render(uniqueList);
+      visibleStockEl.textContent = toPersianDigits(sumCount(uniqueList));
+      visibleCountEl.textContent = toPersianDigits(uniqueList.length);
+      searchInput.focus();
+    </script>
+    <span style="position: fixed; left: 8px; bottom: 4px; font-size: 8px; color: #cbd5e1; pointer-events: none; font-family: monospace; user-select: none; z-index: 9999;">v<?= APP_VERSION ?></span>
+  </body>
+</html>

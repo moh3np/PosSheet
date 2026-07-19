@@ -1,0 +1,947 @@
+<?var mode = viewMode || 'sidebar';?>
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <style>
+      #psa-root {
+        direction: rtl;
+        font-family: var(--psa-font-family, "Vazirmatn", "Tahoma", sans-serif);
+        background: #f7f7f9;
+        color: #1f1f1f;
+        min-width: 340px;
+        max-width: <?!= mode === 'sidebar' ? '480px' : '1200px' ?>;
+        padding: 16px;
+        box-sizing: border-box;
+      }
+      #psa-root * {
+        box-sizing: border-box;
+      }
+      #psa-root h1 {
+        font-size: 20px;
+        margin: 0 0 12px;
+        font-weight: 600;
+      }
+      #psa-root .psa-meta {
+        font-size: 12px;
+        color: #555;
+        margin-bottom: 12px;
+      }
+      #psa-root .psa-filters {
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 16px;
+      }
+      #psa-root .psa-field {
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+      }
+      #psa-root label {
+        font-size: 13px;
+        margin-bottom: 4px;
+        font-weight: 500;
+      }
+      #psa-root input[type="text"],
+      #psa-root select {
+        font: inherit;
+        padding: 6px 8px;
+        border: 1px solid #d0d0d5;
+        border-radius: 6px;
+        background: #fff;
+      }
+      #psa-root select[multiple] {
+        height: 96px;
+        padding: 6px;
+      }
+      #psa-root .psa-inline {
+        display: flex;
+        gap: 8px;
+      }
+      #psa-root .psa-inline .psa-field {
+        flex: 1;
+      }
+      #psa-root .psa-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      #psa-root button {
+        font: inherit;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+      }
+      #psa-root .psa-primary {
+        background: #2962ff;
+        color: #fff;
+      }
+      #psa-root .psa-secondary {
+        background: #e0e7ff;
+        color: #1f1f1f;
+      }
+      #psa-root button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+      #psa-root .psa-kpis {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      #psa-root .psa-insights {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      #psa-root .psa-insight-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 12px;
+      }
+      #psa-root .psa-insight-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      #psa-root .psa-insight-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      #psa-root .psa-insight-item {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        line-height: 1.6;
+      }
+      #psa-root .psa-badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 999px;
+        background: #e8f0fe;
+        color: #1f3f7f;
+        font-size: 11px;
+        margin-right: 4px;
+      }
+      #psa-root .psa-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      #psa-root .psa-card .label {
+        font-size: 12px;
+        color: #616170;
+      }
+      #psa-root .psa-card .value {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      #psa-root table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      }
+      #psa-root th,
+      #psa-root td {
+        padding: 8px;
+        border-bottom: 1px solid #ececf2;
+        font-size: 13px;
+        text-align: center;
+      }
+      #psa-root th {
+        background: #f0f2ff;
+        font-weight: 600;
+      }
+      #psa-root .psa-table-wrapper {
+        overflow-x: auto;
+      }
+      #psa-root .psa-empty {
+        padding: 16px;
+        text-align: center;
+        font-size: 13px;
+        color: #666;
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      }
+      #psa-root .psa-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+        font-size: 13px;
+      }
+      #psa-root .psa-pagination button {
+        min-width: 80px;
+      }
+      #psa-root .psa-feedback {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #d32f2f;
+      }
+      #psa-root .psa-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+      }
+      #psa-root .psa-checkbox input {
+        width: 16px;
+        height: 16px;
+      }
+      #psa-root .psa-amount-types {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        font-size: 13px;
+      }
+      #psa-root .psa-amount-types label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin: 0;
+      }
+      #psa-root .psa-summary {
+        font-size: 12px;
+        color: #555;
+        margin-top: 8px;
+      }
+      #psa-root .psa-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(255,255,255,0.7);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        direction: rtl;
+        font-size: 14px;
+        color: #333;
+      }
+      #psa-root .psa-overlay.active {
+        display: flex;
+      }
+      #psa-root .psa-spinner {
+        border: 4px solid #e0e0e0;
+        border-top-color: #2962ff;
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        animation: psa-spin 1s linear infinite;
+        margin-left: 12px;
+      }
+      @keyframes psa-spin {
+        to { transform: rotate(-360deg); }
+      }
+      #psa-root .psa-chart-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+      #psa-root .psa-chart {
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        min-height: 240px;
+      }
+      #psa-root .psa-chart h2 {
+        font-size: 14px;
+        margin: 0 0 8px;
+      }
+      #psa-root .psa-toggle-charts {
+        display: <?!= mode === 'dialog' ? 'none' : 'none' ?>;
+      }
+      @media (max-width: 420px) {
+        #psa-root {
+          padding: 12px;
+        }
+        #psa-root .psa-inline {
+          flex-direction: column;
+        }
+        #psa-root select[multiple] {
+          height: 120px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="psa-root" data-view-mode="<?!= mode ?>">
+      <div class="psa-overlay" id="psa-overlay">
+        <div class="psa-spinner"></div>
+        <div>در حال پردازش...</div>
+      </div>
+      <h1>تحلیل فروش</h1>
+      <div class="psa-meta" id="psa-meta"></div>
+      <form id="psa-form" class="psa-filters">
+        <div class="psa-inline">
+          <div class="psa-field">
+            <label>از تاریخ (شمسی)</label>
+            <input type="text" id="psa-date-from" placeholder="YYYY/MM/DD">
+          </div>
+          <div class="psa-field">
+            <label>تا تاریخ (شمسی)</label>
+            <input type="text" id="psa-date-to" placeholder="YYYY/MM/DD">
+          </div>
+        </div>
+        <div class="psa-field">
+          <label>فروشنده</label>
+          <select id="psa-sellers" multiple></select>
+        </div>
+        <div class="psa-field">
+          <label>برند</label>
+          <select id="psa-brands" multiple></select>
+        </div>
+        <div class="psa-field">
+          <label>موقعیت در انبار</label>
+          <select id="psa-locations" multiple></select>
+        </div>
+        <div class="psa-field">
+          <label>جستجو (SKU یا نام محصول)</label>
+          <input type="text" id="psa-search" placeholder="عبارت جستجو">
+        </div>
+        <div class="psa-field psa-checkbox">
+          <input type="checkbox" id="psa-include-canceled">
+          <label for="psa-include-canceled">شامل لغوشده‌ها/مرجوعی‌ها؟</label>
+        </div>
+        <div class="psa-field">
+          <label>نوع مبلغ</label>
+          <div class="psa-amount-types">
+            <label><input type="radio" name="psa-amount" value="pricePaid" checked> قیمت با تخفیف</label>
+            <label><input type="radio" name="psa-amount" value="priceList"> قیمت محصول</label>
+          </div>
+        </div>
+        <div class="psa-field">
+          <label>Group By</label>
+          <select id="psa-group-by">
+            <option value="none">بدون گروه‌بندی</option>
+            <option value="day">تاریخ (روز)</option>
+            <option value="week">تاریخ (هفته)</option>
+            <option value="month">تاریخ (ماه)</option>
+            <option value="seller">فروشنده</option>
+            <option value="brand">برند</option>
+            <option value="location">موقعیت</option>
+            <option value="sku">SKU</option>
+            <option value="product">نام محصول</option>
+          </select>
+        </div>
+        <div class="psa-actions">
+          <button type="submit" class="psa-primary" id="psa-run">محاسبه</button>
+          <button type="button" class="psa-secondary" id="psa-export">خروجی به شیت</button>
+        </div>
+        <div class="psa-summary" id="psa-summary"></div>
+        <div class="psa-feedback" id="psa-feedback"></div>
+      </form>
+      <div class="psa-kpis" id="psa-kpis"></div>
+      <div class="psa-insights" id="psa-insights"></div>
+      <div class="psa-table-wrapper" id="psa-table-wrapper"></div>
+      <div class="psa-pagination" id="psa-pagination"></div>
+      <? if (mode === 'dialog') { ?>
+        <div class="psa-chart-grid" id="psa-charts">
+          <div class="psa-chart"><h2>مبلغ خالص روزانه</h2><div id="psa-chart-day"></div></div>
+          <div class="psa-chart"><h2>۱۰ محصول برتر</h2><div id="psa-chart-product"></div></div>
+          <div class="psa-chart"><h2>مبلغ خالص بر اساس فروشنده</h2><div id="psa-chart-seller"></div></div>
+          <div class="psa-chart"><h2>مبلغ خالص بر اساس برند</h2><div id="psa-chart-brand"></div></div>
+        </div>
+      <? } ?>
+    </div>
+    <script>
+      (function() {
+        const root = document.getElementById('psa-root');
+        const overlay = document.getElementById('psa-overlay');
+        const metaEl = document.getElementById('psa-meta');
+        const summaryEl = document.getElementById('psa-summary');
+        const feedbackEl = document.getElementById('psa-feedback');
+        const kpiContainer = document.getElementById('psa-kpis');
+        const insightsContainer = document.getElementById('psa-insights');
+        const tableWrapper = document.getElementById('psa-table-wrapper');
+        const paginationEl = document.getElementById('psa-pagination');
+        const form = document.getElementById('psa-form');
+        const mode = root.dataset.viewMode;
+        const state = {
+          options: { sellers: [], brands: [], locations: [] },
+          filters: {},
+          loading: false,
+          currentPage: 1,
+          lastUpdated: null,
+          lastSignature: null,
+          chartsSignature: null,
+          chartsLoaded: false
+        };
+
+        function initFont() {
+          const bodyFont = window.getComputedStyle(document.body).fontFamily;
+          if (bodyFont && bodyFont !== 'auto') {
+            root.style.setProperty('--psa-font-family', bodyFont);
+          } else {
+            if (!document.getElementById('psa-font-link')) {
+              const link = document.createElement('link');
+              link.id = 'psa-font-link';
+              link.rel = 'stylesheet';
+              link.href = 'https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600&display=swap';
+              document.head.appendChild(link);
+            }
+            root.style.setProperty('--psa-font-family', '"Vazirmatn", "Tahoma", sans-serif');
+          }
+        }
+
+        function setLoading(flag) {
+          state.loading = flag;
+          overlay.classList.toggle('active', flag);
+          form.querySelectorAll('input, select, button').forEach(function(el) {
+            if (el.id === 'psa-export') return;
+            el.disabled = flag && el.type !== 'checkbox';
+          });
+          document.getElementById('psa-run').disabled = flag;
+        }
+
+        function formatNumber(value) {
+          const num = Number(value);
+          if (!isFinite(num)) return '—';
+          return new Intl.NumberFormat('fa-IR').format(num);
+        }
+
+        function formatCurrency(value) {
+          const num = Number(value);
+          if (!isFinite(num)) return '—';
+          return new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 0 }).format(num);
+        }
+
+        function formatPercent(value) {
+          if (value === null || value === undefined || isNaN(value)) return '—';
+          return new Intl.NumberFormat('fa-IR', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value);
+        }
+
+        function formatDecimal(value, fractionDigits) {
+          const num = Number(value);
+          if (!isFinite(num)) return '—';
+          const digits = typeof fractionDigits === 'number' ? fractionDigits : 2;
+          return new Intl.NumberFormat('fa-IR', { maximumFractionDigits: digits, minimumFractionDigits: 0 }).format(num);
+        }
+
+        function formatDateTime(value) {
+          if (!value) return '—';
+          const date = new Date(value);
+          if (!isFinite(date.getTime())) return '—';
+          return new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+        }
+
+        function renderMeta() {
+          if (!state.lastUpdated) {
+            metaEl.textContent = 'آخرین به‌روزرسانی: نامشخص';
+            return;
+          }
+          const date = new Date(state.lastUpdated);
+          const str = isFinite(date.getTime()) ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'medium', timeStyle: 'short' }).format(date) : state.lastUpdated;
+          metaEl.textContent = 'آخرین به‌روزرسانی: ' + str;
+        }
+
+        function renderOptions() {
+          populateSelect('psa-sellers', state.options.sellers);
+          populateSelect('psa-brands', state.options.brands);
+          populateSelect('psa-locations', state.options.locations);
+        }
+
+        function populateSelect(id, values) {
+          const select = document.getElementById(id);
+          select.innerHTML = '';
+          values.forEach(function(val) {
+            const option = document.createElement('option');
+            option.value = val;
+            option.textContent = val || '—';
+            select.appendChild(option);
+          });
+        }
+
+        function applyFiltersToForm(filters) {
+          document.getElementById('psa-date-from').value = filters.dateFrom || '';
+          document.getElementById('psa-date-to').value = filters.dateTo || '';
+          setMultiSelect('psa-sellers', filters.sellers || []);
+          setMultiSelect('psa-brands', filters.brands || []);
+          setMultiSelect('psa-locations', filters.locations || []);
+          document.getElementById('psa-search').value = filters.search || '';
+          document.getElementById('psa-include-canceled').checked = Boolean(filters.includeCanceled);
+          const amount = filters.amountType || 'pricePaid';
+          const amountInput = form.querySelector('input[name="psa-amount"][value="' + amount + '"]');
+          if (amountInput) amountInput.checked = true;
+          document.getElementById('psa-group-by').value = filters.groupBy || 'none';
+        }
+
+        function setMultiSelect(id, values) {
+          const select = document.getElementById(id);
+          const lookup = new Set(values || []);
+          Array.from(select.options).forEach(function(opt) {
+            opt.selected = lookup.has(opt.value);
+          });
+        }
+
+        function collectFilters() {
+          const amount = form.querySelector('input[name="psa-amount"]:checked');
+          return {
+            dateFrom: document.getElementById('psa-date-from').value.trim(),
+            dateTo: document.getElementById('psa-date-to').value.trim(),
+            sellers: getSelected('psa-sellers'),
+            brands: getSelected('psa-brands'),
+            locations: getSelected('psa-locations'),
+            search: document.getElementById('psa-search').value.trim(),
+            includeCanceled: document.getElementById('psa-include-canceled').checked,
+            amountType: amount ? amount.value : 'pricePaid',
+            groupBy: document.getElementById('psa-group-by').value,
+            page: state.currentPage || 1
+          };
+        }
+
+        function getSelected(id) {
+          const select = document.getElementById(id);
+          return Array.from(select.selectedOptions).map(function(opt) { return opt.value; });
+        }
+
+        function renderKpis(kpis) {
+          kpiContainer.innerHTML = '';
+          const defs = [
+            ['تعداد سفارش‌ها', formatNumber(kpis.orderCount)],
+            ['تعداد آیتم‌ها', formatNumber(kpis.itemCount)],
+            ['مبلغ ناخالص', formatCurrency(kpis.grossAmount)],
+            ['مبلغ خالص', formatCurrency(kpis.netAmount)],
+            ['میانگین ارزش سفارش', formatCurrency(kpis.averageOrderValue)],
+            ['مجموع تخفیف', formatCurrency(kpis.discountTotal)],
+            ['نرخ تخفیف میانگین وزنی', formatPercent(kpis.discountRate)],
+            ['مبلغ مرجوعی', formatCurrency(kpis.returnAmount)],
+            ['تعداد آیتم مرجوعی', formatNumber(kpis.returnCount)],
+            ['تعداد سفارش‌های دارای مرجوعی', formatNumber(kpis.returnOrderCount)]
+          ];
+          defs.forEach(function(pair) {
+            var card = document.createElement('div');
+            card.className = 'psa-card';
+            var label = document.createElement('div');
+            label.className = 'label';
+            label.textContent = pair[0];
+            var value = document.createElement('div');
+            value.className = 'value';
+            value.textContent = pair[1];
+            card.appendChild(label);
+            card.appendChild(value);
+            kpiContainer.appendChild(card);
+          });
+        }
+
+        function renderTable(table) {
+          tableWrapper.innerHTML = '';
+          if (!table.rows || !table.rows.length) {
+            const div = document.createElement('div');
+            div.className = 'psa-empty';
+            div.textContent = 'هیچ رکوردی برای نمایش وجود ندارد.';
+            tableWrapper.appendChild(div);
+            return;
+          }
+          const tableEl = document.createElement('table');
+          const thead = document.createElement('thead');
+          const trHead = document.createElement('tr');
+          table.headers.forEach(function(h) {
+            const th = document.createElement('th');
+            th.textContent = h;
+            trHead.appendChild(th);
+          });
+          thead.appendChild(trHead);
+          tableEl.appendChild(thead);
+          const tbody = document.createElement('tbody');
+          table.rows.forEach(function(row) {
+            const tr = document.createElement('tr');
+            row.forEach(function(cell, idx) {
+              const td = document.createElement('td');
+              const type = table.valueTypes[idx];
+              if (type === 'currency') {
+                td.textContent = formatCurrency(cell);
+                td.style.whiteSpace = 'nowrap';
+              } else if (type === 'number') {
+                td.textContent = formatNumber(cell);
+                td.style.whiteSpace = 'nowrap';
+              } else {
+                td.textContent = cell == null || cell === '' ? '—' : cell;
+              }
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+          tableEl.appendChild(tbody);
+          tableWrapper.appendChild(tableEl);
+        }
+
+        function renderPagination(pagination) {
+          paginationEl.innerHTML = '';
+          if (!pagination.totalRows) {
+            return;
+          }
+          const info = document.createElement('div');
+          info.textContent = 'صفحه ' + pagination.page + ' از ' + pagination.totalPages;
+          const controls = document.createElement('div');
+          const prev = document.createElement('button');
+          prev.textContent = 'قبلی';
+          prev.className = 'psa-secondary';
+          prev.disabled = pagination.page <= 1;
+          prev.addEventListener('click', function() {
+            changePage(pagination.page - 1);
+          });
+          const next = document.createElement('button');
+          next.textContent = 'بعدی';
+          next.className = 'psa-secondary';
+          next.disabled = pagination.page >= pagination.totalPages;
+          next.addEventListener('click', function() {
+            changePage(pagination.page + 1);
+          });
+          controls.appendChild(prev);
+          controls.appendChild(next);
+          paginationEl.appendChild(controls);
+          paginationEl.appendChild(info);
+        }
+
+        function changePage(page) {
+          state.currentPage = page;
+          runReport();
+        }
+
+        function renderSummary(info) {
+          if (!info) {
+            summaryEl.textContent = '';
+            return;
+          }
+          let summary = 'آیتم‌های مطابق فیلترها: ' + formatNumber(info.includedCount) + ' | کل سطرهای بررسی‌شده: ' + formatNumber(info.filteredCount);
+          if (info.canceledCount) {
+            summary += ' | لغوشده/مرجوعی: ' + formatNumber(info.canceledCount);
+          }
+          summaryEl.textContent = summary;
+        }
+
+        function buildInsightLine(label, value) {
+          const line = document.createElement('div');
+          line.textContent = label + ': ' + value;
+          return line;
+        }
+
+        function renderProductInsight(item, options) {
+          options = options || {};
+          const wrapper = document.createElement('div');
+          wrapper.className = 'psa-insight-item';
+          const headline = document.createElement('div');
+          headline.textContent = (item.name && item.name !== '') ? item.name : 'بدون نام';
+          const sku = item.displaySku || item.sku;
+          if (sku) {
+            const badge = document.createElement('span');
+            badge.className = 'psa-badge';
+            badge.textContent = sku;
+            badge.dir = 'ltr';
+            headline.appendChild(document.createTextNode(' '));
+            headline.appendChild(badge);
+          }
+          wrapper.appendChild(headline);
+          const meta = [];
+          if (item.salesCount != null) {
+            meta.push('تعداد فروش: ' + formatNumber(item.salesCount));
+          }
+          if (options.includeStock) {
+            meta.push('موجودی فعلی: ' + formatNumber(item.stockCount));
+          }
+          if (options.includeVelocity && item.salesVelocityDaily) {
+            meta.push('سرعت فروش روزانه: ' + formatDecimal(item.salesVelocityDaily, 2));
+          }
+          if (options.includeThreshold && item.lowStockThreshold != null) {
+            meta.push('آستانه هشدار: ' + formatNumber(item.lowStockThreshold));
+          }
+          if (options.includeCoverage && item.coverageDays != null) {
+            meta.push('پوشش موجودی: ' + formatDecimal(item.coverageDays, 1) + ' روز');
+          }
+          if (options.includeSuggested && item.suggestedReorder) {
+            meta.push('پیشنهاد خرید: ' + formatNumber(item.suggestedReorder));
+          }
+          if (item.lastSoldAt) {
+            meta.push('آخرین فروش: ' + formatDateTime(item.lastSoldAt));
+          }
+          if (item.location) {
+            meta.push('محل: ' + item.location);
+          }
+          if (item.brand) {
+            meta.push('برند: ' + item.brand);
+          }
+          if (item.seller) {
+            meta.push('فروشنده: ' + item.seller);
+          }
+          if (meta.length) {
+            const details = document.createElement('div');
+            details.textContent = meta.join(' | ');
+            wrapper.appendChild(details);
+          }
+          return wrapper;
+        }
+
+        function appendInsightCard(title, items, options, emptyMessage) {
+          if (!insightsContainer) {
+            return;
+          }
+          const card = document.createElement('div');
+          card.className = 'psa-insight-card';
+          const titleEl = document.createElement('div');
+          titleEl.className = 'psa-insight-title';
+          titleEl.textContent = title;
+          card.appendChild(titleEl);
+          const list = document.createElement('div');
+          list.className = 'psa-insight-list';
+          if (!items || !items.length) {
+            const empty = document.createElement('div');
+            empty.className = 'psa-insight-item';
+            empty.textContent = emptyMessage || 'داده‌ای برای نمایش وجود ندارد.';
+            list.appendChild(empty);
+          } else {
+            items.forEach(function(item) {
+              list.appendChild(renderProductInsight(item, options));
+            });
+          }
+          card.appendChild(list);
+          insightsContainer.appendChild(card);
+        }
+
+        function renderInsights(insights) {
+          if (!insightsContainer) {
+            return;
+          }
+          insightsContainer.innerHTML = '';
+          if (!insights) {
+            insightsContainer.style.display = 'none';
+            return;
+          }
+          insightsContainer.style.display = '';
+          const metrics = insights.metrics || {};
+          const summaryCard = document.createElement('div');
+          summaryCard.className = 'psa-insight-card';
+          const summaryTitle = document.createElement('div');
+          summaryTitle.className = 'psa-insight-title';
+          summaryTitle.textContent = 'خلاصه موجودی و فروش';
+          summaryCard.appendChild(summaryTitle);
+          const summaryList = document.createElement('div');
+          summaryList.className = 'psa-insight-list';
+          summaryList.appendChild(buildInsightLine('بازه تحلیل', metrics.windowDays ? formatNumber(metrics.windowDays) + ' روز' : '—'));
+          summaryList.appendChild(buildInsightLine('محصولات دارای فروش', formatNumber(metrics.distinctProducts || 0)));
+          summaryList.appendChild(buildInsightLine('تعداد آیتم فروخته‌شده', formatNumber(metrics.totalSold || 0)));
+          summaryList.appendChild(buildInsightLine('کل موجودی ثبت‌شده', formatNumber(metrics.inventoryUnits || 0) + ' آیتم در ' + formatNumber(metrics.inventorySkuCount || 0) + ' SKU'));
+          summaryList.appendChild(buildInsightLine('ناموجود', formatNumber(metrics.outOfStockCount || 0)));
+          summaryList.appendChild(buildInsightLine('کمبود موجودی', formatNumber(metrics.lowStockCount || 0)));
+          summaryList.appendChild(buildInsightLine('پیشنهاد خرید مجدد', formatNumber(metrics.restockCount || 0)));
+          summaryCard.appendChild(summaryList);
+          insightsContainer.appendChild(summaryCard);
+          appendInsightCard('محصولات پرفروش (براساس تعداد)', insights.topByCount || [], { includeStock: true, includeVelocity: true }, 'در این بازه فروشی ثبت نشده است.');
+          appendInsightCard('محصولات ناموجود پس از فروش', insights.outOfStock || [], { includeStock: true, includeVelocity: true }, 'محصول ناموجودی مطابق فروش‌های این بازه یافت نشد.');
+          appendInsightCard('موجودی‌های کم', insights.lowStock || [], { includeStock: true, includeVelocity: true, includeThreshold: true }, 'موجودی بحرانی برای این بازه یافت نشد.');
+          appendInsightCard('پیشنهادهای خرید مجدد', insights.restock || [], { includeStock: true, includeVelocity: true, includeCoverage: true, includeSuggested: true }, 'محصولی برای خرید مجدد فوری پیشنهاد نشده است.');
+        }
+
+        function setFeedback(message, isError) {
+          feedbackEl.textContent = message || '';
+          feedbackEl.style.color = isError ? '#d32f2f' : '#1e88e5';
+        }
+
+        function handleInit(data) {
+          state.options = data.options || state.options;
+          state.filters = data.defaults || {};
+          state.lastUpdated = data.lastUpdated || null;
+          renderOptions();
+          applyFiltersToForm(state.filters);
+          if (data.report) {
+            applyReport(data.report);
+          }
+          renderMeta();
+        }
+
+        function applyReport(report) {
+          if (!report) return;
+          state.currentPage = report.pagination ? report.pagination.page : 1;
+          renderKpis(report.kpis || {});
+          renderTable(report.table || { rows: [] });
+          renderPagination(report.pagination || {});
+          renderSummary(report.datasetInfo || null);
+          renderInsights(report.insights || null);
+          state.lastSignature = JSON.stringify(report.filters || {});
+          setFeedback('', false);
+          if (mode === 'dialog') {
+            requestCharts(report.filters || {});
+          }
+        }
+
+        function onError(err) {
+          console.error(err);
+          setFeedback((err && err.message) || 'خطای نامشخص رخ داد.', true);
+        }
+
+        function runReport() {
+          const filters = collectFilters();
+          filters.page = state.currentPage;
+          setLoading(true);
+          google.script.run
+            .withSuccessHandler(function(report) {
+              setLoading(false);
+              applyReport(report);
+              if (report && report.lastUpdated) {
+                state.lastUpdated = report.lastUpdated;
+                renderMeta();
+              }
+            })
+            .withFailureHandler(function(err) {
+              setLoading(false);
+              onError(err);
+            })
+            .PosSheetInsights_computeReport(filters);
+        }
+
+        function handleExport() {
+          const btn = document.getElementById('psa-export');
+          btn.disabled = true;
+          const filters = collectFilters();
+          filters.page = 1;
+          setFeedback('در حال ایجاد خروجی...', false);
+          google.script.run
+            .withSuccessHandler(function(res) {
+              btn.disabled = false;
+              setFeedback('گزارش در شیت "' + (res.sheetName || '') + '" ذخیره شد.', false);
+            })
+            .withFailureHandler(function(err) {
+              btn.disabled = false;
+              onError(err);
+            })
+            .PosSheetInsights_exportReport(filters);
+        }
+
+        var chartsLoaderPromise = null;
+        function loadChartsLib() {
+          if (chartsLoaderPromise) return chartsLoaderPromise;
+          chartsLoaderPromise = new Promise(function(resolve, reject) {
+            if (window.google && google.charts) {
+              google.charts.load('current', { packages: ['corechart'] });
+              google.charts.setOnLoadCallback(function() { resolve(); });
+              return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://www.gstatic.com/charts/loader.js';
+            script.onload = function() {
+              google.charts.load('current', { packages: ['corechart'] });
+              google.charts.setOnLoadCallback(function() { resolve(); });
+            };
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+          return chartsLoaderPromise;
+        }
+
+        function requestCharts(filters) {
+          if (mode !== 'dialog') return;
+          const signature = JSON.stringify(filters);
+          if (signature === state.chartsSignature) {
+            return;
+          }
+          loadChartsLib().then(function() {
+            google.script.run
+              .withSuccessHandler(function(data) {
+                state.chartsSignature = signature;
+                drawCharts(data || {});
+              })
+              .withFailureHandler(onError)
+              .PosSheetInsights_getChartData(filters);
+          }).catch(function(err) {
+            console.error('Failed to load chart library', err);
+          });
+        }
+
+        function drawCharts(data) {
+          drawChart('psa-chart-day', data.day || [], 'LineChart');
+          drawChart('psa-chart-product', data.product || [], 'ColumnChart');
+          drawChart('psa-chart-seller', data.seller || [], 'BarChart');
+          drawChart('psa-chart-brand', data.brand || [], 'PieChart');
+        }
+
+        function drawChart(elementId, rows, type) {
+          const el = document.getElementById(elementId);
+          if (!el) return;
+          if (!rows.length) {
+            el.innerHTML = '<div style="text-align:center;color:#666;padding:12px;font-size:12px;">داده‌ای برای نمایش نیست.</div>';
+            return;
+          }
+          const data = new google.visualization.DataTable();
+          data.addColumn('string', 'کلید');
+          data.addColumn('number', 'مبلغ');
+          data.addRows(rows.map(function(row) { return [String(row[0] || '—'), Number(row[1] || 0)]; }));
+          const options = {
+            legend: { position: 'bottom' },
+            height: 240,
+            fontName: root.style.getPropertyValue('--psa-font-family') || 'Tahoma',
+            chartArea: { width: '85%', height: '70%' }
+          };
+          var chart;
+          switch (type) {
+            case 'LineChart':
+              chart = new google.visualization.LineChart(el);
+              options.pointSize = 4;
+              options.vAxis = { format: 'decimal' };
+              break;
+            case 'BarChart':
+              chart = new google.visualization.BarChart(el);
+              options.bar = { groupWidth: '60%' };
+              break;
+            case 'PieChart':
+              chart = new google.visualization.PieChart(el);
+              options.chartArea = { width: '80%', height: '80%' };
+              break;
+            default:
+              chart = new google.visualization.ColumnChart(el);
+              options.bar = { groupWidth: '60%' };
+          }
+          chart.draw(data, options);
+        }
+
+        form.addEventListener('submit', function(evt) {
+          evt.preventDefault();
+          state.currentPage = 1;
+          runReport();
+        });
+        document.getElementById('psa-export').addEventListener('click', handleExport);
+        document.getElementById('psa-search').addEventListener('keydown', function(evt) {
+          if (evt.key === 'Enter') {
+            evt.preventDefault();
+            state.currentPage = 1;
+            runReport();
+          }
+        });
+
+        initFont();
+        setLoading(true);
+        google.script.run
+          .withSuccessHandler(function(res) {
+            setLoading(false);
+            handleInit(res);
+          })
+          .withFailureHandler(function(err) {
+            setLoading(false);
+            onError(err);
+          })
+          .PosSheetInsights_getInitialState();
+      })();
+    </script>
+    <span style="position: fixed; left: 8px; bottom: 4px; font-size: 8px; color: #cbd5e1; pointer-events: none; font-family: monospace; user-select: none; z-index: 9999;">v<?= APP_VERSION ?></span>
+  </body>
+</html>

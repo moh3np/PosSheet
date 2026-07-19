@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fa">
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css">
+    <style>
+      :root { color-scheme: light; }
+      html, body {
+        height: 100%;
+        margin: 0;
+      }
+      body {
+        font-family: 'Vazir', sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        direction: rtl;
+        color: #0f172a;
+      }
+      .dialog {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        padding: 20px 20px 16px;
+        border-radius: 22px;
+        background: #ffffff;
+        box-shadow: 0 24px 45px rgba(15, 23, 42, 0.14);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        overflow: hidden;
+      }
+      .header {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+      }
+      .header p {
+        margin: 0;
+        font-size: 13px;
+        color: #475569;
+        line-height: 1.6;
+      }
+      .pin-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+      }
+      .pin-wrapper.error {
+        background: rgba(248, 113, 113, 0.15);
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(239, 68, 68, 0.25);
+        animation: shake 420ms ease;
+      }
+      .pin-wrapper.error .pin-digit {
+        border-color: #ef4444;
+        color: #b91c1c;
+      }
+      .pin-wrapper.error .pin-digit:focus {
+        box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.35);
+      }
+      .pin-inputs {
+        display: flex;
+        gap: 10px;
+        direction: ltr;
+      }
+      .pin-digit {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        border: 2px solid #dbeafe;
+        background: #f8fafc;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        color: #1d4ed8;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        outline: none;
+      }
+      .pin-digit:focus {
+        border-color: #2563eb;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.25);
+      }
+      .pin-digit.filled {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+      .error-message {
+        min-height: 20px;
+        font-size: 13px;
+        color: #b91c1c;
+        text-align: center;
+        opacity: 0;
+        transform: translateY(6px);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+      .error-message.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .submit-button {
+        align-self: stretch;
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 999px;
+        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 20px 30px rgba(37, 99, 235, 0.35);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      }
+      .submit-button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 24px 38px rgba(76, 29, 149, 0.45);
+      }
+      .submit-button:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+      .submit-button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+      .submit-button.loading::after {
+        content: '';
+        display: inline-block;
+        margin-right: 10px;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.65);
+        border-top-color: #fff;
+        animation: spin 0.65s linear infinite;
+        vertical-align: middle;
+      }
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        20% { transform: translateX(-6px); }
+        40% { transform: translateX(6px); }
+        60% { transform: translateX(-4px); }
+        80% { transform: translateX(4px); }
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="dialog" id="dialog">
+      <div class="header">
+        <p>برای مشاهده لیست قیمت محصولات بایروز، رمز ۴ رقمی خود را وارد کنید.</p>
+      </div>
+      <form id="pinForm" autocomplete="off" novalidate>
+        <div class="pin-wrapper" id="pinWrapper">
+          <div class="pin-inputs" id="pinInputs">
+            <input class="pin-digit" type="password" inputmode="numeric" maxlength="1" aria-label="رقم اول" autocomplete="one-time-code">
+            <input class="pin-digit" type="password" inputmode="numeric" maxlength="1" aria-label="رقم دوم">
+            <input class="pin-digit" type="password" inputmode="numeric" maxlength="1" aria-label="رقم سوم">
+            <input class="pin-digit" type="password" inputmode="numeric" maxlength="1" aria-label="رقم چهارم">
+          </div>
+          <div class="error-message" id="errorMessage" role="alert" aria-live="assertive"></div>
+        </div>
+        <button type="submit" class="submit-button" id="submitButton">تایید</button>
+      </form>
+    </div>
+    <script>
+      (function() {
+        var form = document.getElementById('pinForm');
+        var pinWrapper = document.getElementById('pinWrapper');
+        var errorMessage = document.getElementById('errorMessage');
+        var submitButton = document.getElementById('submitButton');
+        var closeButton = document.querySelector('.close-button');
+        var inputs = Array.prototype.slice.call(document.querySelectorAll('.pin-digit'));
+        var submitting = false;
+
+        function normalizeInputValue(value) {
+          return (value || '').replace(/[^\d۰-۹]/g, '').slice(-1);
+        }
+
+        function clearErrorState() {
+          pinWrapper.classList.remove('error');
+          errorMessage.classList.remove('visible');
+          errorMessage.textContent = '';
+        }
+
+        function showError(message) {
+          pinWrapper.classList.add('error');
+          errorMessage.textContent = message || 'رمز وارد شده صحیح نیست.';
+          errorMessage.classList.add('visible');
+          inputs.forEach(function(input) {
+            input.value = '';
+            input.classList.remove('filled');
+          });
+          window.setTimeout(function() {
+            pinWrapper.classList.remove('error');
+          }, 600);
+          focusInput(inputs[0]);
+        }
+
+        function focusInput(input) {
+          if (input) {
+            input.focus();
+            input.select();
+          }
+        }
+
+        function getDigits() {
+          return inputs.map(function(input) {
+            return input.value;
+          });
+        }
+
+        function setLoading(state) {
+          submitting = state;
+          submitButton.disabled = state;
+          submitButton.classList.toggle('loading', state);
+        }
+
+        function attemptSubmit() {
+          if (submitting) {
+            return;
+          }
+          clearErrorState();
+          var digits = getDigits();
+          var isComplete = digits.every(function(digit) { return digit !== ''; });
+          if (!isComplete) {
+            return;
+          }
+          setLoading(true);
+          google.script.run
+            .withSuccessHandler(function(result) {
+              setLoading(false);
+              if (result && result.success) {
+                window.setTimeout(function() {
+                  google.script.host.close();
+                }, 120);
+              } else {
+                showError((result && result.message) || 'رمز وارد شده صحیح نیست.');
+              }
+            })
+            .withFailureHandler(function() {
+              setLoading(false);
+              showError('خطایی در برقراری ارتباط رخ داد. لطفاً دوباره تلاش کنید.');
+            })
+            .buyruzPricingCompleteAuthorization(digits);
+        }
+
+        inputs.forEach(function(input, index) {
+          input.addEventListener('input', function(event) {
+            var value = normalizeInputValue(event.target.value);
+            event.target.value = value;
+            event.target.classList.toggle('filled', !!value);
+            clearErrorState();
+            if (value && index < inputs.length - 1) {
+              focusInput(inputs[index + 1]);
+            }
+            if (getDigits().every(function(digit) { return digit !== ''; })) {
+              attemptSubmit();
+            }
+          });
+
+          input.addEventListener('keydown', function(event) {
+            var key = event.key;
+            if (key === 'Backspace' && !event.target.value && index > 0) {
+              focusInput(inputs[index - 1]);
+            }
+            if (key === 'ArrowLeft' && index < inputs.length - 1) {
+              event.preventDefault();
+              focusInput(inputs[index + 1]);
+            }
+            if (key === 'ArrowRight' && index > 0) {
+              event.preventDefault();
+              focusInput(inputs[index - 1]);
+            }
+          });
+
+          input.addEventListener('focus', function(event) {
+            event.target.select();
+          });
+        });
+
+        document.getElementById('pinInputs').addEventListener('paste', function(event) {
+          event.preventDefault();
+          clearErrorState();
+          var pasted = (event.clipboardData || window.clipboardData).getData('text');
+          if (!pasted) {
+            return;
+          }
+          var digits = pasted.replace(/[^\d۰-۹]/g, '').slice(0, inputs.length).split('');
+          inputs.forEach(function(input, idx) {
+            var value = digits[idx] || '';
+            input.value = value;
+            input.classList.toggle('filled', !!value);
+          });
+          if (digits.length === inputs.length) {
+            attemptSubmit();
+          } else {
+            focusInput(inputs[digits.length] || inputs[inputs.length - 1]);
+          }
+        });
+
+        form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          attemptSubmit();
+        });
+
+        if (closeButton) {
+          closeButton.addEventListener('click', function() {
+            if (!submitting) {
+              google.script.host.close();
+            }
+          });
+        }
+
+        document.addEventListener('keydown', function(event) {
+          if (event.key === 'Escape' && !submitting) {
+            google.script.host.close();
+          }
+        });
+
+        focusInput(inputs[0]);
+      })();
+    </script>
+  </body>
+</html>

@@ -234,6 +234,38 @@
         background:#4caf50;
         color:#fff;
       }
+      #footer button.submit:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+      /* Loading overlay shown during submission */
+      #loadingOverlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.75);
+        z-index: 999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+      }
+      #loadingOverlay .spinner {
+        width: 48px;
+        height: 48px;
+        border: 5px solid #ccc;
+        border-top-color: #4caf50;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 12px;
+      }
+      #loadingOverlay .message {
+        font-weight: bold;
+        color: #333;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
     </style>
   </head>
   <body>
@@ -290,12 +322,17 @@
         <div id="finalDiscountInfo"></div>
       </div>
     </div>
+    <div id="loadingOverlay">
+      <div class="spinner"></div>
+      <div class="message">در حال ثبت سفارش... لطفاً صبر کنید</div>
+    </div>
     <div id="footer">
       <button class="submit">ثبت سفارش</button>
     </div>
     <script>
       let inventoryData = <?!= JSON.stringify(inventoryData) ?>;
       const productList = document.getElementById('productList');
+      let isSubmitting = false;
       let snIndex, persianSnIndex, nameIndex, inventoryCounts, uniqueNames;
 
       function loadInventoryData(data){
@@ -390,10 +427,8 @@
       });
       finalAmountInput.addEventListener('keydown', function(e){
         if(e.key === 'Enter'){
-          const val = parseNumber(finalAmountInput.value);
-          finalAmountInput.value = formatNumber(val);
-          finalAmountReminder.style.display = 'none';
-          applyExtraDiscount(val);
+          e.preventDefault();
+          applyFinalAmountIfNeeded();
         }
       });
       finalAmountInput.addEventListener('focus', function(){
@@ -434,6 +469,17 @@
           finalDiscountInfo.innerHTML = '';
           finalDiscountInfo.style.display = 'none';
         }
+      }
+
+      function applyFinalAmountIfNeeded(){
+        const raw = finalAmountInput.value.trim();
+        if(raw === ''){
+          return;
+        }
+        const val = parseNumber(raw);
+        finalAmountInput.value = formatNumber(val);
+        finalAmountReminder.style.display = 'none';
+        applyExtraDiscount(val);
       }
 
       function applyExtraDiscount(finalVal){
@@ -657,13 +703,21 @@
         }
       });
       const submitBtn = document.querySelector('#footer .submit');
-      submitBtn.addEventListener('click', function(){
-        if(finalAmountInput.value.trim() !== '' && finalAmountReminder.style.display !== 'none'){
-          const val = parseNumber(finalAmountInput.value);
-          finalAmountInput.value = formatNumber(val);
-          finalAmountReminder.style.display = 'none';
-          applyExtraDiscount(val);
+      function setSubmitting(state){
+        isSubmitting = state;
+        if(submitBtn){
+          submitBtn.disabled = state;
+          submitBtn.textContent = state ? 'در حال ثبت...' : 'ثبت سفارش';
         }
+        const overlay = document.getElementById('loadingOverlay');
+        if(overlay){
+          overlay.style.display = state ? 'flex' : 'none';
+        }
+      }
+
+      submitBtn.addEventListener('click', function(){
+        if(isSubmitting) return;
+        applyFinalAmountIfNeeded();
         const rows = Array.from(tbody.querySelectorAll('tr'));
         if(!rows.length) return;
         const items = rows.map(row => {
@@ -682,12 +736,18 @@
             brand: row.dataset.brand || ''
           };
         });
+        setSubmitting(true);
         google.script.run
           .withSuccessHandler(() => {
+            // On success, reset form and re-enable UI
             resetForm();
+            setSubmitting(false);
           })
           .withFailureHandler(err => {
-            alert(err.message);
+            // On failure, re-enable UI and inform the user
+            setSubmitting(false);
+            const msg = (err && err.message) || err || 'خطای نامشخص';
+            alert('ثبت سفارش ناموفق بود: ' + msg);
           })
           .submitOrder(items);
       });
@@ -711,5 +771,6 @@
       setTimeout(() => snInput.focus(), 0);
 
     </script>
+    <span style="position: fixed; left: 8px; bottom: 4px; font-size: 8px; color: #cbd5e1; pointer-events: none; font-family: monospace; user-select: none; z-index: 9999;">v<?= APP_VERSION ?></span>
   </body>
 </html>

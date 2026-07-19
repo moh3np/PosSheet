@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0">
+    <script>
+      var INVENTORY_LOOKUP = <?!= inventoryLookupJson ?>;
+    </script>
+    <style>
+      :root { color-scheme: light; }
+      html {
+        height: 100%;
+        overflow: hidden;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        direction: rtl;
+        background: #f5f7fb;
+        margin: 0;
+        padding: 24px;
+        height: 100%;
+        overflow: hidden;
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 24px;
+        color: #222;
+        text-align: center;
+      }
+      .card {
+        max-width: 720px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 0;
+        height: auto;
+        max-height: calc(100% - 64px);
+      }
+      .card-content {
+        flex: 1;
+        overflow-y: auto;
+        padding-bottom: 16px;
+      }
+      .card-content::-webkit-scrollbar {
+        width: 8px;
+      }
+      .card-content::-webkit-scrollbar-thumb {
+        background: rgba(100, 116, 139, 0.3);
+        border-radius: 8px;
+      }
+      .header {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+        z-index: 2;
+      }
+      .input-row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+        justify-content: center;
+      }
+      .input-row input {
+        flex: 1 1 280px;
+        max-width: 360px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid #cbd5f5;
+        font-size: 16px;
+        text-align: center;
+      }
+      .input-row button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        background: #2563eb;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .input-row button:disabled {
+        background: #90a4d4;
+        cursor: not-allowed;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        border-radius: 10px;
+        overflow: hidden;
+      }
+      thead {
+        background: #f1f5f9;
+      }
+      th, td {
+        padding: 10px;
+        text-align: center;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      tbody tr:nth-child(odd) {
+        background: #fafcff;
+      }
+      tbody tr:hover {
+        background: #e8f0ff;
+      }
+      .remove-btn {
+        border: none;
+        background: transparent;
+        color: #d32f2f;
+        cursor: pointer;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .remove-btn .material-symbols-rounded {
+        font-size: 22px;
+      }
+      td.name-cell {
+        text-align: right;
+      }
+      td.sku-cell {
+        direction: ltr;
+        text-align: center;
+      }
+      .actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 16px 0 8px;
+        border-top: 1px solid #e2e8f0;
+        margin: 0 0 8px;
+        background: #fff;
+      }
+      .counts {
+        font-size: 14px;
+        color: #475569;
+      }
+      .submit-btn {
+        padding: 10px 24px;
+        border: none;
+        border-radius: 10px;
+        background: #16a34a;
+        color: #fff;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      .submit-btn:disabled {
+        background: #9bd7ae;
+        cursor: not-allowed;
+      }
+      .message {
+        margin-top: 20px;
+        padding: 14px 18px;
+        border-radius: 10px;
+        font-size: 14px;
+        line-height: 1.6;
+        display: none;
+      }
+      .message.visible { display: block; }
+      .message.success {
+        background: #e6f7ec;
+        border: 1px solid #51b96a;
+        color: #14532d;
+      }
+      .message.error {
+        background: #fdecea;
+        border: 1px solid #f16360;
+        color: #7f1d1d;
+      }
+      .message ul {
+        margin: 8px 0 0;
+        padding-right: 18px;
+      }
+      .message ul li {
+        margin-bottom: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="card-content">
+        <div class="header">
+          <h1>انبارگردانی تویلند</h1>
+          <form id="entryForm" class="input-row">
+            <input id="serialInput" type="text" placeholder="اس‌ان محصول را اسکن یا وارد کنید" autocomplete="off" list="serialOptions" autofocus>
+            <datalist id="serialOptions"></datalist>
+            <button type="submit">افزودن</button>
+            <button id="clearButton" type="button">پاکسازی فهرست</button>
+          </form>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ردیف</th>
+              <th>سریال</th>
+              <th>نام محصول</th>
+              <th>SKU</th>
+              <th>حذف</th>
+            </tr>
+          </thead>
+          <tbody id="serialTableBody"></tbody>
+        </table>
+
+        <div id="messageBox" class="message"></div>
+      </div>
+
+      <div class="actions">
+        <div class="counts">تعداد ثبت شده: <span id="serialCount">۰</span></div>
+        <button id="submitButton" class="submit-btn" type="button" disabled>ثبت</button>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        var inventoryLookup = Array.isArray(INVENTORY_LOOKUP) ? INVENTORY_LOOKUP : [];
+        var serialIndex = {};
+        var serials = [];
+        var input = document.getElementById('serialInput');
+        var form = document.getElementById('entryForm');
+        var tableBody = document.getElementById('serialTableBody');
+        var countLabel = document.getElementById('serialCount');
+        var submitButton = document.getElementById('submitButton');
+        var clearButton = document.getElementById('clearButton');
+        var messageBox = document.getElementById('messageBox');
+        var datalist = document.getElementById('serialOptions');
+        var isSubmitting = false;
+
+        initInventoryOptions();
+        renderList();
+
+        function initInventoryOptions() {
+          if (!datalist) {
+            return;
+          }
+          var fragment = document.createDocumentFragment();
+          inventoryLookup.forEach(function(item) {
+            if (!item) {
+              return;
+            }
+            var serial = item.serial ? String(item.serial).trim() : '';
+            var persian = item.serialPersian ? String(item.serialPersian).trim() : '';
+            var normalized = item.normalized ? String(item.normalized).trim() : '';
+            var name = item.name ? String(item.name).trim() : '';
+            var sku = item.sku ? String(item.sku).trim() : '';
+
+            registerSerialKey(serial, item);
+            registerSerialKey(persian, item);
+            registerSerialKey(normalized, item);
+
+            var normalizedSerial = normalizeDigits(serial);
+            var normalizedPersian = normalizeDigits(persian);
+            registerSerialKey(normalizedSerial, item);
+            registerSerialKey(normalizedPersian, item);
+
+            if (serial) {
+              var labelParts = ['SN: ' + serial];
+              if (sku) {
+                labelParts.push('SKU: ' + sku);
+              }
+              if (name) {
+                labelParts.push(name);
+              }
+              var option = document.createElement('option');
+              option.value = serial;
+              option.textContent = labelParts.join(' | ');
+              option.label = option.textContent;
+              fragment.appendChild(option);
+            }
+            if (persian && persian !== serial) {
+              var persianLabel = ['SN فارسی: ' + persian];
+              if (sku) {
+                persianLabel.push('SKU: ' + sku);
+              }
+              if (name) {
+                persianLabel.push(name);
+              }
+              var optionFa = document.createElement('option');
+              optionFa.value = persian;
+              optionFa.textContent = persianLabel.join(' | ');
+              optionFa.label = optionFa.textContent;
+              fragment.appendChild(optionFa);
+            }
+          });
+          datalist.appendChild(fragment);
+        }
+
+        function registerSerialKey(value, data) {
+          var key = value ? String(value).trim() : '';
+          if (!key || serialIndex[key]) {
+            return;
+          }
+          serialIndex[key] = data;
+        }
+
+        function renderList() {
+          tableBody.innerHTML = '';
+          serials.forEach(function(entry, index) {
+            var row = document.createElement('tr');
+
+            var indexCell = document.createElement('td');
+            indexCell.textContent = index + 1;
+
+            var serialCell = document.createElement('td');
+            serialCell.textContent = entry.displaySerial;
+
+            var nameCell = document.createElement('td');
+            nameCell.className = 'name-cell';
+            nameCell.textContent = entry.name || '—';
+
+            var skuCell = document.createElement('td');
+            skuCell.className = 'sku-cell';
+            skuCell.textContent = entry.sku || '—';
+
+            var actionCell = document.createElement('td');
+            var removeBtn = document.createElement('button');
+            removeBtn.className = 'remove-btn';
+            removeBtn.type = 'button';
+            removeBtn.title = 'حذف این سطر';
+            removeBtn.addEventListener('click', function() {
+              serials.splice(index, 1);
+              renderList();
+            });
+            var icon = document.createElement('span');
+            icon.className = 'material-symbols-rounded';
+            icon.textContent = 'delete';
+            removeBtn.appendChild(icon);
+
+            actionCell.appendChild(removeBtn);
+            row.appendChild(indexCell);
+            row.appendChild(serialCell);
+            row.appendChild(nameCell);
+            row.appendChild(skuCell);
+            row.appendChild(actionCell);
+            tableBody.appendChild(row);
+          });
+          countLabel.textContent = toPersianDigit(serials.length);
+          submitButton.disabled = isSubmitting || !serials.length;
+        }
+
+        function normalizeDigits(str) {
+          if (str === null || str === undefined) {
+            return '';
+          }
+          var value = String(str);
+          var out = '';
+          for (var i = 0; i < value.length; i++) {
+            var code = value.charCodeAt(i);
+            if (code >= 1776 && code <= 1785) {
+              out += String(code - 1776);
+            } else if (code >= 1632 && code <= 1641) {
+              out += String(code - 1632);
+            } else {
+              out += value[i];
+            }
+          }
+          return out.trim();
+        }
+
+        function toPersianDigit(num) {
+          var digits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+          return String(num).replace(/[0-9]/g, function(d) { return digits[d]; });
+        }
+
+        function showMessage(type, text, details) {
+          messageBox.className = 'message visible ' + type;
+          messageBox.innerHTML = '';
+          var paragraph = document.createElement('div');
+          paragraph.textContent = text;
+          messageBox.appendChild(paragraph);
+          if (details && details.length) {
+            var list = document.createElement('ul');
+            details.forEach(function(item) {
+              var li = document.createElement('li');
+              li.textContent = item;
+              list.appendChild(li);
+            });
+            messageBox.appendChild(list);
+          }
+        }
+
+        function clearMessage() {
+          messageBox.className = 'message';
+          messageBox.innerHTML = '';
+        }
+
+        function createEntry(value) {
+          var trimmed = (value || '').trim();
+          if (!trimmed) {
+            return null;
+          }
+          var normalized = normalizeDigits(trimmed);
+          var match = serialIndex[trimmed] || serialIndex[normalized];
+          if (!match && normalized) {
+            var persianCandidate = toPersianDigit(normalized);
+            match = serialIndex[persianCandidate];
+          }
+          var displaySerial = trimmed;
+          var name = '';
+          var sku = '';
+          var persianSerial = '';
+          if (match) {
+            displaySerial = match.serial ? String(match.serial).trim() : trimmed;
+            name = match.name || '';
+            sku = match.sku || '';
+            persianSerial = match.serialPersian || '';
+          }
+          return {
+            input: trimmed,
+            normalized: normalized,
+            displaySerial: displaySerial || trimmed,
+            name: name,
+            sku: sku,
+            persianSerial: persianSerial
+          };
+        }
+
+        function handleSubmit() {
+          if (!serials.length || isSubmitting) {
+            return;
+          }
+          isSubmitting = true;
+          submitButton.disabled = true;
+          clearMessage();
+          google.script.run
+            .withSuccessHandler(function(result) {
+              isSubmitting = false;
+              serials = [];
+              renderList();
+              input.focus();
+              displayResult(result);
+            })
+            .withFailureHandler(function(err) {
+              isSubmitting = false;
+              submitButton.disabled = false;
+              input.focus();
+              showMessage('error', err && err.message ? err.message : 'خطایی رخ داد. دوباره تلاش کنید.');
+            })
+            .submitInventoryCounting(serials.map(function(entry) { return entry.input; }));
+        }
+
+        function displayResult(result) {
+          if (!result) {
+            showMessage('error', 'پاسخ معتبری از سرور دریافت نشد.');
+            return;
+          }
+          var summary = [];
+          summary.push('ورودی کل: ' + toPersianDigit(result.totalInput || 0));
+          summary.push('پس از حذف تکراری‌ها: ' + toPersianDigit(result.uniqueCount || 0));
+          var successTotal = (result.br && result.br.updated || 0) + (result.tl && result.tl.updated || 0);
+          summary.push('موارد پردازش شده: ' + toPersianDigit(successTotal));
+          summary.push('به‌روزرسانی BR: ' + toPersianDigit(result.br && result.br.updated || 0));
+          summary.push('به‌روزرسانی TL: ' + toPersianDigit(result.tl && result.tl.updated || 0));
+
+          var details = [];
+          if (result.duplicates && result.duplicates.length) {
+            details.push('تکراری‌ها: ' + result.duplicates.join('، '));
+          }
+          if (result.missingInPos && result.missingInPos.length) {
+            details.push('در موجودی یافت نشد: ' + result.missingInPos.join('، '));
+          }
+          if (result.unrouted && result.unrouted.length) {
+            details.push('SKU نامشخص: ' + result.unrouted.join('، '));
+          }
+          if (result.br && result.br.missingExternal && result.br.missingExternal.length) {
+            details.push('BR در شیت بایروز یافت نشد: ' + result.br.missingExternal.join('، '));
+          }
+          if (result.tl && result.tl.missingExternal && result.tl.missingExternal.length) {
+            details.push('TL در شیت تویلند یافت نشد: ' + result.tl.missingExternal.join('، '));
+          }
+
+          showMessage('success', summary.join(' | '), details);
+        }
+
+        form.addEventListener('submit', function(event) {
+          event.preventDefault();
+          var value = input.value.trim();
+          if (!value) {
+            return;
+          }
+          var entry = createEntry(value);
+          if (!entry) {
+            input.value = '';
+            return;
+          }
+          serials.push(entry);
+          input.value = '';
+          renderList();
+          input.focus();
+        });
+
+        submitButton.addEventListener('click', handleSubmit);
+
+        clearButton.addEventListener('click', function() {
+          if (isSubmitting) {
+            return;
+          }
+          serials = [];
+          renderList();
+          clearMessage();
+          input.focus();
+        });
+
+        input.addEventListener('keydown', function(event) {
+          if (event.key === 'Enter') {
+            // allow barcode scanners that append newline to trigger add without needing button
+            event.preventDefault();
+            form.dispatchEvent(new Event('submit'));
+          }
+          if (event.key === 'Escape') {
+            input.value = '';
+          }
+        });
+      })();
+    </script>
+    <span style="position: fixed; left: 8px; bottom: 4px; font-size: 8px; color: #cbd5e1; pointer-events: none; font-family: monospace; user-select: none; z-index: 9999;">v<?= APP_VERSION ?></span>
+  </body>
+</html>

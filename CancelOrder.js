@@ -2,7 +2,8 @@
 
 function showCancelDialog() {
   var ss = SpreadsheetApp.getActive();
-  var posRange = ss.getRangeByName('PosOrders');
+  var posOrdersRangeName = Config.namedRanges.posOrders;
+  var posRange = ss.getRangeByName(posOrdersRangeName);
   if (!posRange) return;
   var sheet = posRange.getSheet();
   var lastRow = getLastDataRow(posRange.offset(0, 3));
@@ -65,12 +66,12 @@ function cancelOrders(items) {
   });
 
   if (tlItems.length) {
-    var tlSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
-    processCancelGroup(tlSs, tlItems, 'ToylandOrders', 'ToylandInventory', true);
+    var tlSs = SpreadsheetApp.openById(Config.sheets.tolyandSheet);
+    processCancelGroup(tlSs, tlItems, Config.namedRanges.toylandOrders, Config.namedRanges.toylandInventory, true);
   }
   if (brItems.length) {
-    var brSs = SpreadsheetApp.openById('12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8');
-    processCancelGroup(brSs, brItems, 'BuyruzPosOrders', 'BuyruzInventory', false);
+    var brSs = SpreadsheetApp.openById(Config.sheets.buyruzSheet);
+    processCancelGroup(brSs, brItems, Config.namedRanges.buyruzOrders, Config.namedRanges.buyruzInventory, false);
   }
 }
 
@@ -83,7 +84,9 @@ function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName, tran
   if (lastRow < startRow) return;
   var dataRows = lastRow - startRow + 1;
   var numCols = ordersRange.getNumColumns();
-  var data = sheet.getRange(startRow, ordersRange.getColumn(), dataRows, numCols).getValues();
+  var dataRange = sheet.getRange(startRow, ordersRange.getColumn(), dataRows, numCols);
+  var data = dataRange.getValues();
+  var displayData = dataRange.getDisplayValues();
   var snMap = {};
   for (var i = 0; i < data.length; i++) {
     snMap[String(data[i][3]).trim()] = i;
@@ -96,21 +99,88 @@ function processCancelGroup(ss, items, ordersRangeName, inventoryRangeName, tran
     if (idx != null) {
       cancelValues[idx][0] = true;
       var row = data[idx];
+      var displayRow = displayData[idx];
       var locationValue = row[7] === 'مغازه' ? 'STORE' : row[7];
-      var priceValue = transferPrice ? row[5] : '';
-      invRows.push([row[1], row[9], row[2], row[10], row[3], row[8], priceValue, locationValue, '']);
+      var priceValue = transferPrice && inventoryRangeName !== Config.namedRanges.toylandInventory ? row[5] : '';
+      var uniqueCodeValue = displayRow && displayRow.length > 10 ? displayRow[10] : row[10];
+      invRows.push([row[1], row[9], row[2], uniqueCodeValue || '', row[3], row[8], priceValue, locationValue, '']);
     }
   });
   sheet.getRange(startRow, cancelCol, dataRows, 1).setValues(cancelValues);
   if (invRows.length) {
+    if (inventoryRangeName === Config.namedRanges.buyruzInventory) {
+      appendBuyruzCancelInventoryRows_(ss, invRows);
+      return;
+    }
     var invRange = ss.getRangeByName(inventoryRangeName);
     var invSheet = invRange.getSheet();
     var baseCol = invRange.getColumn();
+    var numInvCols = invRange.getNumColumns();
     var start = getLastDataRow(invRange) + 1;
-    invSheet.getRange(start, baseCol, invRows.length, invRange.getNumColumns()).setValues(invRows);
+    var skipToylandColumn = Config.inventory.skipToylandColumn;
+    var isToylandInventory = inventoryRangeName === Config.namedRanges.toylandInventory && numInvCols > skipToylandColumn;
+    if (isToylandInventory) {
+      var leftCols = Math.min(skipToylandColumn, numInvCols);
+      if (leftCols > 0) {
+        var leftRange = invSheet.getRange(start, baseCol, invRows.length, leftCols);
+        var leftValues = invRows.map(function(r){ return r.slice(0, skipToylandColumn); });
+        leftRange.setValues(leftValues);
+      }
+      var rightCols = numInvCols - (skipToylandColumn + 1);
+      if (rightCols > 0) {
+        var rightRange = invSheet.getRange(start, baseCol + skipToylandColumn + 1, invRows.length, rightCols);
+        var rightValues = invRows.map(function(r){ return r.slice(skipToylandColumn + 1); });
+        rightRange.setValues(rightValues);
+      }
+    } else {
+      invSheet.getRange(start, baseCol, invRows.length, numInvCols).setValues(invRows);
+    }
     var labelRange = invSheet.getRange(start, baseCol + 8, invRows.length, 1);
     labelRange.insertCheckboxes();
     labelRange.setValues(Array(invRows.length).fill([false]));
   }
 }
 
+function appendBuyruzCancelInventoryRows_(ss, invRows) {
+  var ranges = getBuyruzCancelInventoryRanges_(ss);
+  if (!ranges) return;
+
+  var start = getLastDataRow(ranges.sn) + 1;
+  getBuyruzCancelColumnRange_(ranges.sku, start, invRows.length)
+    .setValues(invRows.map(function(r){ return [r[2]]; }));
+  getBuyruzCancelColumnRange_(ranges.uniqueCode, start, invRows.length)
+    .setValues(invRows.map(function(r){ return [r[3]]; }));
+  getBuyruzCancelColumnRange_(ranges.sn, start, invRows.length)
+    .setValues(invRows.map(function(r){ return [r[4]]; }));
+  getBuyruzCancelColumnRange_(ranges.location, start, invRows.length)
+    .setValues(invRows.map(function(r){ return [r[7]]; }));
+
+  var labelRange = getBuyruzCancelColumnRange_(ranges.labelPrinted, start, invRows.length);
+  labelRange.insertCheckboxes();
+  labelRange.setValues(Array(invRows.length).fill([false]));
+}
+
+function getBuyruzCancelInventoryRanges_(ss) {
+  var namedRanges = Config.namedRanges;
+  var ranges = {
+    productName: ss.getRangeByName(namedRanges.buyruzInventoryProductName),
+    productBrand: ss.getRangeByName(namedRanges.buyruzInventoryProductBrand),
+    sku: ss.getRangeByName(namedRanges.buyruzInventorySku),
+    uniqueCode: ss.getRangeByName(namedRanges.buyruzInventoryUniqueCode),
+    sn: ss.getRangeByName(namedRanges.buyruzInventorySN),
+    supplier: ss.getRangeByName(namedRanges.buyruzInventorySupplier),
+    price: ss.getRangeByName(namedRanges.buyruzInventoryPrice),
+    location: ss.getRangeByName(namedRanges.buyruzInventoryLocation),
+    labelPrinted: ss.getRangeByName(namedRanges.buyruzInventoryLabelPrinted)
+  };
+  for (var key in ranges) {
+    if (!ranges[key]) {
+      return null;
+    }
+  }
+  return ranges;
+}
+
+function getBuyruzCancelColumnRange_(range, startRow, numRows) {
+  return range.getSheet().getRange(startRow, range.getColumn(), numRows, 1);
+}

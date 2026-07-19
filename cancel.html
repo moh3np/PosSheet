@@ -82,6 +82,37 @@
         color:#fff;
         cursor:pointer;
       }
+      #footer button:disabled {
+        opacity:0.7;
+        cursor:not-allowed;
+      }
+      #loadingOverlay {
+        display:none;
+        position:fixed;
+        top:0;
+        left:0;
+        right:0;
+        bottom:0;
+        background:rgba(255,255,255,0.75);
+        z-index:999;
+        justify-content:center;
+        align-items:center;
+        flex-direction:column;
+      }
+      #loadingOverlay .spinner {
+        width:48px;
+        height:48px;
+        border:5px solid #ccc;
+        border-top-color:#f44336;
+        border-radius:50%;
+        animation:spin 1s linear infinite;
+        margin-bottom:12px;
+      }
+      #loadingOverlay .message {
+        font-weight:bold;
+        color:#333;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
       td.date-cell {
         direction: ltr;
         text-align: center;
@@ -107,6 +138,10 @@
     <div id="totals">
       <div id="totalDiv">جمع کل: <span id="total">۰</span> تومان</div>
     </div>
+    <div id="loadingOverlay">
+      <div class="spinner"></div>
+      <div class="message">در حال لغو سفارش... لطفاً صبر کنید</div>
+    </div>
     <div id="footer">
       <button id="cancelBtn">لغو سفارش</button>
     </div>
@@ -115,8 +150,12 @@
       const tbody = document.querySelector('#orderTable tbody');
       const totalEl = document.getElementById('total');
       const selectedMap = new Map(); // sn -> sku
-      const MAX_DISPLAY = 200;
+      const MAX_DISPLAY = 150;
       const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+      const cancelBtn = document.getElementById('cancelBtn');
+      const loadingOverlay = document.getElementById('loadingOverlay');
+      let isSubmitting = false;
+      const cancelBtnDefaultText = cancelBtn ? cancelBtn.textContent : 'لغو سفارش';
 
       // Timing utilities removed
 
@@ -138,8 +177,55 @@
                pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
         return toPersianDigits(formatted);
       }
+      function normalizeOrderIdValue(raw){
+        if (raw == null) {
+          return '';
+        }
+        return toEnglishDigits(String(raw)).trim();
+      }
+      function numericOrderId(value){
+        if (!value) {
+          return null;
+        }
+        const direct = Number(value);
+        if (!Number.isNaN(direct)) {
+          return direct;
+        }
+        const digitsOnly = value.replace(/[^0-9]/g, '');
+        if (!digitsOnly) {
+          return null;
+        }
+        const digitsNumber = Number(digitsOnly);
+        return Number.isNaN(digitsNumber) ? null : digitsNumber;
+      }
+      function compareOrderIds(aIndex, bIndex){
+        const aValue = normalizeOrderIdValue(orderData.ids[aIndex]);
+        const bValue = normalizeOrderIdValue(orderData.ids[bIndex]);
+        const aNum = numericOrderId(aValue);
+        const bNum = numericOrderId(bValue);
+        if (aNum != null && bNum != null && aNum !== bNum) {
+          return bNum - aNum;
+        }
+        if (bValue !== aValue) {
+          return bValue.localeCompare(aValue, 'fa');
+        }
+        return bIndex - aIndex;
+      }
 
-      const allIndices = orderData.ids.map((_,i)=>i);
+      const sortedIndices = orderData.ids
+        .map((_, i) => i)
+        .sort(compareOrderIds);
+
+      function setSubmitting(state){
+        isSubmitting = state;
+        if (cancelBtn) {
+          cancelBtn.disabled = state;
+          cancelBtn.textContent = state ? 'در حال لغو...' : cancelBtnDefaultText;
+        }
+        if (loadingOverlay) {
+          loadingOverlay.style.display = state ? 'flex' : 'none';
+        }
+      }
 
       function renderRows(indices){
         tbody.innerHTML = '';
@@ -199,7 +285,7 @@
               const search = document.getElementById('orderSearch');
               if (search.value) {
                 search.value = '';
-                renderRows(allIndices);
+                renderRows(sortedIndices);
                 search.focus();
               }
             });
@@ -235,7 +321,7 @@
       function filterOrders(){
         const q = document.getElementById('orderSearch').value.trim().toLowerCase();
         const en = toEnglishDigits(q);
-        const filtered = allIndices.filter(i => {
+        const filtered = sortedIndices.filter(i => {
           const name = (orderData.names[i] || '').toLowerCase();
           const date = formatDateStr(orderData.persianDates[i] || orderData.dates[i] || '').split(' ')[0];
           const data = [
@@ -253,15 +339,32 @@
       document.getElementById('orderSearch').addEventListener('input', filterOrders);
       document.getElementById('orderSearch').focus();
 
-      renderRows(allIndices);
+      renderRows(sortedIndices);
 
-      document.getElementById('cancelBtn').addEventListener('click', () => {
-        const selected = Array.from(selectedMap.entries())
-          .map(([sn, sku]) => ({ sn, sku }));
-        google.script.run.withSuccessHandler(() => {
-          google.script.host.close();
-        }).cancelOrders(selected);
-      });
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+          if (isSubmitting) return;
+          const selected = Array.from(selectedMap.entries())
+            .map(([sn, sku]) => ({ sn, sku }));
+          if (!selected.length) {
+            alert('لطفاً سفارش مورد نظر را انتخاب کنید.');
+            return;
+          }
+          setSubmitting(true);
+          google.script.run
+            .withSuccessHandler(() => {
+              setSubmitting(false);
+              google.script.host.close();
+            })
+            .withFailureHandler(err => {
+              setSubmitting(false);
+              const msg = (err && err.message) || err || 'خطای نامشخص';
+              alert('لغو سفارش ناموفق بود: ' + msg);
+            })
+            .cancelOrders(selected);
+        });
+      }
     </script>
+    <span style="position: fixed; left: 8px; bottom: 4px; font-size: 8px; color: #cbd5e1; pointer-events: none; font-family: monospace; user-select: none; z-index: 9999;">v<?= APP_VERSION ?></span>
   </body>
 </html>

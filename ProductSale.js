@@ -1,11 +1,29 @@
 // Removed logging and timing utilities to simplify code and avoid side effects.
 
-function onOpen() {
+function buildPosMenus() {
   var ui = SpreadsheetApp.getUi();
   ui.createMenu('فروش')
     .addItem('خرده فروشی', 'showSaleDialog')
     .addItem('لغو سفارش', 'showCancelDialog')
     .addToUi();
+
+  ui.createMenu('محصولات')
+    .addItem('محصولات بی‌لیبل', 'showUnlabeledProductsDialog')
+    .addItem('قیمت محصولات تویلند\u200c', 'showToylandPricingDialog')
+    .addItem('قیمت محصولات بایروز', 'showBuyruzPricingDialog')
+    .addItem('انبارگردانی تویلند', 'showInventoryCountingDialog')
+    .addToUi();
+
+  var analysisMenu = ui.createMenu('تحلیل فروش');
+  analysisMenu.addItem('تحلیل فروش (Sidebar)', 'PosSheetInsights_showSidebar');
+  analysisMenu.addItem('نمایش گسترده', 'PosSheetInsights_showDialog');
+  analysisMenu.addItem('به‌روزرسانی داده‌ها', 'PosSheetInsights_refreshCache');
+  analysisMenu.addItem('تنظیم زمان‌بندی', 'PosSheetInsights_setupTrigger');
+  analysisMenu.addToUi();
+}
+
+function onOpen() {
+  buildPosMenus();
 }
 
 function showSaleDialog() {
@@ -17,9 +35,11 @@ function showSaleDialog() {
     .setHeight(800);
   SpreadsheetApp.getUi().showModalDialog(html, 'فروش محصول');
 }
+
 function getInventoryData() {
   var ss = SpreadsheetApp.getActive();
-  var invRange = ss.getRangeByName('PosInventory');
+  var posInventoryRangeName = Config.namedRanges.posInventory;
+  var invRange = ss.getRangeByName(posInventoryRangeName);
   var empty = {names:[], skus:[], sns:[], persianSNS:[], locations:[], prices:[], uniqueCodes:[], brands:[], sellers:[]};
   if (!invRange) return empty;
   var sheet = invRange.getSheet();
@@ -43,6 +63,14 @@ function getInventoryData() {
   }
   return {names:names, skus:skus, sns:sns, persianSNS:persianSns, locations:locations, prices:prices, uniqueCodes:uniqueCodes, brands:brands, sellers:sellers};
 }
+
+
+
+
+
+
+
+
 
 function submitOrder(items) {
   if (!items || !items.length) {
@@ -88,17 +116,17 @@ function handleExternalOrders(dateStr, items, orderId) {
   var tlItems = items.filter(function(it){ return it.sku && it.sku.indexOf('TL') === 0; });
   if (tlItems.length) {
     processExternalOrder({
-      spreadsheetId: '1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s',
-      ordersRange: 'ToylandOrders',
-      inventoryRange: 'ToylandInventory'
+      spreadsheetId: Config.sheets.tolyandSheet,
+      ordersRange: Config.namedRanges.toylandOrders,
+      inventoryRange: Config.namedRanges.toylandInventory
     }, tlItems, dateStr, orderId);
   }
   var brItems = items.filter(function(it){ return it.sku && it.sku.indexOf('BR') === 0; });
   if (brItems.length) {
     processExternalOrder({
-      spreadsheetId: '12-Khe_IZ9S7z_VN_LZQCHdcKEIgKDquviar8cSR_wG8',
-      ordersRange: 'BuyruzPosOrders',
-      inventoryRange: 'BuyruzInventory'
+      spreadsheetId: Config.sheets.buyruzSheet,
+      ordersRange: Config.namedRanges.buyruzOrders,
+      inventoryRange: Config.namedRanges.buyruzInventory
     }, brItems, dateStr, orderId);
   }
 }
@@ -152,6 +180,10 @@ function processExternalOrder(cfg, items, dateStr, orderId) {
 
   var invRange = ss.getRangeByName(cfg.inventoryRange);
   if (invRange) {
+    if (cfg.inventoryRange === Config.namedRanges.buyruzInventory) {
+      processBuyruzInventorySale_(ss, items);
+      return;
+    }
     var invSheet = invRange.getSheet();
     var invDataStart = getDataStartRow(invRange);
     var numInvCols = invRange.getNumColumns();
@@ -160,28 +192,139 @@ function processExternalOrder(cfg, items, dateStr, orderId) {
     var invValues = invDataRows > 0 ? invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, numInvCols).getValues() : [];
     var removeSet = items.map(function(it){ return String(it.serial).trim(); });
     var filtered = invValues.filter(function(r){ return removeSet.indexOf(String(r[4]).trim()) === -1; });
-    if (cfg.inventoryRange === 'BuyruzInventory') {
-      filtered = filtered.map(function(r){
-        r[6] = '';
-        return r;
-      });
-    }
+    var skipToylandColumn = Config.inventory.skipToylandColumn; // skip column 7 (0-based index) for Toyland inventory updates
+    var isToylandInventory = cfg.inventoryRange === Config.namedRanges.toylandInventory && numInvCols > skipToylandColumn;
     if (invDataRows > 0) {
-      var clearRange = invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, numInvCols);
-      clearRange.clearContent();
-      clearRange.clearDataValidations();
+      if (isToylandInventory) {
+        var leftCols = Math.min(skipToylandColumn, numInvCols);
+        if (leftCols > 0) {
+          var leftClearRange = invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, leftCols);
+          leftClearRange.clearContent();
+          leftClearRange.clearDataValidations();
+        }
+        var rightCols = numInvCols - (skipToylandColumn + 1);
+        if (rightCols > 0) {
+          var rightClearRange = invSheet.getRange(invDataStart, invRange.getColumn() + skipToylandColumn + 1, invDataRows, rightCols);
+          rightClearRange.clearContent();
+          rightClearRange.clearDataValidations();
+        }
+      } else {
+        var clearRange = invSheet.getRange(invDataStart, invRange.getColumn(), invDataRows, numInvCols);
+        clearRange.clearContent();
+        clearRange.clearDataValidations();
+      }
     }
     if (filtered.length) {
-      var targetRange = invSheet.getRange(invDataStart, invRange.getColumn(), filtered.length, numInvCols);
-      targetRange.setValues(filtered);
+      if (isToylandInventory) {
+        var leftCols = Math.min(skipToylandColumn, numInvCols);
+        if (leftCols > 0) {
+          var leftRange = invSheet.getRange(invDataStart, invRange.getColumn(), filtered.length, leftCols);
+          var leftValues = filtered.map(function(r) { return r.slice(0, skipToylandColumn); });
+          leftRange.setValues(leftValues);
+        }
+        var rightCols = numInvCols - (skipToylandColumn + 1);
+        if (rightCols > 0) {
+          var rightRange = invSheet.getRange(invDataStart, invRange.getColumn() + skipToylandColumn + 1, filtered.length, rightCols);
+          var rightValues = filtered.map(function(r) { return r.slice(skipToylandColumn + 1); });
+          rightRange.setValues(rightValues);
+        }
+      } else {
+        var targetRange = invSheet.getRange(invDataStart, invRange.getColumn(), filtered.length, numInvCols);
+        targetRange.setValues(filtered);
+      }
       invSheet.getRange(invDataStart, invRange.getColumn() + 8, filtered.length, 1).insertCheckboxes();
     }
   }
 }
 
+function processBuyruzInventorySale_(ss, items) {
+  var ranges = getBuyruzInventorySaleRanges_(ss);
+  if (!ranges) return;
+
+  var startRow = getDataStartRow(ranges.sn);
+  var lastRow = getLastDataRow(ranges.sn);
+  if (lastRow < startRow) return;
+
+  var numRows = lastRow - startRow + 1;
+  var removeSet = {};
+  items.forEach(function(it) {
+    removeSet[String(it.serial).trim()] = true;
+  });
+
+  var columns = [
+    { key: 'sku', range: ranges.sku },
+    { key: 'uniqueCode', range: ranges.uniqueCode },
+    { key: 'sn', range: ranges.sn },
+    { key: 'location', range: ranges.location },
+    { key: 'labelPrinted', range: ranges.labelPrinted }
+  ];
+  var valuesByKey = {};
+  columns.forEach(function(col) {
+    valuesByKey[col.key] = readBuyruzInventoryColumn_(col.range, startRow, numRows);
+  });
+
+  var kept = {};
+  columns.forEach(function(col) {
+    kept[col.key] = [];
+  });
+
+  for (var i = 0; i < numRows; i++) {
+    var serial = valuesByKey.sn[i] ? String(valuesByKey.sn[i][0]).trim() : '';
+    if (removeSet[serial]) {
+      continue;
+    }
+    columns.forEach(function(col) {
+      kept[col.key].push(valuesByKey[col.key][i]);
+    });
+  }
+
+  columns.forEach(function(col) {
+    var updateRange = getBuyruzInventoryColumnRange_(col.range, startRow, numRows);
+    updateRange.clearContent();
+    updateRange.clearDataValidations();
+    if (kept[col.key].length) {
+      getBuyruzInventoryColumnRange_(col.range, startRow, kept[col.key].length).setValues(kept[col.key]);
+    }
+  });
+
+  if (kept.labelPrinted.length) {
+    getBuyruzInventoryColumnRange_(ranges.labelPrinted, startRow, kept.labelPrinted.length).insertCheckboxes();
+  }
+}
+
+function getBuyruzInventorySaleRanges_(ss) {
+  var namedRanges = Config.namedRanges;
+  var ranges = {
+    productName: ss.getRangeByName(namedRanges.buyruzInventoryProductName),
+    productBrand: ss.getRangeByName(namedRanges.buyruzInventoryProductBrand),
+    sku: ss.getRangeByName(namedRanges.buyruzInventorySku),
+    uniqueCode: ss.getRangeByName(namedRanges.buyruzInventoryUniqueCode),
+    sn: ss.getRangeByName(namedRanges.buyruzInventorySN),
+    supplier: ss.getRangeByName(namedRanges.buyruzInventorySupplier),
+    price: ss.getRangeByName(namedRanges.buyruzInventoryPrice),
+    location: ss.getRangeByName(namedRanges.buyruzInventoryLocation),
+    labelPrinted: ss.getRangeByName(namedRanges.buyruzInventoryLabelPrinted)
+  };
+  for (var key in ranges) {
+    if (!ranges[key]) {
+      return null;
+    }
+  }
+  return ranges;
+}
+
+function readBuyruzInventoryColumn_(range, startRow, numRows) {
+  return getBuyruzInventoryColumnRange_(range, startRow, numRows).getValues();
+}
+
+function getBuyruzInventoryColumnRange_(range, startRow, numRows) {
+  return range.getSheet().getRange(startRow, range.getColumn(), numRows, 1);
+}
+
 function getNextOrderId() {
   var ss = SpreadsheetApp.getActive();
-  var posOrdersRange = ss.getRangeByName('PosOrders');
+  var posOrdersRangeName = Config.namedRanges.posOrders;
+  var posOrdersRange = ss.getRangeByName(posOrdersRangeName);
   if (!posOrdersRange) return 1;
   var sheet = posOrdersRange.getSheet();
   var idCol = posOrdersRange.getColumn();
@@ -199,4 +342,3 @@ function getNextOrderId() {
   });
   return lastId + 1;
 }
-

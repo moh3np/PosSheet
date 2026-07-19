@@ -36,6 +36,18 @@ function getPersianDateTime() {
   return jy + '/' + jm + '/' + jd + ' ' + time;
 }
 
+function getPersianDate() {
+  var parts = Utilities.formatDate(new Date(), 'Asia/Tehran', 'yyyy-M-d').split('-');
+  var gYear = Number(parts[0]);
+  var gMonth = Number(parts[1]);
+  var gDay = Number(parts[2]);
+  var j = gregorianToJalali(gYear, gMonth, gDay);
+  var jy = j[0];
+  var jm = ('0' + j[1]).slice(-2);
+  var jd = ('0' + j[2]).slice(-2);
+  return jy + '/' + jm + '/' + jd;
+}
+
 function gregorianToJalali(gy, gm, gd) {
   var g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
   var jy;
@@ -59,4 +71,30 @@ function gregorianToJalali(gy, gm, gd) {
   var jm = (days < 186) ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
   var jd = 1 + ((days < 186) ? (days % 31) : ((days - 186) % 30));
   return [jy, jm, jd];
+}
+
+function normalizeDigits(value) {
+  if (value === null || value === undefined) {
+    value = '';
+  }
+  var str = String(value);
+  var out = '';
+  for (var i = 0; i < str.length; i++) {
+    var code = str.charCodeAt(i);
+    if (code >= 1776 && code <= 1785) {
+      out += String(code - 1776);
+    } else if (code >= 1632 && code <= 1641) {
+      out += String(code - 1632);
+    } else {
+      out += str[i];
+    }
+  }
+  return out.trim();
+}
+
+function toPersianDigits(value) {
+  var digits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return String(value).replace(/[0-9]/g, function(d) {
+    return digits[d];
+  });
 }

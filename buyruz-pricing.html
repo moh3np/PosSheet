@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css">
+    <script>
+      var BUYRUZ_PRICING = <?!= pricingJson ?>;
+    </script>
+    <style>
+      :root { color-scheme: light; }
+      html, body {
+        height: 100%;
+      }
+      body {
+        font-family: 'Vazir', sans-serif;
+        direction: rtl;
+        background: #fff;
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+      }
+      .card {
+        width: 100%;
+        max-width: 1200px;
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 20px 28px 0;
+        box-sizing: border-box;
+        position: relative;
+      }
+      .header {
+        margin-bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .meta {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        font-size: 13px;
+        color: #475569;
+        margin: 0;
+      }
+      .meta span {
+        background: rgba(37, 99, 235, 0.08);
+        padding: 6px 12px;
+        border-radius: 999px;
+      }
+      #searchInput {
+        width: 100%;
+        padding: 12px 18px;
+        border-radius: 14px;
+        border: 1px solid #d1d5db;
+        font-size: 16px;
+        text-align: center;
+        background: #f9fafb;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+      #searchInput:focus {
+        outline: none;
+        background: #fff;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+      }
+      .table-container {
+        flex: 1;
+        overflow: auto;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0 10px;
+        min-width: 960px;
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
+        padding: 14px 12px;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        color: #1e293b;
+        border-bottom: 1px solid #d8e0f0;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+      thead th span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      thead th .sort-indicator {
+        width: 8px;
+        height: 12px;
+        position: relative;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+      thead th .sort-indicator::before,
+      thead th .sort-indicator::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-left: 4px solid transparent;
+        border-right: 4px solid transparent;
+      }
+      thead th .sort-indicator::before {
+        top: 0;
+        border-bottom: 4px solid #94a3b8;
+        opacity: 0.4;
+      }
+      thead th .sort-indicator::after {
+        bottom: 0;
+        border-top: 4px solid #94a3b8;
+        opacity: 0.4;
+      }
+      thead th[data-sort-direction] {
+        background: linear-gradient(180deg, #e0ebff 0%, #dbeafe 100%);
+        color: #1d4ed8;
+      }
+      thead th[data-sort-direction] .sort-indicator {
+        opacity: 1;
+      }
+      thead th[data-sort-direction="asc"] .sort-indicator::before {
+        border-bottom-color: #1d4ed8;
+        opacity: 1;
+      }
+      thead th[data-sort-direction="asc"] .sort-indicator::after {
+        opacity: 0.2;
+      }
+      thead th[data-sort-direction="desc"] .sort-indicator::after {
+        border-top-color: #1d4ed8;
+        opacity: 1;
+      }
+      thead th[data-sort-direction="desc"] .sort-indicator::before {
+        opacity: 0.2;
+      }
+      tbody td {
+        padding: 10px 12px;
+        background: #fff;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+        border-bottom: 1px solid #e2e8f0;
+        font-size: 14px;
+        text-align: center;
+        color: #1f2937;
+      }
+      tbody tr {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      tbody tr:hover td {
+        transform: translateY(-2px);
+        box-shadow: 0 16px 32px rgba(15, 23, 42, 0.12);
+      }
+      td.name-cell {
+        text-align: right;
+      }
+      td.name-cell .name-link {
+        display: inline-block;
+        width: 100%;
+        border: none;
+        background: none;
+        padding: 0;
+        margin: 0;
+        text-align: right;
+        font: inherit;
+        color: #0f172a;
+        cursor: pointer;
+        transition: color 0.15s ease;
+      }
+      td.name-cell .name-link:hover,
+      td.name-cell .name-link:focus {
+        color: #2563eb;
+        text-decoration: underline;
+        outline: none;
+      }
+      tbody tr.selected td {
+        background: #eef2ff;
+        box-shadow: 0 12px 22px rgba(37, 99, 235, 0.12);
+      }
+      td.sku-cell {
+        direction: ltr;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+      }
+      td.date-cell {
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+      }
+      td.price-cell {
+        font-family: 'Tahoma', sans-serif;
+        font-size: 14px;
+      }
+      td.cost-cell {
+        font-family: 'Tahoma', sans-serif;
+        font-size: 14px;
+      }
+      td.profit-cell {
+        font-family: 'Tahoma', sans-serif;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      td.profit-cell.positive {
+        color: #166534;
+      }
+      td.profit-cell.negative {
+        color: #b91c1c;
+      }
+      td.profit-cell.neutral {
+        color: #374151;
+      }
+      td.updated-cell {
+        font-family: 'Courier New', monospace;
+        font-size: 12px;
+        color: #475569;
+      }
+      .field-input {
+        width: 160px;
+        padding: 10px 14px;
+        border-radius: 14px;
+        border: 1px solid #d4def7;
+        font-size: 15px;
+        direction: rtl;
+        text-align: center;
+        box-sizing: border-box;
+        background: #f8fafc;
+        color: #1e293b;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease;
+      }
+      .field-input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+        background: #fff;
+      }
+      .field-input::placeholder {
+        color: #94a3b8;
+      }
+      .field-input[disabled] {
+        background: #edeff5;
+        color: #94a3b8;
+        cursor: not-allowed;
+      }
+      .field-input.filled {
+        font-weight: 600;
+      }
+      .field-input.positive {
+        background: #dcfce7;
+        border-color: #86efac;
+        color: #166534;
+        box-shadow: 0 10px 22px rgba(22, 101, 52, 0.15);
+      }
+      .field-input.negative {
+        background: #fee2e2;
+        border-color: #fca5a5;
+        color: #991b1b;
+        box-shadow: 0 10px 22px rgba(153, 27, 27, 0.15);
+      }
+      .field-input.neutral {
+        background: #f8fafc;
+        border-color: #d4def7;
+        color: #1e293b;
+        box-shadow: none;
+      }
+      .empty-state {
+        display: none;
+        text-align: center;
+        padding: 24px 12px;
+        color: #94a3b8;
+        font-size: 16px;
+      }
+      .empty-state.visible {
+        display: block;
+      }
+      .content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        overflow: hidden;
+      }
+      .action-bar {
+        position: sticky;
+        bottom: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0) 0%, #fff 32%);
+        padding: 18px 0 22px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+      .summary-info {
+        font-size: 13px;
+        color: #475569;
+        transition: color 0.2s ease;
+      }
+      .summary-info.positive {
+        color: #166534;
+      }
+      .summary-info.negative {
+        color: #b91c1c;
+      }
+      .action-buttons {
+        display: flex;
+        gap: 12px;
+      }
+      .ghost-btn,
+      .primary-btn {
+        min-width: 140px;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-size: 15px;
+        cursor: pointer;
+        font-family: inherit;
+        border: none;
+      }
+      .ghost-btn {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+      }
+      .ghost-btn:hover {
+        background: #e2e8f0;
+      }
+      .primary-btn {
+        background: #2563eb;
+        color: #fff;
+        box-shadow: 0 12px 26px rgba(37, 99, 235, 0.28);
+      }
+      .primary-btn:hover {
+        background: #1d4ed8;
+      }
+      .primary-btn.loading {
+        background: #1d4ed8;
+        color: rgba(255, 255, 255, 0.85);
+        cursor: wait;
+      }
+      .primary-btn.loading::after {
+        content: '';
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.45);
+        border-top-color: #fff;
+        margin-inline-start: 8px;
+        vertical-align: middle;
+        animation: spin 0.8s linear infinite;
+      }
+      .toast-container {
+        position: fixed;
+        inset-inline-start: 50%;
+        top: 24px;
+        transform: translateX(-50%);
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        pointer-events: none;
+      }
+      .toast {
+        min-width: 300px;
+        max-width: 420px;
+        background: #0f172a;
+        color: #fff;
+        padding: 14px 20px;
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.35);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        pointer-events: auto;
+        opacity: 0;
+        transform: translateY(-12px);
+        transition: opacity 0.25s ease, transform 0.25s ease;
+      }
+      .toast.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .toast.success {
+        background: linear-gradient(135deg, #16a34a, #0f766e);
+      }
+      .toast.error {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+      }
+      .toast .toast-close {
+        background: transparent;
+        border: none;
+        color: inherit;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        padding: 4px;
+      }
+      .submit-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(248, 250, 252, 0.85);
+        backdrop-filter: blur(3px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 12px;
+        z-index: 100;
+        text-align: center;
+        pointer-events: none;
+      }
+      .submit-overlay.visible {
+        display: flex;
+        pointer-events: auto;
+      }
+      .submit-overlay .submit-spinner {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        border: 4px solid rgba(37, 99, 235, 0.2);
+        border-top-color: #2563eb;
+        animation: spin 0.8s linear infinite;
+      }
+      .submit-overlay .submit-overlay-text {
+        font-size: 15px;
+        color: #0f172a;
+        font-weight: 600;
+      }
+      body.is-submitting {
+        cursor: progress;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+    <body>
+      <div class="card">
+      <div class="header">
+        <div class="meta">
+          <span id="countLabel">...</span>
+          <span id="generatedAt">...</span>
+        </div>
+        <input id="searchInput" type="search" placeholder="جستجو بر اساس نام محصول یا SKU" autocomplete="off">
+      </div>
+      <div class="content">
+        <div class="table-container">
+          <table id="pricingTable">
+            <thead>
+              <tr>
+                <th data-sort-key="name"><span>نام محصول<span class="sort-indicator" aria-hidden="true"></span></span></th>
+                <th data-sort-key="sku"><span>SKU<span class="sort-indicator" aria-hidden="true"></span></span></th>
+                <th data-sort-key="date"><span>تاریخ خرید<span class="sort-indicator" aria-hidden="true"></span></span></th>
+                <th data-sort-key="purchasePrice"><span>قیمت خرید<span class="sort-indicator" aria-hidden="true"></span></span></th>
+                <th data-sort-key="currentPrice"><span>قیمت فعلی<span class="sort-indicator" aria-hidden="true"></span></span></th>
+                <th data-sort-key="newPrice"><span>قیمت جدید<span class="sort-indicator" aria-hidden="true"></span></span></th>
+                <th data-sort-key="percentChange"><span>درصد افزایش قیمت<span class="sort-indicator" aria-hidden="true"></span></span></th>
+                <th data-sort-key="profit"><span>درصد سود<span class="sort-indicator" aria-hidden="true"></span></span></th>
+                <th data-sort-key="updated"><span>آخرین به‌روزرسانی<span class="sort-indicator" aria-hidden="true"></span></span></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="emptyState" class="empty-state">هیچ محصولی با این شرایط یافت نشد.</div>
+      </div>
+      <div class="action-bar">
+        <div class="summary-info" id="summaryInfo">هیچ تغییری وارد نشده است.</div>
+        <div class="action-buttons">
+          <button id="cancelButton" type="button" class="ghost-btn">لغو</button>
+          <button id="submitButton" type="button" class="primary-btn">ثبت تغییر</button>
+        </div>
+      </div>
+      <div class="submit-overlay" id="submitOverlay" aria-live="polite" aria-busy="false">
+        <div class="submit-spinner"></div>
+        <div class="submit-overlay-text">در حال ثبت تغییرات...</div>
+      </div>
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+    <script>
+      (function() {
+        var state = BUYRUZ_PRICING || {};
+        var baseData = [];
+        var tableBody = document.querySelector('#pricingTable tbody');
+        var headerCells = Array.prototype.slice.call(document.querySelectorAll('#pricingTable thead th'));
+        var searchInput = document.getElementById('searchInput');
+        var emptyState = document.getElementById('emptyState');
+        var countLabel = document.getElementById('countLabel');
+        var generatedAt = document.getElementById('generatedAt');
+        var cancelButton = document.getElementById('cancelButton');
+        var submitButton = document.getElementById('submitButton');
+        var summaryInfo = document.getElementById('summaryInfo');
+        var toastContainer = document.getElementById('toastContainer');
+        var userState = {};
+        var baseLookup = {};
+        var currentView = baseData;
+        var submitting = false;
+        var sortState = { key: null, direction: 'asc' };
+        var currentQuery = '';
+        var selectedSkuKey = null;
+        var currentSelectedRow = null;
+        var selectedPriceInput = null;
+        var pendingPriceFocus = false;
+        var reloading = false;
+        var summaryOverride = null;
+        var summaryOverrideTimer = null;
+        var submitOverlay = document.getElementById('submitOverlay');
+        var submitDefaultLabel = submitButton ? submitButton.textContent : 'ثبت تغییر';
+
+        applyState(state, { deferRender: true });
+
+        headerCells.forEach(function(th) {
+          th.addEventListener('click', function() {
+            var key = th.dataset.sortKey;
+            if (!key) {
+              return;
+            }
+            if (sortState.key === key) {
+              sortState.direction = sortState.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+              sortState.key = key;
+              sortState.direction = 'asc';
+            }
+            headerCells.forEach(function(cell) {
+              if (cell === th) {
+                cell.dataset.sortDirection = sortState.direction;
+              } else {
+                delete cell.dataset.sortDirection;
+              }
+            });
+            refreshView();
+          });
+        });
+
+        refreshView();
+
+        searchInput.addEventListener('focus', function() {
+          searchInput.select();
+          searchInput.dataset.preventMouseUpReset = 'true';
+        });
+
+        searchInput.addEventListener('mouseup', function(event) {
+          if (searchInput.dataset.preventMouseUpReset === 'true') {
+            event.preventDefault();
+            searchInput.dataset.preventMouseUpReset = 'false';
+          }
+        });
+
+        searchInput.addEventListener('blur', function() {
+          delete searchInput.dataset.preventMouseUpReset;
+        });
+
+        searchInput.addEventListener('input', function() {
+          currentQuery = normalizeText(searchInput.value);
+          refreshView();
+        });
+
+        window.addEventListener('focus', focusSelectedInputIfNeeded);
+        document.addEventListener('visibilitychange', function() {
+          if (!document.hidden) {
+            focusSelectedInputIfNeeded();
+          }
+        });
+
+        function refreshView() {
+          var rows;
+          if (currentQuery) {
+            rows = baseData.filter(function(item) {
+              return item._search.indexOf(currentQuery) !== -1;
+            });
+          } else {
+            rows = baseData.slice();
+          }
+          updateCount(rows.length);
+          renderRows(applySort(rows));
+        }
+
+        function renderRows(rows) {
+          currentView = rows;
+          tableBody.textContent = '';
+          currentSelectedRow = null;
+          if (selectedSkuKey) {
+            selectedPriceInput = null;
+          }
+          if (!rows.length) {
+            emptyState.classList.add('visible');
+            return;
+          }
+          emptyState.classList.remove('visible');
+
+          var frag = document.createDocumentFragment();
+          rows.forEach(function(item) {
+            var skuKey = item.normalizedSku;
+            var record = userState[skuKey];
+            if (!record) {
+              record = { price: '', percent: '' };
+              userState[skuKey] = record;
+            }
+            var currentPrice = item.currentPriceValue != null ? Number(item.currentPriceValue) : null;
+            var purchasePrice = item.purchasePriceValue != null ? Number(item.purchasePriceValue) : null;
+            var lastUpdated = item.lastUpdatedDisplay || item.lastUpdatedValue || '';
+
+            var tr = document.createElement('tr');
+            tr.appendChild(createNameCell(item, tr, skuKey, function() { return priceInput; }));
+            tr.appendChild(createCell(formatPersianNumber(item.sku, item.normalizedSku), 'sku-cell'));
+            tr.appendChild(createCell(item.latestDate ? item.latestDate : '—', 'date-cell'));
+            tr.appendChild(createCell(formatPurchasePrice(purchasePrice), 'price-cell cost-cell'));
+            tr.appendChild(createCell(formatCurrentPrice(item), 'price-cell'));
+
+            var priceCell = document.createElement('td');
+            var priceInput = document.createElement('input');
+            priceInput.type = 'text';
+            priceInput.inputMode = 'decimal';
+            priceInput.autocomplete = 'off';
+            priceInput.className = 'field-input price-field neutral';
+            priceInput.placeholder = currentPrice != null ? formatNumber(currentPrice) : '۰';
+            setInputFromAscii(priceInput, record.price, false);
+            priceCell.appendChild(priceInput);
+            tr.appendChild(priceCell);
+
+            var percentCell = document.createElement('td');
+            var percentInput = document.createElement('input');
+            percentInput.type = 'text';
+            percentInput.inputMode = 'decimal';
+            percentInput.autocomplete = 'off';
+            percentInput.className = 'field-input percent-field neutral';
+            percentInput.placeholder = '۰';
+            percentInput.disabled = currentPrice == null || currentPrice <= 0;
+            setInputFromAscii(percentInput, record.percent, true);
+            percentCell.appendChild(percentInput);
+            tr.appendChild(percentCell);
+
+            var profitCell = createCell('—', 'profit-cell neutral');
+            tr.appendChild(profitCell);
+
+            tr.appendChild(createCell(formatLastUpdated(lastUpdated), 'updated-cell date-cell'));
+
+            priceInput.addEventListener('input', function() {
+              var ascii = normalizeNumericString(priceInput.value, false);
+              record.price = ascii;
+              setInputFromAscii(priceInput, ascii, false);
+              if (currentPrice != null && currentPrice > 0) {
+                if (ascii) {
+                  var priceNumber = asciiToNumber(ascii);
+                  if (priceNumber != null) {
+                    var percentValue = ((priceNumber - currentPrice) / currentPrice) * 100;
+                    var percentAscii = percentValue.toFixed(2);
+                    record.percent = percentAscii;
+                    setInputFromAscii(percentInput, percentAscii, true);
+                  } else {
+                    record.percent = '';
+                    percentInput.value = '';
+                  }
+                } else {
+                  record.percent = '';
+                  percentInput.value = '';
+                }
+              }
+              updateFieldStyles(currentPrice, priceInput, percentInput, record, purchasePrice, profitCell);
+              updateSummary();
+            });
+            priceInput.addEventListener('focus', function() {
+              pendingPriceFocus = false;
+              setSelectedRow(tr, priceInput, skuKey, false);
+            });
+
+            percentInput.addEventListener('input', function() {
+              if (percentInput.disabled) {
+                return;
+              }
+              var ascii = normalizeNumericString(percentInput.value, true);
+              record.percent = ascii;
+              setInputFromAscii(percentInput, ascii, true);
+              var percentNumber = asciiToNumber(ascii);
+              if (percentNumber == null) {
+                record.price = '';
+                priceInput.value = '';
+                updateFieldStyles(currentPrice, priceInput, percentInput, record, purchasePrice, profitCell);
+                return;
+              }
+              if (currentPrice != null && currentPrice > 0) {
+                var computedPrice = currentPrice * (1 + percentNumber / 100);
+                var priceAscii = String(Math.round(computedPrice));
+                record.price = priceAscii;
+                setInputFromAscii(priceInput, priceAscii, false);
+              }
+              updateFieldStyles(currentPrice, priceInput, percentInput, record, purchasePrice, profitCell);
+              updateSummary();
+            });
+            percentInput.addEventListener('focus', function() {
+              setSelectedRow(tr, priceInput, skuKey, false);
+            });
+
+            updateFieldStyles(currentPrice, priceInput, percentInput, record, purchasePrice, profitCell);
+            if (selectedSkuKey && selectedSkuKey === skuKey) {
+              tr.classList.add('selected');
+              currentSelectedRow = tr;
+              selectedPriceInput = priceInput;
+            }
+            frag.appendChild(tr);
+          });
+          tableBody.appendChild(frag);
+          updateSummary();
+        }
+
+        function updateCount(count) {
+          countLabel.textContent = 'تعداد ردیف‌ها: ' + toPersianDigits(count);
+        }
+
+        function createCell(value, className) {
+          var td = document.createElement('td');
+          if (className) {
+            String(className).split(/\s+/).forEach(function(cls) {
+              if (cls) {
+                td.classList.add(cls);
+              }
+            });
+          }
+          if (value && value.nodeType === 1) {
+            td.appendChild(value);
+          } else {
+            td.textContent = value;
+          }
+          return td;
+        }
+
+        function createNameCell(item, rowElement, skuKey, priceInputResolver) {
+          var td = document.createElement('td');
+          td.className = 'name-cell';
+          if (!item || !item.name) {
+            td.textContent = '—';
+            return td;
+          }
+          var link = document.createElement('a');
+          link.href = buildSearchUrl(item.name, item.sku || item.normalizedSku);
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          link.className = 'name-link';
+          link.textContent = item.name;
+
+          var ensureSelection = function() {
+            var priceInput = typeof priceInputResolver === 'function' ? priceInputResolver() : null;
+            setSelectedRow(rowElement, priceInput, skuKey, false);
+          };
+
+          link.addEventListener('focus', ensureSelection);
+          link.addEventListener('mousedown', ensureSelection);
+          link.addEventListener('touchstart', ensureSelection);
+          link.addEventListener('click', function() {
+            pendingPriceFocus = true;
+            ensureSelection();
+          });
+
+          td.appendChild(link);
+          return td;
+        }
+
+        function buildSearchUrl(name, sku) {
+          var tokens = [];
+          if (name) {
+            tokens.push(name);
+          }
+          if (sku) {
+            tokens.push(sku);
+          }
+          var query = tokens.join(' ');
+          if (!query) {
+            return 'https://www.google.com/search';
+          }
+          return 'https://www.google.com/search?q=' + encodeURIComponent(query);
+        }
+
+        function setSelectedRow(row, priceInput, skuKey, focusNow) {
+          if (currentSelectedRow && currentSelectedRow !== row) {
+            currentSelectedRow.classList.remove('selected');
+          }
+          currentSelectedRow = row || null;
+          if (row) {
+            row.classList.add('selected');
+          }
+          if (skuKey) {
+            selectedSkuKey = skuKey;
+          }
+          if (priceInput) {
+            selectedPriceInput = priceInput;
+          }
+          if (focusNow && priceInput) {
+            priceInput.focus();
+            priceInput.select();
+            pendingPriceFocus = false;
+          }
+        }
+
+        function focusSelectedInputIfNeeded() {
+          if (pendingPriceFocus && selectedPriceInput) {
+            selectedPriceInput.focus();
+            selectedPriceInput.select();
+            pendingPriceFocus = false;
+          }
+        }
+
+        function applySort(rows) {
+          if (!Array.isArray(rows)) {
+            return [];
+          }
+          if (!rows.length) {
+            return [];
+          }
+          if (!sortState.key) {
+            return rows.slice();
+          }
+          var direction = sortState.direction === 'desc' ? -1 : 1;
+          var key = sortState.key;
+          return rows.slice().sort(function(a, b) {
+            var aValue = getSortValue(a, key);
+            var bValue = getSortValue(b, key);
+            return compareValues(aValue, bValue) * direction;
+          });
+        }
+
+        function getSortValue(item, key) {
+          if (!item) {
+            return null;
+          }
+          var skuKey = item.normalizedSku;
+          var record = userState[skuKey] || {};
+          var currentPrice = item.currentPriceValue != null ? Number(item.currentPriceValue) : null;
+          var purchasePrice = item.purchasePriceValue != null ? Number(item.purchasePriceValue) : null;
+          var salePrice = asciiToNumber(record.price);
+
+          if ((salePrice == null || !isFinite(salePrice)) && record.percent) {
+            var percentFromRecord = asciiToNumber(record.percent);
+            if (percentFromRecord != null && isFinite(percentFromRecord) && currentPrice != null && currentPrice > 0) {
+              salePrice = currentPrice * (1 + percentFromRecord / 100);
+            }
+          }
+
+          switch (key) {
+            case 'name':
+              return item.name || '';
+            case 'sku':
+              return item.normalizedSku || '';
+            case 'date': {
+              var digits = normalizeNumericString(item.latestDate, false);
+              if (digits && digits.length) {
+                var dateNumber = Number(digits);
+                return isFinite(dateNumber) ? dateNumber : digits;
+              }
+              return null;
+            }
+            case 'purchasePrice':
+              return purchasePrice;
+            case 'currentPrice':
+              return currentPrice;
+            case 'newPrice':
+              if (salePrice != null && isFinite(salePrice)) {
+                return salePrice;
+              }
+              return currentPrice;
+            case 'percentChange': {
+              var percentValue = asciiToNumber(record.percent);
+              if (percentValue != null && isFinite(percentValue)) {
+                return percentValue;
+              }
+              if (salePrice != null && isFinite(salePrice) && currentPrice != null && currentPrice > 0) {
+                return ((salePrice - currentPrice) / currentPrice) * 100;
+              }
+              return null;
+            }
+            case 'profit': {
+              var effectiveSale = salePrice != null && isFinite(salePrice) ? salePrice : currentPrice;
+              if (purchasePrice != null && isFinite(purchasePrice) && purchasePrice > 0 && effectiveSale != null && isFinite(effectiveSale) && effectiveSale > 0) {
+                return ((effectiveSale - purchasePrice) / purchasePrice) * 100;
+              }
+              return null;
+            }
+            case 'updated': {
+              var updatedValue = item.lastUpdatedDisplay || item.lastUpdatedValue || '';
+              if (!updatedValue) {
+                return null;
+              }
+              var numeric = normalizeNumericString(updatedValue, true);
+              if (numeric && numeric.length) {
+                var numericValue = Number(numeric);
+                if (isFinite(numericValue)) {
+                  return numericValue;
+                }
+              }
+              return normalizeText(updatedValue);
+            }
+            default:
+              return null;
+          }
+        }
+
+        function compareValues(a, b) {
+          var aEmpty = a === null || a === undefined || a === '';
+          var bEmpty = b === null || b === undefined || b === '';
+          if (aEmpty && bEmpty) {
+            return 0;
+          }
+          if (aEmpty) {
+            return 1;
+          }
+          if (bEmpty) {
+            return -1;
+          }
+          if (typeof a === 'number' && typeof b === 'number') {
+            if (!isFinite(a) && !isFinite(b)) {
+              return 0;
+            }
+            if (!isFinite(a)) {
+              return 1;
+            }
+            if (!isFinite(b)) {
+              return -1;
+            }
+            return a - b;
+          }
+          var aStr = String(a);
+          var bStr = String(b);
+          return aStr.localeCompare(bStr, 'fa', { numeric: true, sensitivity: 'base' });
+        }
+
+        function formatPersianNumber(display, normalized) {
+          var value = display || normalized || '';
+          if (!value) {
+            return '—';
+          }
+          return toPersianDigits(value);
+        }
+
+        function formatCurrentPrice(item) {
+          if (item.currentPriceValue == null && !item.currentPriceDisplay) {
+            return '—';
+          }
+          var display = item.currentPriceDisplay ? item.currentPriceDisplay : formatNumber(item.currentPriceValue);
+          return toPersianDigits(display);
+        }
+
+        function formatPurchasePrice(value) {
+          if (value == null || !isFinite(value) || value <= 0) {
+            return '—';
+          }
+          return toPersianDigits(formatNumber(value));
+        }
+
+        function formatLastUpdated(value) {
+          if (!value) {
+            return '—';
+          }
+          return toPersianDigits(value);
+        }
+
+        function formatNumber(number) {
+          if (number == null || number === '') {
+            return '';
+          }
+          var value = Number(number);
+          if (!isFinite(value)) {
+            return '';
+          }
+          return value.toLocaleString('fa-IR');
+        }
+
+        function normalizeNumericString(value, allowDecimal) {
+          if (!value) {
+            return '';
+          }
+          var out = '';
+          var hasDecimal = false;
+          var hasSign = false;
+          for (var i = 0; i < value.length; i++) {
+            var ch = value[i];
+            if (!hasSign && (ch === '-' || ch === '−' || ch === '+' || ch === '＋')) {
+              out += ch === '＋' ? '+' : ch;
+              hasSign = true;
+              continue;
+            }
+            if (ch === ' ' || ch === ',' || ch === '٬' || ch === '%' || ch === '٪') {
+              continue;
+            }
+            if (allowDecimal && (ch === '.' || ch === '٫')) {
+              if (!hasDecimal) {
+                out += '.';
+                hasDecimal = true;
+              }
+              continue;
+            }
+            var mapped = mapDigit(ch);
+            if (mapped >= '0' && mapped <= '9') {
+              out += mapped;
+            }
+          }
+          return out;
+        }
+
+        function setInputFromAscii(input, ascii, allowDecimal) {
+          if (!input) {
+            return;
+          }
+          if (!ascii) {
+            input.value = '';
+            return;
+          }
+          var num = Number(ascii);
+          if (isFinite(num)) {
+            if (!allowDecimal) {
+              num = Math.round(num);
+            }
+            input.value = num.toLocaleString('fa-IR');
+          } else {
+            input.value = toPersianDigits(ascii);
+          }
+        }
+
+        function updateFieldStyles(currentPrice, priceInput, percentInput, record, purchasePrice, profitCell) {
+          var priceNumber = asciiToNumber(record.price);
+          var percentNumber = asciiToNumber(record.percent);
+          var priceClasses = ['field-input', 'price-field'];
+          var percentClasses = ['field-input', 'percent-field'];
+
+          if (percentNumber != null && isFinite(percentNumber) && currentPrice != null && currentPrice > 0) {
+            var trend = percentNumber > 0.0001 ? 'positive' : percentNumber < -0.0001 ? 'negative' : 'neutral';
+            priceClasses.push(trend);
+            percentClasses.push(trend);
+            percentClasses.push('filled');
+            percentInput.title = 'درصد تغییر نسبت به قیمت فعلی';
+          } else {
+            percentClasses.push('neutral');
+            priceClasses.push('neutral');
+            percentInput.value = '';
+            record.percent = '';
+            percentInput.title = '';
+          }
+
+          if (priceNumber != null && isFinite(priceNumber) && priceNumber > 0) {
+            priceInput.value = formatNumber(priceNumber);
+            priceClasses.push('filled');
+          } else {
+            priceInput.value = '';
+            record.price = '';
+          }
+
+          if (percentInput.disabled) {
+            percentClasses.push('neutral');
+            percentInput.value = '';
+            record.percent = '';
+          }
+
+          if (currentPrice != null) {
+            priceInput.placeholder = formatNumber(currentPrice);
+            priceInput.title = 'قیمت فعلی: ' + formatNumber(currentPrice);
+          } else {
+            priceInput.placeholder = '۰';
+            priceInput.title = '';
+          }
+
+          priceInput.className = priceClasses.join(' ');
+          percentInput.className = percentClasses.join(' ');
+          updateProfitCell(purchasePrice, currentPrice, record, profitCell);
+        }
+
+        function asciiToNumber(value) {
+          if (!value) {
+            return null;
+          }
+          var num = Number(value);
+          if (!isFinite(num)) {
+            return null;
+          }
+          return num;
+        }
+
+        function updateProfitCell(purchasePrice, currentPrice, record, profitCell) {
+          if (!profitCell) {
+            return;
+          }
+          var salePrice = asciiToNumber(record.price);
+          if (salePrice == null || salePrice <= 0) {
+            salePrice = currentPrice != null ? Number(currentPrice) : null;
+          }
+          if (purchasePrice == null || !isFinite(purchasePrice) || purchasePrice <= 0 || salePrice == null || !isFinite(salePrice) || salePrice <= 0) {
+            profitCell.textContent = '—';
+            profitCell.className = 'profit-cell neutral';
+            return;
+          }
+          var profitPercent = ((salePrice - purchasePrice) / purchasePrice) * 100;
+          var trend = profitPercent > 0.0001 ? 'positive' : profitPercent < -0.0001 ? 'negative' : 'neutral';
+          profitCell.textContent = formatSignedPercent(profitPercent);
+          profitCell.className = 'profit-cell ' + trend;
+        }
+
+        function updateSummary() {
+          if (!summaryInfo) {
+            return;
+          }
+          if (summaryOverride && summaryOverride.text) {
+            summaryInfo.textContent = summaryOverride.text;
+            summaryInfo.className = 'summary-info' + (summaryOverride.tone ? ' ' + summaryOverride.tone : '');
+            return;
+          }
+          var pending = getPendingChanges();
+          var changeCount = pending.length;
+          if (!changeCount) {
+            summaryInfo.textContent = 'هیچ تغییری وارد نشده است.';
+            summaryInfo.className = 'summary-info';
+            return;
+          }
+
+          var totalDelta = 0;
+          var totalPercent = 0;
+          pending.forEach(function(item) {
+            if (item.basePrice != null && isFinite(item.basePrice)) {
+              totalDelta += item.price - item.basePrice;
+            }
+            if (item.percent != null && isFinite(item.percent)) {
+              totalPercent += item.percent;
+            }
+          });
+          var avgPercent = totalPercent / changeCount;
+          summaryInfo.className = 'summary-info ' + (totalDelta > 0.0001 ? 'positive' : totalDelta < -0.0001 ? 'negative' : '');
+          summaryInfo.textContent =
+            'تغییرات معلق: ' + toPersianDigits(changeCount) +
+            ' مورد | مجموع تغییر قیمت: ' + formatSignedCurrency(totalDelta) +
+            ' | میانگین درصد: ' + formatSignedPercent(avgPercent);
+        }
+
+        function formatSignedCurrency(value) {
+          if (!isFinite(value) || Math.abs(value) < 0.0001) {
+            return '۰';
+          }
+          var sign = value > 0 ? '+' : '-';
+          var abs = Math.abs(Math.round(value));
+          return sign + abs.toLocaleString('fa-IR');
+        }
+
+        function formatSignedPercent(value) {
+          if (!isFinite(value) || Math.abs(value) < 0.0001) {
+            return '۰٪';
+          }
+          var sign = value > 0 ? '+' : '';
+          return sign + toPersianDigits(value.toFixed(2)) + '٪';
+        }
+
+        cancelButton.addEventListener('click', function() {
+          if (typeof google !== 'undefined' && google.script && google.script.host && google.script.host.close) {
+            google.script.host.close();
+          } else {
+            window.close();
+          }
+        });
+
+        submitButton.addEventListener('click', function() {
+          if (submitting) {
+            return;
+          }
+          var payload = collectChanges();
+          if (!payload.length) {
+            showToast('هیچ قیمتی برای ثبت وارد نشده است.', 'error', 4000);
+            return;
+          }
+          setSubmittingState(true);
+
+          if (typeof google === 'undefined' || !google.script || !google.script.run) {
+            setSubmittingState(false);
+            console.log('Buyruz pricing changes (preview):', payload);
+            showToast('امکان اتصال به سرویس برای ثبت قیمت‌ها وجود ندارد.', 'error', 6000);
+            return;
+          }
+
+          google.script.run
+            .withSuccessHandler(function(result) {
+              setSubmittingState(false);
+              handleSubmitResult(result, payload);
+            })
+            .withFailureHandler(function(error) {
+              setSubmittingState(false);
+              var message = error && error.message ? error.message : 'ثبت قیمت با خطا مواجه شد.';
+              showToast('خطا در ثبت قیمت‌ها: ' + message, 'error', 7000);
+            })
+            .applyBuyruzPricingChanges(payload);
+        });
+
+        function handleSubmitResult(result, payload) {
+          var updated = result && isFinite(result.updated) ? Number(result.updated) : 0;
+          var missing = result && Array.isArray(result.missing) ? result.missing : [];
+
+          if (updated) {
+            payload.forEach(function(change) {
+              var lookup = baseLookup[change.sku];
+              if (lookup) {
+                lookup.currentPriceValue = change.price;
+                lookup.currentPriceDisplay = formatNumber(change.price);
+                if (result && result.timestamp) {
+                  lookup.lastUpdatedDisplay = result.timestamp;
+                  lookup.lastUpdatedValue = result.timestamp;
+                }
+              }
+              var stateEntry = userState[change.sku];
+              if (stateEntry) {
+                stateEntry.price = '';
+                stateEntry.percent = '';
+              }
+            });
+            renderRows(currentView.slice());
+            var message = 'تعداد ' + toPersianDigits(updated) + ' ردیف ثبت شد.';
+            if (missing.length) {
+              message += ' اما برای ' + toPersianDigits(missing.length) + ' مورد سطر مطابق یافت نشد.';
+              setSummaryNotification(message, 'negative', 6000);
+              showToast('ثبت ' + toPersianDigits(updated) + ' ردیف انجام شد.', 'success', 3500);
+              showToast('برای ' + toPersianDigits(missing.length) + ' مورد سطر مطابق یافت نشد.', 'error', 7000);
+            } else {
+              message += ' در حال بروزرسانی داده‌ها...';
+              setSummaryNotification(message, 'positive');
+              showToast('ثبت ' + toPersianDigits(updated) + ' ردیف با موفقیت انجام شد.', 'success', 3500);
+            }
+            reloadDataFromServer();
+            return;
+          }
+
+          if (missing.length) {
+            var missingMessage = 'برای ' + toPersianDigits(missing.length) + ' مورد، سطری با SKU مطابق یافت نشد: ' + missing.join('، ');
+            setSummaryNotification(missingMessage, 'negative', 7000);
+            showToast(missingMessage, 'error', 7000);
+            return;
+          }
+
+          setSummaryNotification('تغییری ثبت نشد.', '', 3000);
+        }
+
+        function reloadDataFromServer() {
+          if (reloading) {
+            return;
+          }
+          if (typeof google === 'undefined' || !google.script || !google.script.run) {
+            setSummaryNotification('امکان بارگذاری مجدد داده‌ها وجود ندارد.', 'negative', 6000);
+            return;
+          }
+          reloading = true;
+          setSummaryNotification('در حال بروزرسانی داده‌ها...', '');
+          google.script.run
+            .withSuccessHandler(function(data) {
+              reloading = false;
+              applyState(data);
+              setSummaryNotification('داده‌ها بروزرسانی شد.', 'positive', 4000);
+            })
+            .withFailureHandler(function(error) {
+              reloading = false;
+              var message = error && error.message ? error.message : 'خطا در بارگذاری مجدد داده‌ها.';
+              setSummaryNotification(message, 'negative', 7000);
+            })
+            .getBuyruzPricingData();
+        }
+
+        function applyState(newState, options) {
+          state = newState || {};
+          updateGeneratedAtLabel(state.generatedAt);
+          baseData = Array.isArray(state.items) ? state.items.slice() : [];
+          currentView = baseData;
+          baseLookup = {};
+          userState = {};
+          selectedSkuKey = null;
+          currentSelectedRow = null;
+          selectedPriceInput = null;
+          pendingPriceFocus = false;
+
+          baseData.forEach(function(item) {
+            var tokens = [
+              item.name,
+              item.sku,
+              item.normalizedSku,
+              item.tlSku,
+              item.latestDate
+            ];
+            item._search = normalizeText(tokens.join(' '));
+            if (item.normalizedSku) {
+              baseLookup[item.normalizedSku] = item;
+            }
+          });
+
+          if (!(options && options.deferRender)) {
+            refreshView();
+          }
+        }
+
+        function updateGeneratedAtLabel(value) {
+          if (!generatedAt) {
+            return;
+          }
+          if (value) {
+            var updated = new Date(value);
+            if (!isNaN(updated.getTime())) {
+              generatedAt.textContent = 'به‌روزرسانی: ' + toPersianDigits(updated.toLocaleString('fa-IR'));
+              return;
+            }
+          }
+          generatedAt.textContent = 'زمان به‌روزرسانی: نامشخص';
+        }
+
+        function setSummaryNotification(text, tone, duration) {
+          summaryOverride = text ? { text: text, tone: tone || '' } : null;
+          if (summaryOverrideTimer) {
+            window.clearTimeout(summaryOverrideTimer);
+            summaryOverrideTimer = null;
+          }
+          if (summaryOverride && duration && duration > 0) {
+            summaryOverrideTimer = window.setTimeout(function() {
+              summaryOverride = null;
+              summaryOverrideTimer = null;
+              updateSummary();
+            }, duration);
+          }
+          updateSummary();
+        }
+
+        function setElementDisabled(element, disabled) {
+          if (!element) {
+            return;
+          }
+          if (disabled) {
+            element.dataset.wasDisabled = element.disabled ? '1' : '';
+            element.disabled = true;
+          } else {
+            if (element.dataset.wasDisabled === '1') {
+              element.disabled = true;
+            } else {
+              element.disabled = false;
+            }
+            delete element.dataset.wasDisabled;
+          }
+        }
+
+        function setSubmittingState(active) {
+          submitting = !!active;
+          if (submitButton) {
+            submitButton.classList.toggle('loading', active);
+            setElementDisabled(submitButton, active);
+            submitButton.textContent = active ? 'در حال ثبت...' : submitDefaultLabel;
+          }
+          if (submitOverlay) {
+            submitOverlay.classList.toggle('visible', active);
+            submitOverlay.setAttribute('aria-busy', active ? 'true' : 'false');
+          }
+          document.body.classList.toggle('is-submitting', active);
+          setElementDisabled(searchInput, active);
+          if (tableBody) {
+            var inputs = tableBody.querySelectorAll('input');
+            inputs.forEach(function(input) {
+              setElementDisabled(input, active);
+            });
+          }
+        }
+
+        function showToast(message, type, duration) {
+          if (!toastContainer || !message) {
+            return;
+          }
+          var toast = document.createElement('div');
+          toast.className = 'toast ' + (type === 'error' ? 'error' : 'success');
+
+          var textSpan = document.createElement('span');
+          textSpan.textContent = message;
+          toast.appendChild(textSpan);
+
+          var closeBtn = document.createElement('button');
+          closeBtn.type = 'button';
+          closeBtn.className = 'toast-close';
+          closeBtn.innerHTML = '&times;';
+          toast.appendChild(closeBtn);
+
+          toastContainer.appendChild(toast);
+
+          window.requestAnimationFrame(function() {
+            toast.classList.add('visible');
+          });
+
+          var timer = null;
+          var hide = function() {
+            if (timer) {
+              window.clearTimeout(timer);
+              timer = null;
+            }
+            if (!toast.parentNode) {
+              return;
+            }
+            toast.classList.remove('visible');
+            window.setTimeout(function() {
+              if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+              }
+            }, 200);
+          };
+
+          var delay = typeof duration === 'number' ? duration : 4000;
+          if (delay > 0) {
+            timer = window.setTimeout(hide, delay);
+          }
+          closeBtn.addEventListener('click', hide);
+        }
+
+        function collectChanges() {
+          var pending = getPendingChanges();
+          return pending.map(function(item) {
+            return {
+              sku: item.sku,
+              price: item.price,
+              name: item.name,
+              displaySku: item.displaySku
+            };
+          });
+        }
+
+        function getPendingChanges() {
+          var changes = [];
+          Object.keys(userState).forEach(function(key) {
+            var entry = userState[key];
+            if (!entry) {
+              return;
+            }
+            var priceNumber = asciiToNumber(entry.price);
+            if (priceNumber == null || priceNumber <= 0) {
+              return;
+            }
+            var baseItem = baseLookup[key];
+            var basePrice = baseItem && baseItem.currentPriceValue != null ? Number(baseItem.currentPriceValue) : null;
+            if (basePrice != null && isFinite(basePrice) && Math.abs(priceNumber - basePrice) < 0.0001) {
+              return;
+            }
+            changes.push({
+              sku: key,
+              price: Math.round(priceNumber),
+              basePrice: basePrice,
+              percent: asciiToNumber(entry.percent),
+              name: baseItem ? baseItem.name : '',
+              displaySku: baseItem ? (baseItem.sku || key) : key
+            });
+          });
+          return changes;
+        }
+
+        function normalizeText(value) {
+          if (!value) {
+            return '';
+          }
+          var out = '';
+          for (var i = 0; i < value.length; i++) {
+            out += mapDigit(value[i]).toLowerCase();
+          }
+          return out.replace(/\s+/g, ' ').trim();
+        }
+
+        function toPersianDigits(value) {
+          var str = String(value == null ? '' : value);
+          var digits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+          return str.replace(/\d/g, function(d) { return digits[d]; });
+        }
+
+        function mapDigit(ch) {
+          var code = ch.charCodeAt(0);
+          if (code >= 48 && code <= 57) {
+            return ch;
+          }
+          if (code >= 1776 && code <= 1785) {
+            return String(code - 1776);
+          }
+          if (code >= 1632 && code <= 1641) {
+            return String(code - 1632);
+          }
+          return ch;
+        }
+      })();
+    </script>
+    <span style="position: fixed; left: 8px; bottom: 4px; font-size: 8px; color: #cbd5e1; pointer-events: none; font-family: monospace; user-select: none; z-index: 9999;">v<?= APP_VERSION ?></span>
+  </body>
+</html>
