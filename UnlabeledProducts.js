@@ -10,8 +10,7 @@ function showUnlabeledProductsDialog() {
 
 function getUnlabeledInventoryData() {
   var ss = SpreadsheetApp.getActive();
-  var posInventoryRangeName = Config.namedRanges.posInventory;
-  var inventoryRange = ss.getRangeByName(posInventoryRangeName);
+  var inventoryRange = ss.getRangeByName('PosInventory');
   if (!inventoryRange) {
     return { items: [] };
   }
@@ -54,8 +53,8 @@ function getUnlabeledInventoryData() {
 
   var toylandSkuMap = {};
   try {
-    var externalSs = SpreadsheetApp.openById(Config.sheets.tolyandSheet);
-    var toylandRange = externalSs.getRangeByName(Config.namedRanges.toylandInventory);
+    var externalSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
+    var toylandRange = externalSs.getRangeByName('ToylandInventory');
     if (toylandRange) {
       var toySheet = toylandRange.getSheet();
       var toyStart = getDataStartRow(toylandRange);
@@ -98,6 +97,29 @@ function getUnlabeledInventoryData() {
   return { items: items };
 }
 
+function normalizeDigits(str) {
+  if (typeof str !== 'string') {
+    str = String(str || '');
+  }
+  var out = '';
+  for (var i = 0; i < str.length; i++) {
+    var code = str.charCodeAt(i);
+    if (code >= 1776 && code <= 1785) {
+      out += String(code - 1776);
+    } else if (code >= 1632 && code <= 1641) {
+      out += String(code - 1632);
+    } else {
+      out += str[i];
+    }
+  }
+  return out.trim();
+}
+
+function toPersianDigits(str) {
+  var digits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  return String(str).replace(/[0-9]/g, function(d) { return digits[d]; });
+}
+
 function findRowMatches(range, value) {
   if (!value) {
     return [];
@@ -121,7 +143,7 @@ function setColumnBoolean(sheet, columnIndex, rows, value) {
   var a1List = rows.map(function(row) {
     return sheet.getRange(row, columnIndex, 1, 1).getA1Notation();
   });
-  // sheet.getRangeList(a1List).setValue(value);
+  sheet.getRangeList(a1List).setValue(value);
 }
 
 function updateUnlabeledInventoryStatus(payload) {
@@ -134,10 +156,9 @@ function updateUnlabeledInventoryStatus(payload) {
   var skuKey = payload.sku != null ? normalizeDigits(String(payload.sku)) : '';
 
   var ss = SpreadsheetApp.getActive();
-  var posInventoryRangeName = Config.namedRanges.posInventory;
-  var inventoryRange = ss.getRangeByName(posInventoryRangeName);
+  var inventoryRange = ss.getRangeByName('PosInventory');
   if (!inventoryRange) {
-    throw new Error(posInventoryRangeName + ' تعریف نشده است.');
+    throw new Error('PosInventory تعریف نشده است.');
   }
   var sheet = inventoryRange.getSheet();
   var startRow = getDataStartRow(inventoryRange);
@@ -147,7 +168,7 @@ function updateUnlabeledInventoryStatus(payload) {
       totalCount: 0,
       desiredCount: 0,
       missingCount: 0,
-      message: 'هیچ موجودی در ' + posInventoryRangeName + ' یافت نشد.'
+      message: 'هیچ موجودی در PosInventory یافت نشد.'
     };
   }
   var numRows = lastRow - startRow + 1;
@@ -249,7 +270,7 @@ function updateUnlabeledInventoryStatus(payload) {
     });
   }
 
-  var remoteUpdated = updateExternalLabelPrinted(keptSerials);
+  var remoteUpdated = 0;
   return {
     totalCount: totalCount,
     desiredCount: appliedDesired,
@@ -257,71 +278,6 @@ function updateUnlabeledInventoryStatus(payload) {
     remoteUpdated: remoteUpdated,
     toylandUpdated: toylandUpdated
   };
-}
-
-function updateExternalLabelPrinted(serialsToReset) {
-  serialsToReset = serialsToReset || [];
-  if (!serialsToReset.length) {
-    return 0;
-  }
-
-  var serialSet = {};
-  serialsToReset.forEach(function(sn) {
-    var norm = normalizeDigits(String(sn).trim());
-    if (norm) {
-      serialSet[norm] = true;
-    }
-  });
-  var serialKeys = Object.keys(serialSet);
-  if (!serialKeys.length) {
-    return 0;
-  }
-
-  var externalSs;
-  try {
-    externalSs = SpreadsheetApp.openById(Config.sheets.tolyandSheet);
-  } catch (err) {
-    throw new Error('عدم دسترسی به شیت موجودی بیرونی: ' + err);
-  }
-  var toylandRange = externalSs.getRangeByName(Config.namedRanges.toylandInventory);
-  if (!toylandRange) {
-    throw new Error('ToylandInventory در شیت بیرونی پیدا نشد.');
-  }
-  var toylandSheet = toylandRange.getSheet();
-  var toyStartRow = getDataStartRow(toylandRange);
-  var toyLastRow = getLastDataRow(toylandRange);
-  if (toyLastRow < toyStartRow) {
-    return 0;
-  }
-
-  var toyNumRows = toyLastRow - toyStartRow + 1;
-  var toyBaseCol = toylandRange.getColumn();
-  var snCol = toyBaseCol + 4;
-  var labelColumn = toyBaseCol + 8;
-  var snRange = toylandSheet.getRange(toyStartRow, snCol, toyNumRows, 1);
-
-  var seenRows = {};
-  serialKeys.forEach(function(serial) {
-    var matches = findSerialCells(snRange, serial);
-    matches.forEach(function(cell) {
-      var row = cell.getRow();
-      if (row) {
-        seenRows[row] = true;
-      }
-    });
-  });
-
-  var targetRows = Object.keys(seenRows);
-  if (!targetRows.length) {
-    return 0;
-  }
-
-  var rangeList = targetRows.map(function(rowStr) {
-    var rowNumber = parseInt(rowStr, 10);
-    return toylandSheet.getRange(rowNumber, labelColumn, 1, 1).getA1Notation();
-  });
-  toylandSheet.getRangeList(rangeList).setValue(false);
-  return rangeList.length;
 }
 
 function updateToylandInventoryFlags(tlSkuCounts) {
@@ -335,11 +291,11 @@ function updateToylandInventoryFlags(tlSkuCounts) {
 
   var externalSs;
   try {
-    externalSs = SpreadsheetApp.openById(Config.sheets.tolyandSheet);
+    externalSs = SpreadsheetApp.openById('1LIR_q1xrpdzcqoBJmNXTO0UJ9dksoBjS7h3Me4PRB1s');
   } catch (err) {
     throw new Error('عدم دسترسی به شیت موجودی بیرونی: ' + err);
   }
-  var toylandRange = externalSs.getRangeByName(Config.namedRanges.toylandInventory);
+  var toylandRange = externalSs.getRangeByName('ToylandInventory');
   if (!toylandRange) {
     throw new Error('ToylandInventory در شیت بیرونی پیدا نشد.');
   }
